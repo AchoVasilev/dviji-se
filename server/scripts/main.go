@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -12,8 +11,6 @@ import (
 
 func main() {
 	var migrationName string
-	flag.StringVar(&migrationName, "name", "", "Name of the migration")
-	flag.Parse()
 
 	if migrationName == "" {
 		reader := bufio.NewReader(os.Stdin)
