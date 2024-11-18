@@ -40,7 +40,7 @@ CREATE TABLE permissions
   created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
   updated_at TIMESTAMPTZ,
   updated_by VARCHAR,
-  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  is_deleted BOOLEAN DEFAULT FALSE,
 
   CONSTRAINT pk_permission_id PRIMARY KEY(id)
 );

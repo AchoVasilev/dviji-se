@@ -10,7 +10,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 )
@@ -18,15 +17,10 @@ import (
 var Db *sql.DB
 
 func ConnectDatabase() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Error occured when loading .env file!")
-	}
-
 	host := os.Getenv("HOST")
-	port := os.Getenv("PORT")
+	port := os.Getenv("DBPORT")
 	user := os.Getenv("DBUSER")
-	password := os.Getenv("PASSWORD")
+	password := os.Getenv("DBPASSWORD")
 	dbName := os.Getenv("DBNAME")
 
 	dbSetup := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbName, password)
