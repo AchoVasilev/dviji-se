@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"server/application/categories"
+	"server/common/api"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,8 +30,8 @@ func (controller *CategoriesController) GetCategories(c *gin.Context) {
 	defer cancel()
 
 	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error.code.internal"})
+		log.Println(err.Error())
+		common.SendInternalServerResponse(c)
 
 		return
 	}
