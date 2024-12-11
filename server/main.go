@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"server/infrastructure/database"
 	"server/infrastructure/environment"
@@ -18,14 +20,17 @@ func init() {
 }
 
 func main() {
+	mux := http.NewServeMux()
 	router := gin.Default()
 	router.Use(cors.Default())
+
+	port := os.Getenv("PORT")
+	fmt.Printf("Starting server on port: %s \n", port)
+	err := http.ListenAndServe(":8080", mux)
 	apiV1 := router.Group("/v1")
-
 	routes.CategoriesRoutes(apiV1)
-
-	err := router.Run(":" + os.Getenv("PORT"))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }
