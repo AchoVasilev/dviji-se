@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -14,7 +13,7 @@ type ValidationError struct {
 	Error string `json:"error"`
 }
 
-func ValidateRequestBody(c *gin.Context, payload interface{}) []*ValidationError {
+func ValidateRequestBody(payload interface{}) []*ValidationError {
 	var validate *validator.Validate
 	validate = validator.New(validator.WithRequiredStructEnabled())
 

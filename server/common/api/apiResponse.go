@@ -1,10 +1,9 @@
-package common
+package api
 
 import (
 	"net/http"
 	"server/common"
-
-	"github.com/gin-gonic/gin"
+	"server/infrastructure/utils"
 )
 
 type ApiResponse map[string]any
@@ -16,8 +15,8 @@ type JSONSuccessResponse struct {
 }
 
 type JSONFailedValidationResponse struct {
-	Success bool                     `json:"success"`
-	Errors  []common.ValidationError `json:"errors"`
+	Success bool                      `json:"success"`
+	Errors  []*common.ValidationError `json:"errors"`
 }
 
 type JSONErrorResponse struct {
@@ -25,36 +24,40 @@ type JSONErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func SendSuccessResponse(ctx *gin.Context, message string, data interface{}, statusCode int) {
-	ctx.JSON(statusCode, JSONSuccessResponse{
+func SendOkWithBody(writer http.ResponseWriter, data interface{}) {
+	utils.WriteJSON(writer, http.StatusOK, data)
+}
+
+func SendSuccessResponse(writer http.ResponseWriter, message string, data interface{}, statusCode int) {
+	utils.WriteJSON(writer, statusCode, JSONSuccessResponse{
 		Success: true,
 		Message: message,
 		Data:    data,
 	})
 }
 
-func SendFailedValidationResponse(ctx *gin.Context, errors []common.ValidationError) {
-	ctx.JSON(http.StatusUnprocessableEntity, JSONFailedValidationResponse{
+func SendFailedValidationResponse(writer http.ResponseWriter, errors []*common.ValidationError) {
+	utils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
 		Success: false,
 		Errors:  errors,
 	})
 }
 
-func SendErrorResponse(ctx *gin.Context, message string, statusCode int) {
-	ctx.JSON(statusCode, JSONErrorResponse{
+func SendErrorResponse(writer http.ResponseWriter, message string, statusCode int) {
+	utils.WriteJSON(writer, statusCode, JSONErrorResponse{
 		Success: false,
 		Message: message,
 	})
 }
 
-func SendNotFoundResponse(ctx *gin.Context, message string) {
-	SendErrorResponse(ctx, message, http.StatusNotFound)
+func SendNotFoundResponse(writer http.ResponseWriter, message string) {
+	SendErrorResponse(writer, message, http.StatusNotFound)
 }
 
-func SendBadRequestResponse(ctx *gin.Context, message string) {
-	SendErrorResponse(ctx, message, http.StatusBadRequest)
+func SendBadRequestResponse(writer http.ResponseWriter, message string) {
+	SendErrorResponse(writer, message, http.StatusBadRequest)
 }
 
-func SendInternalServerResponse(ctx *gin.Context) {
-	SendErrorResponse(ctx, "internal.server.error", http.StatusInternalServerError)
+func SendInternalServerResponse(writer http.ResponseWriter) {
+	SendErrorResponse(writer, "internal.server.error", http.StatusInternalServerError)
 }

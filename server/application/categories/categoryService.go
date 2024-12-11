@@ -23,7 +23,7 @@ func (categoryService *CategoryService) GetCategories(ctx context.Context) ([]ca
 	return categoryService.CategoryRepository.FindAll(ctx)
 }
 
-func (categoryService *CategoryService) Create(ctx context.Context, resource CreateCategoryResource) (category.Category, error) {
+func (categoryService *CategoryService) Create(ctx context.Context, resource *CreateCategoryResource) (category.Category, error) {
 	log.Println("Creating a new category")
 	toCreate := category.Category{
 		Id:        uuid.New(),

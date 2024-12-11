@@ -5,12 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"server/common/api"
 	"server/infrastructure/database"
 	"server/infrastructure/environment"
 	"server/web/ports/rest/routes"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
 func init() {
@@ -21,14 +19,11 @@ func init() {
 
 func main() {
 	mux := http.NewServeMux()
-	router := gin.Default()
-	router.Use(cors.Default())
 
 	port := os.Getenv("PORT")
 	fmt.Printf("Starting server on port: %s \n", port)
-	err := http.ListenAndServe(":8080", mux)
-	apiV1 := router.Group("/v1")
-	routes.CategoriesRoutes(apiV1)
+	err := http.ListenAndServe(":8080", api.CheckCORS(mux))
+	routes.CategoriesRoutes(mux)
 	if err != nil {
 		log.Fatal(err)
 	}

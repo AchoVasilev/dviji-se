@@ -7,8 +7,6 @@ import (
 	"server/application/categories"
 	"server/common/api"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type CategoriesController struct {
@@ -22,7 +20,7 @@ func instance() *CategoriesController {
 	return &CategoriesController{CategoryService: categories.Service}
 }
 
-func (controller *CategoriesController) GetCategories(c *gin.Context) {
+func (controller *CategoriesController) GetCategories(writer http.ResponseWriter, req *http.Request) {
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
 
 	allCategories, err := controller.CategoryService.GetCategories(ctx)
@@ -31,7 +29,7 @@ func (controller *CategoriesController) GetCategories(c *gin.Context) {
 
 	if err != nil {
 		log.Println(err.Error())
-		common.SendInternalServerResponse(c)
+		api.SendInternalServerResponse(writer)
 
 		return
 	}
@@ -42,30 +40,21 @@ func (controller *CategoriesController) GetCategories(c *gin.Context) {
 		response = append(response, resource.CreateCategoryResponseFrom(category))
 	}
 
-	c.JSON(http.StatusOK, response)
+	api.SendOkWithBody(writer, response)
 }
 
-func (controller *CategoriesController) Create(c *gin.Context) {
+func (controller *CategoriesController) Create(writer http.ResponseWriter, req *http.Request, input *categories.CreateCategoryResource) {
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
-
-	var input categories.CreateCategoryResource
-	if err := c.BindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		log.Println(err)
-		defer cancel()
-
-		return
-	}
 
 	result, err := controller.CategoryService.Create(ctx, input)
 	defer cancel()
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error.code.internal"})
+		api.SendInternalServerResponse(writer)
 		return
 	}
 
 	var response categories.CategoryResponseResource
 	response = response.CreateCategoryResponseFrom(result)
-	c.JSON(http.StatusOK, response)
+	api.SendOkWithBody(writer, response)
 }
