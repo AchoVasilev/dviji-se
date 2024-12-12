@@ -1,14 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
-	"os"
-	"server/common/api"
 	"server/infrastructure/database"
 	"server/infrastructure/environment"
-	"server/web/ports/rest/routes"
+	"server/infrastructure/server"
 )
 
 func init() {
@@ -18,14 +14,7 @@ func init() {
 }
 
 func main() {
-	mux := http.NewServeMux()
-
-	port := os.Getenv("PORT")
-	fmt.Printf("Starting server on port: %s \n", port)
-	err := http.ListenAndServe(":8080", api.CheckCORS(mux))
-	routes.CategoriesRoutes(mux)
-	if err != nil {
+	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
-
 }

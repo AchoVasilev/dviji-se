@@ -9,6 +9,11 @@ import (
 
 func ValidateBody[T any](next func(writer http.ResponseWriter, req *http.Request, _ *T)) http.HandlerFunc {
 	return func(writer http.ResponseWriter, req *http.Request) {
+		if req.Method != "GET" {
+			next(writer, req, nil)
+			return
+		}
+
 		params := new(T)
 		if err := utils.ParseJSON(req, params); err != nil {
 			api.SendInternalServerResponse(writer)

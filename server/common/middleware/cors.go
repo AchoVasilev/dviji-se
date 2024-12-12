@@ -1,4 +1,4 @@
-package api
+package middleware
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ var methods = []string{"GET", "POST", "PUT", "PATCH", "OPTIONS"}
 
 var headers = []string{"Accept", "Accept-Encoding", "Content-Type", "Content-Length", "X-CSRF-TOKEN", "Authorization", "User-Agent"}
 
-func CheckCORS(next http.Handler) http.Handler {
+func EnableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 		if isPreflight(req) {
 			origin := req.Header.Get("Origin")

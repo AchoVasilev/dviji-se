@@ -14,7 +14,7 @@ type CategoriesController struct {
 }
 
 var CategoriesCtrl = instance()
-var cancelTime = 100 * time.Second
+var cancelTime = 10 * time.Second
 
 func instance() *CategoriesController {
 	return &CategoriesController{CategoryService: categories.Service}
