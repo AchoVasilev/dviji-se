@@ -1,8 +1,10 @@
-package common
+package api
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
+	"server/infrastructure/utils"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -13,7 +15,21 @@ type ValidationError struct {
 	Error string `json:"error"`
 }
 
-func ValidateRequestBody(payload interface{}) []*ValidationError {
+func ProcessRequestBody[R interface{}](writer http.ResponseWriter, req *http.Request, payload *R) bool {
+	if err := utils.ParseJSON(req, payload); err != nil {
+		SendInternalServerResponse(writer)
+		return false
+	}
+
+	if err := validatePayload(payload); err != nil {
+		SendFailedValidationResponse(writer, err)
+		return false
+	}
+
+	return true
+}
+
+func validatePayload[R interface{}](payload *R) []*ValidationError {
 	var validate *validator.Validate
 	validate = validator.New(validator.WithRequiredStructEnabled())
 

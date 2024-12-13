@@ -10,20 +10,18 @@ import (
 )
 
 type CategoryService struct {
-	CategoryRepository *category.CategoryRepository
+	categoryRepository *category.CategoryRepository
 }
 
-var Service = instance()
-
-func instance() *CategoryService {
-	return &CategoryService{CategoryRepository: category.Repository}
+func NewCategoryService(categoryRepository *category.CategoryRepository) *CategoryService {
+	return &CategoryService{categoryRepository: categoryRepository}
 }
 
 func (categoryService *CategoryService) GetCategories(ctx context.Context) ([]category.Category, error) {
-	return categoryService.CategoryRepository.FindAll(ctx)
+	return categoryService.categoryRepository.FindAll(ctx)
 }
 
-func (categoryService *CategoryService) Create(ctx context.Context, resource *CreateCategoryResource) (category.Category, error) {
+func (categoryService *CategoryService) Create(ctx context.Context, resource CreateCategoryResource) (category.Category, error) {
 	log.Println("Creating a new category")
 	toCreate := category.Category{
 		Id:        uuid.New(),
@@ -32,7 +30,7 @@ func (categoryService *CategoryService) Create(ctx context.Context, resource *Cr
 		CreatedAt: time.Now(),
 	}
 
-	err := categoryService.CategoryRepository.Create(ctx, toCreate)
+	err := categoryService.categoryRepository.Create(ctx, toCreate)
 	if err == nil {
 		log.Printf("Created category. [id=%s]", toCreate.Id)
 	}

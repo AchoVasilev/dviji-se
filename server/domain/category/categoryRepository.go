@@ -10,9 +10,7 @@ type CategoryRepository struct {
 	Db *sql.DB
 }
 
-var Repository = instance()
-
-func instance() *CategoryRepository {
+func NewCategoryRepository() *CategoryRepository {
 	return &CategoryRepository{Db: database.Db}
 }
 

@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
+	"runtime/debug"
+	"server/common/api"
 	"slices"
 	"strings"
 )
@@ -41,4 +44,19 @@ func isPreflight(req *http.Request) bool {
 	return req.Method == "OPTIONS" &&
 		req.Header.Get("Origin") != "" &&
 		req.Header.Get("Access-Control-Request-Method") != ""
+}
+
+func Recovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("Caught panic: %v. Stack trace: %s", err, string(debug.Stack()))
+
+				api.SendInternalServerResponse(writer)
+			}
+		}()
+
+		next.ServeHTTP(writer, req)
+		return
+	})
 }

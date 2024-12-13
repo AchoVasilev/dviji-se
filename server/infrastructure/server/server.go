@@ -7,27 +7,34 @@ import (
 	"server/common/middleware"
 )
 
-func initialize() *http.Server {
-	router := http.NewServeMux()
+type ApiServer struct {
+	port string
+	http *http.Server
+}
+
+func initialize() *ApiServer {
+	router := RegisterRoutes()
 
 	middleware.CreateChain()
-	port := os.Getenv("PORT")
 
 	stack := middleware.CreateChain(
-		middleware.ValidateBody,
 		middleware.EnableCORS,
+		middleware.Recovery,
 	)
 
-	return &http.Server{
-		Addr:    ":" + port,
-		Handler: stack(router),
-	}
+	port := os.Getenv("PORT")
+	return &ApiServer{
+		port: port,
+		http: &http.Server{
+			Addr:    ":" + port,
+			Handler: stack(router),
+		}}
 }
 
 func Run() error {
 	server := initialize()
 
-	log.Println("Starting server on port: " + server.Addr)
+	log.Println("Starting server on port: " + server.port)
 
-	return server.ListenAndServe()
+	return server.http.ListenAndServe()
 }

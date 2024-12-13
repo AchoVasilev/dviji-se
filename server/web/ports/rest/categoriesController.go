@@ -10,22 +10,20 @@ import (
 )
 
 type CategoriesController struct {
-	CategoryService *categories.CategoryService
+	categoryService *categories.CategoryService
 }
 
-var CategoriesCtrl = instance()
 var cancelTime = 10 * time.Second
 
-func instance() *CategoriesController {
-	return &CategoriesController{CategoryService: categories.Service}
+func NewCategoriesController(categoryService *categories.CategoryService) *CategoriesController {
+	return &CategoriesController{categoryService: categoryService}
 }
 
 func (controller *CategoriesController) GetCategories(writer http.ResponseWriter, req *http.Request) {
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
-
-	allCategories, err := controller.CategoryService.GetCategories(ctx)
-
 	defer cancel()
+
+	allCategories, err := controller.categoryService.GetCategories(ctx)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -43,11 +41,18 @@ func (controller *CategoriesController) GetCategories(writer http.ResponseWriter
 	api.SendOkWithBody(writer, response)
 }
 
-func (controller *CategoriesController) Create(writer http.ResponseWriter, req *http.Request, input *categories.CreateCategoryResource) {
+func (controller *CategoriesController) Create(writer http.ResponseWriter, req *http.Request) {
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
-
-	result, err := controller.CategoryService.Create(ctx, input)
 	defer cancel()
+
+	var input categories.CreateCategoryResource
+	success := api.ProcessRequestBody(writer, req, &input)
+	if !success {
+		api.SendInternalServerResponse(writer)
+		return
+	}
+
+	result, err := controller.categoryService.Create(ctx, input)
 
 	if err != nil {
 		api.SendInternalServerResponse(writer)

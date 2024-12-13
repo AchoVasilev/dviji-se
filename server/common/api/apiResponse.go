@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"server/common"
 	"server/infrastructure/utils"
 )
 
@@ -15,8 +14,8 @@ type JSONSuccessResponse struct {
 }
 
 type JSONFailedValidationResponse struct {
-	Success bool                      `json:"success"`
-	Errors  []*common.ValidationError `json:"errors"`
+	Success bool               `json:"success"`
+	Errors  []*ValidationError `json:"errors"`
 }
 
 type JSONErrorResponse struct {
@@ -36,7 +35,7 @@ func SendSuccessResponse(writer http.ResponseWriter, message string, data interf
 	})
 }
 
-func SendFailedValidationResponse(writer http.ResponseWriter, errors []*common.ValidationError) {
+func SendFailedValidationResponse(writer http.ResponseWriter, errors []*ValidationError) {
 	utils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
 		Success: false,
 		Errors:  errors,

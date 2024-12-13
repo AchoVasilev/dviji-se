@@ -41,13 +41,17 @@ func ConnectDatabase() {
 	}
 
 	Db = db
-	log.Printf("Successfully connceted to database. PORT=%v", port)
+	log.Printf("Successfully connected to database. PORT=%v", port)
 }
 
 func RunMigrations(db *sql.DB) {
+	log.Println("Running database migrations..")
+
 	migrationsPath := "file://db/migrations"
 
 	applyMigrations(db, migrationsPath)
+
+	log.Println("Successfully applied migrations")
 }
 
 func applyMigrations(db *sql.DB, path string) {

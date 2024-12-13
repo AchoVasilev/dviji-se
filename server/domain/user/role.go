@@ -1,6 +1,7 @@
 package user
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,7 +12,7 @@ type Role struct {
 	Name        string       `json:"name"`
 	Permissions []Permission `json:"permissions"`
 	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
 	UpdatedBy   string       `json:"updated_by"`
 	IsDeleted   bool         `json:"is_deleted"`
 }
