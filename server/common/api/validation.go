@@ -15,7 +15,7 @@ type ValidationError struct {
 	Error string `json:"error"`
 }
 
-func ProcessRequestBody[R interface{}](writer http.ResponseWriter, req *http.Request, payload *R) bool {
+func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload interface{}) bool {
 	if err := utils.ParseJSON(req, payload); err != nil {
 		SendInternalServerResponse(writer)
 		return false
@@ -29,7 +29,7 @@ func ProcessRequestBody[R interface{}](writer http.ResponseWriter, req *http.Req
 	return true
 }
 
-func validatePayload[R interface{}](payload *R) []*ValidationError {
+func validatePayload(payload interface{}) []*ValidationError {
 	var validate *validator.Validate
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
@@ -37,12 +37,10 @@ func validatePayload[R interface{}](payload *R) []*ValidationError {
 	err := validate.Struct(payload)
 
 	validationErrors, ok := err.(validator.ValidationErrors)
-
 	if ok {
 		reflected := reflect.ValueOf(payload)
 		for _, validationErr := range validationErrors {
-			field, _ := reflected.Type().FieldByName(validationErr.StructField())
-
+			field, _ := reflected.Elem().Type().FieldByName(validationErr.StructField())
 			key := field.Tag.Get("json")
 			if key == "" {
 				key = strings.ToLower(validationErr.StructField())
@@ -51,7 +49,7 @@ func validatePayload[R interface{}](payload *R) []*ValidationError {
 			fmt.Println(validationErr.Field())
 			currentErr := &ValidationError{
 				Field: key,
-				Error: getErrorMessage(validationErr.Tag(), key),
+				Error: getErrorMessage(validationErr.Tag()),
 			}
 
 			errors = append(errors, currentErr)
@@ -61,12 +59,12 @@ func validatePayload[R interface{}](payload *R) []*ValidationError {
 	return errors
 }
 
-func getErrorMessage(tag string, field string) string {
+func getErrorMessage(tag string) string {
 	switch tag {
 	case "required":
-		return field + " is required"
+		return "field is required"
 	case "email":
-		return field + " must be a valid email"
+		return "field must be a valid email"
 	}
 
 	return ""

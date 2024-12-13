@@ -48,7 +48,6 @@ func (controller *CategoriesController) Create(writer http.ResponseWriter, req *
 	var input categories.CreateCategoryResource
 	success := api.ProcessRequestBody(writer, req, &input)
 	if !success {
-		api.SendInternalServerResponse(writer)
 		return
 	}
 
