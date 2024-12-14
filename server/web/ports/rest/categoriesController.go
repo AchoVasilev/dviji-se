@@ -2,7 +2,7 @@ package rest
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"server/application/categories"
 	"server/common/api"
@@ -26,7 +26,7 @@ func (controller *CategoriesController) GetCategories(writer http.ResponseWriter
 	allCategories, err := controller.categoryService.GetCategories(ctx)
 
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		api.SendInternalServerResponse(writer)
 
 		return
@@ -42,6 +42,7 @@ func (controller *CategoriesController) GetCategories(writer http.ResponseWriter
 }
 
 func (controller *CategoriesController) Create(writer http.ResponseWriter, req *http.Request) {
+	slog.Info("Creating a new category")
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
 	defer cancel()
 
@@ -54,9 +55,12 @@ func (controller *CategoriesController) Create(writer http.ResponseWriter, req *
 	result, err := controller.categoryService.Create(ctx, input)
 
 	if err != nil {
+		slog.Error(err.Error())
 		api.SendInternalServerResponse(writer)
 		return
 	}
+
+	slog.Info("Successfully created a new category", slog.String("id", result.Id.String()))
 
 	var response categories.CategoryResponseResource
 	response = response.CreateCategoryResponseFrom(result)

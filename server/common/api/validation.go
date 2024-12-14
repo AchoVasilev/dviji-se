@@ -2,9 +2,11 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"reflect"
-	"server/infrastructure/utils"
+	"runtime/debug"
+	"server/infrastructure/util/jsonutils"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -16,7 +18,8 @@ type ValidationError struct {
 }
 
 func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload interface{}) bool {
-	if err := utils.ParseJSON(req, payload); err != nil {
+	if err := jsonutils.ParseJSON(req, payload); err != nil {
+		slog.Error("Could not parse request body. Error: %v. Stacktrace: %s", err.Error(), string(debug.Stack()))
 		SendInternalServerResponse(writer)
 		return false
 	}

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"server/common/middleware"
@@ -15,11 +15,12 @@ type ApiServer struct {
 func initialize() *ApiServer {
 	router := RegisterRoutes()
 
-	middleware.CreateChain()
-
 	stack := middleware.CreateChain(
-		middleware.EnableCORS,
 		middleware.Recovery,
+		middleware.EnableCompression,
+		middleware.EnableCORS,
+		middleware.PopulateRequestId,
+		middleware.AppendLogger,
 	)
 
 	port := os.Getenv("PORT")
@@ -34,7 +35,7 @@ func initialize() *ApiServer {
 func Run() error {
 	server := initialize()
 
-	log.Println("Starting server on port: " + server.port)
+	slog.Info("Starting server on port: " + server.port)
 
 	return server.http.ListenAndServe()
 }

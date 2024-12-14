@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -41,17 +42,17 @@ func ConnectDatabase() {
 	}
 
 	Db = db
-	log.Printf("Successfully connected to database. PORT=%v", port)
+	slog.Info(fmt.Sprintf("Successfully connected to database. PORT=%v", port))
 }
 
 func RunMigrations(db *sql.DB) {
-	log.Println("Running database migrations..")
+	slog.Info("Running database migrations..")
 
 	migrationsPath := "file://db/migrations"
 
 	applyMigrations(db, migrationsPath)
 
-	log.Println("Successfully applied migrations")
+	slog.Info("Successfully applied migrations")
 }
 
 func applyMigrations(db *sql.DB, path string) {

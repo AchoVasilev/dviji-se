@@ -7,7 +7,6 @@ import (
 
 func RegisterRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
-
 	routes.CategoriesRoutes(mux)
 
 	return mux

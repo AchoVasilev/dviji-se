@@ -2,7 +2,6 @@ package categories
 
 import (
 	"context"
-	"log"
 	"server/domain/category"
 	"time"
 
@@ -22,7 +21,6 @@ func (categoryService *CategoryService) GetCategories(ctx context.Context) ([]ca
 }
 
 func (categoryService *CategoryService) Create(ctx context.Context, resource CreateCategoryResource) (category.Category, error) {
-	log.Println("Creating a new category")
 	toCreate := category.Category{
 		Id:        uuid.New(),
 		Name:      resource.Name,
@@ -31,9 +29,6 @@ func (categoryService *CategoryService) Create(ctx context.Context, resource Cre
 	}
 
 	err := categoryService.categoryRepository.Create(ctx, toCreate)
-	if err == nil {
-		log.Printf("Created category. [id=%s]", toCreate.Id)
-	}
 
 	return toCreate, err
 }

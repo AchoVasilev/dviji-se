@@ -1,8 +1,9 @@
-package utils
+package jsonutils
 
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -20,7 +21,8 @@ func WriteJSON(writer http.ResponseWriter, status int, value any) error {
 
 func ParseJSON(req *http.Request, value any) error {
 	if req.Body == nil {
-		return fmt.Errorf("Request body is requred")
+		slog.Warn("Missing request body. [requestMethod=%s, requestUri=%s]", req.Method, req.RequestURI)
+		return fmt.Errorf("Body is required")
 	}
 
 	return json.NewDecoder(req.Body).Decode(&value)

@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"server/infrastructure/utils"
+	"server/infrastructure/util/jsonutils"
 )
 
 type ApiResponse map[string]any
@@ -24,11 +24,11 @@ type JSONErrorResponse struct {
 }
 
 func SendOkWithBody(writer http.ResponseWriter, data interface{}) {
-	utils.WriteJSON(writer, http.StatusOK, data)
+	jsonutils.WriteJSON(writer, http.StatusOK, data)
 }
 
 func SendSuccessResponse(writer http.ResponseWriter, message string, data interface{}, statusCode int) {
-	utils.WriteJSON(writer, statusCode, JSONSuccessResponse{
+	jsonutils.WriteJSON(writer, statusCode, JSONSuccessResponse{
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -36,14 +36,14 @@ func SendSuccessResponse(writer http.ResponseWriter, message string, data interf
 }
 
 func SendFailedValidationResponse(writer http.ResponseWriter, errors []*ValidationError) {
-	utils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
+	jsonutils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
 		Success: false,
 		Errors:  errors,
 	})
 }
 
 func SendErrorResponse(writer http.ResponseWriter, message string, statusCode int) {
-	utils.WriteJSON(writer, statusCode, JSONErrorResponse{
+	jsonutils.WriteJSON(writer, statusCode, JSONErrorResponse{
 		Success: false,
 		Message: message,
 	})
