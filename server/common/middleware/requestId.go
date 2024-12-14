@@ -25,7 +25,7 @@ func PopulateRequestId(next http.Handler) http.Handler {
 			slog.Info(fmt.Sprintf("RequestId from client is present: %s", fromClient))
 			id, err := newRequestId()
 			if err != nil {
-				api.SendInternalServerResponse(writer)
+				api.SendInternalServerResponse(writer, req)
 				return
 			}
 
@@ -34,7 +34,7 @@ func PopulateRequestId(next http.Handler) http.Handler {
 		} else if existing := RequestIdFromContext(ctx); existing == "" {
 			id, err := newRequestId()
 			if err != nil {
-				api.SendInternalServerResponse(writer)
+				api.SendInternalServerResponse(writer, req)
 				return
 			}
 

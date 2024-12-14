@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"server/infrastructure/util/jsonutils"
 )
@@ -57,6 +58,23 @@ func SendBadRequestResponse(writer http.ResponseWriter, message string) {
 	SendErrorResponse(writer, message, http.StatusBadRequest)
 }
 
-func SendInternalServerResponse(writer http.ResponseWriter) {
+func SendInternalServerResponse(writer http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	reqId := requestIdFromContext(ctx)
+	writer.Header().Set("X-REQUEST-ID", reqId)
 	SendErrorResponse(writer, "internal.server.error", http.StatusInternalServerError)
+}
+
+func requestIdFromContext(ctx context.Context) string {
+	value := ctx.Value("requestId")
+	if value == nil {
+		return ""
+	}
+
+	id, ok := value.(string)
+	if !ok {
+		return ""
+	}
+
+	return id
 }

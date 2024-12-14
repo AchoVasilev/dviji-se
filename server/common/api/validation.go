@@ -20,7 +20,7 @@ type ValidationError struct {
 func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload interface{}) bool {
 	if err := jsonutils.ParseJSON(req, payload); err != nil {
 		slog.Error("Could not parse request body. Error: %v. Stacktrace: %s", err.Error(), string(debug.Stack()))
-		SendInternalServerResponse(writer)
+		SendInternalServerResponse(writer, req)
 		return false
 	}
 

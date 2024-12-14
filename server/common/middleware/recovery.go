@@ -13,7 +13,7 @@ func Recovery(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				slog.Error("Caught panic: %v. Stack trace: %s", err, string(debug.Stack()))
 
-				api.SendInternalServerResponse(writer)
+				api.SendInternalServerResponse(writer, req)
 			}
 		}()
 

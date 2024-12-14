@@ -27,7 +27,7 @@ func (controller *CategoriesController) GetCategories(writer http.ResponseWriter
 
 	if err != nil {
 		slog.Error(err.Error())
-		api.SendInternalServerResponse(writer)
+		api.SendInternalServerResponse(writer, req)
 
 		return
 	}
@@ -56,7 +56,7 @@ func (controller *CategoriesController) Create(writer http.ResponseWriter, req *
 
 	if err != nil {
 		slog.Error(err.Error())
-		api.SendInternalServerResponse(writer)
+		api.SendInternalServerResponse(writer, req)
 		return
 	}
 
