@@ -19,7 +19,7 @@ type CategoryResponseResource struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (dto *CategoryResponseResource) CreateCategoryResponseFrom(cat category.Category) CategoryResponseResource {
+func (dto *CategoryResponseResource) CreateCategoryResponseFrom(cat *category.Category) CategoryResponseResource {
 	return CategoryResponseResource{
 		Id:        cat.Id,
 		Name:      cat.Name,

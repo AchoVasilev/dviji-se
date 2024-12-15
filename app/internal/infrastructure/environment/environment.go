@@ -2,7 +2,7 @@ package environment
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -14,7 +14,7 @@ func LoadEnvironmentVariables() {
 		currentEnv = "local"
 	}
 
-	log.Printf("Using environment: '%s'", currentEnv)
+	slog.Info(fmt.Sprintf("Using environment: '%s'", currentEnv))
 
 	envFile := fmt.Sprintf("%s.env", currentEnv)
 	err := godotenv.Load(envFile)

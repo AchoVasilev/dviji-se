@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"server/internal/application/categories"
@@ -36,7 +37,7 @@ func (controller *CategoriesController) GetCategories(writer http.ResponseWriter
 	var response []models.CategoryResponseResource
 	for _, category := range allCategories {
 		var resource models.CategoryResponseResource
-		response = append(response, resource.CreateCategoryResponseFrom(category))
+		response = append(response, resource.CreateCategoryResponseFrom(&category))
 	}
 
 	httputils.SendOkWithBody(writer, response)
@@ -61,7 +62,7 @@ func (controller *CategoriesController) Create(writer http.ResponseWriter, req *
 		return
 	}
 
-	slog.Info("Successfully created a new category", slog.String("id", result.Id.String()))
+	slog.Info(fmt.Sprintf("Successfully created a new category. [id=%s]", result.Id.String()))
 
 	var response models.CategoryResponseResource
 	response = response.CreateCategoryResponseFrom(result)

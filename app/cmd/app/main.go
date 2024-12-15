@@ -2,15 +2,16 @@ package main
 
 import (
 	"log"
-	"server/internal/http/server"
-	"server/internal/infrastructure/database"
+	"server/cmd/app/server"
+	"server/cmd/db/database"
 	"server/internal/infrastructure/environment"
 )
 
 func init() {
 	environment.LoadEnvironmentVariables()
-	database.ConnectDatabase()
-	database.RunMigrations(database.Db)
+	db := database.ConnectDatabase()
+	database.RunMigrations(db)
+	server.Initialize(db)
 }
 
 func main() {

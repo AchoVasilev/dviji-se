@@ -21,7 +21,7 @@ func (categoryService *CategoryService) GetCategories(ctx context.Context) ([]ca
 	return categoryService.categoryRepository.FindAll(ctx)
 }
 
-func (categoryService *CategoryService) Create(ctx context.Context, resource models.CreateCategoryResource) (category.Category, error) {
+func (categoryService *CategoryService) Create(ctx context.Context, resource models.CreateCategoryResource) (*category.Category, error) {
 	toCreate := category.Category{
 		Id:        uuid.New(),
 		Name:      resource.Name,
@@ -29,7 +29,7 @@ func (categoryService *CategoryService) Create(ctx context.Context, resource mod
 		CreatedAt: time.Now(),
 	}
 
-	err := categoryService.categoryRepository.Create(ctx, toCreate)
+	result, err := categoryService.categoryRepository.Create(ctx, toCreate)
 
-	return toCreate, err
+	return result, err
 }

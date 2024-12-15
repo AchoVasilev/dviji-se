@@ -3,22 +3,24 @@ package category
 import (
 	"context"
 	"database/sql"
-	"server/internal/infrastructure/database"
 )
 
 type CategoryRepository struct {
 	Db *sql.DB
 }
 
-func NewCategoryRepository() *CategoryRepository {
-	return &CategoryRepository{Db: database.Db}
+func NewCategoryRepository(db *sql.DB) *CategoryRepository {
+	return &CategoryRepository{Db: db}
 }
 
-func (repository *CategoryRepository) Create(ctx context.Context, category Category) error {
+func (repository *CategoryRepository) Create(ctx context.Context, category Category) (*Category, error) {
 	query := `INSERT INTO categories (id, name, image_url, created_at) VALUES($1, $2, $3, $4)`
-	_, err := repository.Db.ExecContext(ctx, query, category.Id, category.Name, category.ImageUrl, category.CreatedAt)
+	var createdCategory Category
+	err := repository.Db.QueryRowContext(ctx, query, category.Id, category.Name, category.ImageUrl, category.CreatedAt).Scan(
+		&createdCategory.Id, &createdCategory.Name, &createdCategory.ImageUrl, &createdCategory.CreatedAt,
+		&createdCategory.UpdatedAt, &createdCategory.IsDeleted)
 
-	return err
+	return &createdCategory, err
 }
 
 func (repository *CategoryRepository) FindAll(ctx context.Context) ([]Category, error) {

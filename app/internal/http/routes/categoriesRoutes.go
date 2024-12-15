@@ -1,14 +1,15 @@
 package routes
 
 import (
+	"database/sql"
 	"net/http"
 	"server/internal/application/categories"
 	"server/internal/domain/category"
 	"server/internal/http/controllers"
 )
 
-func CategoriesRoutes(mux *http.ServeMux) {
-	repo := category.NewCategoryRepository()
+func CategoriesRoutes(mux *http.ServeMux, db *sql.DB) {
+	repo := category.NewCategoryRepository(db)
 	service := categories.NewCategoryService(repo)
 	controller := controllers.NewCategoriesController(service)
 
