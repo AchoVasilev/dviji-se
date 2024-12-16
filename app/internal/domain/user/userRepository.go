@@ -1,8 +1,9 @@
 package user
 
 import (
-	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 type UserRepository struct {
@@ -15,9 +16,10 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	}
 }
 
-func (repo *UserRepository) Create(ctx context.Context, user User) error {
-	query := `INSERT INTO users (id, email, password, created_at) VALUES ($1, $2, $3, $4)`
-	_, err := repo.db.ExecContext(ctx, query)
-	repo.db.BeginTx(ctx, &sql.TxOptions{})
+func (repo *UserRepository) Create(user User) (uuid, error) {
+	query := `INSERT INTO users (id, email, password, status, created_at) VALUES ($1, $2, $3, $4, $5)`
+
+	res, err := repo.db.Exec(query, user.Id, user.Email, user.Password, user.Status, user.CreatedAt)
+
 	return err
 }

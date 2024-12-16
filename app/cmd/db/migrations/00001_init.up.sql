@@ -15,6 +15,75 @@ CREATE TABLE users
   CONSTRAINT pk_users_id PRIMARY KEY(id)
 );
 
+CREATE TABLE roles
+(
+  id UUID NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
+  updated_at TIMESTAMPTZ,
+  updated_by VARCHAR,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+  CONSTRAINT pk_roles_id PRIMARY KEY(id)
+);
+
+CREATE TABLE permissions
+(
+  id UUID NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
+  updated_at TIMESTAMPTZ,
+  updated_by VARCHAR,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+  CONSTRAINT pk_permissions_id PRIMARY KEY(id)
+);
+
+CREATE TABLE users_roles
+(
+  user_id UUID,
+  role_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
+  updated_at TIMESTAMPTZ,
+  updated_by VARCHAR,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+  CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id),
+  CONSTRAINT fk_role_id FOREIGN KEY(role_id) REFERENCES roles(id),
+
+  CONSTRAINT pk_users_roles_id PRIMARY KEY(user_id, role_id)
+);
+
+CREATE TABLE users_permissions
+(
+  user_id UUID,
+  permission_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
+  updated_at TIMESTAMPTZ,
+  updated_by VARCHAR,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+  CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id),
+  CONSTRAINT fk_permission_id FOREIGN KEY(permission_id) REFERENCES permissions(id),
+
+  CONSTRAINT pk_users_permissions_id PRIMARY KEY(user_id, role_id)
+);
+
+CREATE TABLE roles_permissions
+(
+  role_id UUID,
+  permission_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
+  updated_at TIMESTAMPTZ,
+  updated_by VARCHAR,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+  CONSTRAINT fk_role_id FOREIGN KEY(role_id) REFERENCES roles(id),
+  CONSTRAINT fk_permission_id FOREIGN KEY(permission_id) REFERENCES permissions(id),
+
+  CONSTRAINT pk_roles_permissions PRIMARY KEY(role_id, permission_id)
+);
+
 CREATE TABLE categories
 (
   id UUID NOT NULL,
