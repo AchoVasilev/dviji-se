@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"server/internal/application/categories"
 	"server/internal/domain/category"
-	"server/internal/http/controllers"
+	"server/internal/http/handlers"
 )
 
 func CategoriesRoutes(mux *http.ServeMux, db *sql.DB) {
 	repo := category.NewCategoryRepository(db)
 	service := categories.NewCategoryService(repo)
-	controller := controllers.NewCategoriesController(service)
+	controller := handlers.NewCategoriesHandler(service)
 
 	prefix := "/categories"
 	// @Description Get all categories

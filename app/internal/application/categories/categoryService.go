@@ -3,7 +3,7 @@ package categories
 import (
 	"context"
 	"server/internal/domain/category"
-	"server/internal/http/controllers/models"
+	"server/internal/http/handlers/models"
 	"time"
 
 	"github.com/google/uuid"

@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"context"
@@ -6,22 +6,22 @@ import (
 	"log/slog"
 	"net/http"
 	"server/internal/application/categories"
-	"server/internal/http/controllers/models"
+	"server/internal/http/handlers/models"
 	"server/util/httputils"
 	"time"
 )
 
-type CategoriesController struct {
+type CategoriesHandler struct {
 	categoryService *categories.CategoryService
 }
 
 var cancelTime = 10 * time.Second
 
-func NewCategoriesController(categoryService *categories.CategoryService) *CategoriesController {
-	return &CategoriesController{categoryService: categoryService}
+func NewCategoriesHandler(categoryService *categories.CategoryService) *CategoriesHandler {
+	return &CategoriesHandler{categoryService: categoryService}
 }
 
-func (controller *CategoriesController) GetCategories(writer http.ResponseWriter, req *http.Request) {
+func (controller *CategoriesHandler) GetCategories(writer http.ResponseWriter, req *http.Request) {
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
 	defer cancel()
 
@@ -43,7 +43,7 @@ func (controller *CategoriesController) GetCategories(writer http.ResponseWriter
 	httputils.SendOkWithBody(writer, response)
 }
 
-func (controller *CategoriesController) Create(writer http.ResponseWriter, req *http.Request) {
+func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *http.Request) {
 	slog.Info("Creating a new category")
 	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
 	defer cancel()

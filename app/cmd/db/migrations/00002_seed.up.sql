@@ -11,3 +11,30 @@ VALUES ('5206274b-b473-49c1-bcca-6516838a9f1e', 'Рецепти',
         'https://res.cloudinary.com/dpo3vbxnl/image/upload/v1691941490/onlygains/categories/image04-4_hgly6c.jpg'),
        ('272e0edd-11e8-4709-bbba-5d36d77dd428', 'Сред природата',
         'https://res.cloudinary.com/dpo3vbxnl/image/upload/v1691942376/onlygains/categories/hiking-trail-names_fgpox2.jpg');
+
+INSERT INTO roles(id, name)
+VALUES ('272e0edd-11e8-4709-bbba-5d36d77dd428', 'ADMIN'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd315', 'USER'),
+        ('312e0edd-11e8-4709-bbba-5d36d77dd455', 'MODERATOR');
+
+INSERT INTO permissions(id, name)
+VALUES  ('123v0edd-11e8-4709-bbba-5d36d77dd245', 'comment:write'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd315', 'comment:create'),
+        ('612e0edd-11e8-4709-bbba-5d36d77dd136', 'post:write'),
+        ('443e0edd-11e8-4709-bbba-5d36d77dd654', 'post:create'),
+        ('554e0edd-11e8-4709-bbba-5d36d77dd432', 'permission:add'),
+        ('123e0edd-11e8-4709-bbba-5d36d77dd987', 'permission:remove');
+
+INSERT INTO roles_permissions(role_id, permission_id)
+VALUES ('272e0edd-11e8-4709-bbba-5d36d77dd428', '123v0edd-11e8-4709-bbba-5d36d77dd245'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd428', '272e0edd-11e8-4709-bbba-5d36d77dd315'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd428', '612e0edd-11e8-4709-bbba-5d36d77dd136'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd428', '443e0edd-11e8-4709-bbba-5d36d77dd654'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd428', '554e0edd-11e8-4709-bbba-5d36d77dd432'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd428', '123e0edd-11e8-4709-bbba-5d36d77dd987'),
+        ('312e0edd-11e8-4709-bbba-5d36d77dd455', '123v0edd-11e8-4709-bbba-5d36d77dd245'),
+        ('312e0edd-11e8-4709-bbba-5d36d77dd455', '272e0edd-11e8-4709-bbba-5d36d77dd315'),
+        ('312e0edd-11e8-4709-bbba-5d36d77dd455', '612e0edd-11e8-4709-bbba-5d36d77dd136'),
+        ('312e0edd-11e8-4709-bbba-5d36d77dd455', '443e0edd-11e8-4709-bbba-5d36d77dd654'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd315', '123v0edd-11e8-4709-bbba-5d36d77dd245'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd315', '272e0edd-11e8-4709-bbba-5d36d77dd315');
