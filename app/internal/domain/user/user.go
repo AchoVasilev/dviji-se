@@ -8,14 +8,15 @@ import (
 )
 
 type User struct {
-	Id        uuid.UUID
-	Email     string
-	Password  string
-	FirstName string
-	LastName  string
-	Status    UserStatus
-	Roles     []Role
-	CreatedAt time.Time
-	UpdatedAt sql.NullTime
-	IsDeleted bool
+	Id          uuid.UUID
+	Email       string
+	Password    string
+	FirstName   string
+	LastName    string
+	Status      UserStatus
+	Roles       []Role
+	Permissions []Permission
+	CreatedAt   time.Time
+	UpdatedAt   sql.NullTime
+	IsDeleted   bool
 }

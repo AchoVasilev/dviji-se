@@ -33,7 +33,8 @@ func Initialize(db *sql.DB) {
 		http: &http.Server{
 			Addr:    ":" + port,
 			Handler: stack(router),
-		}}
+		},
+	}
 }
 
 func Run() error {

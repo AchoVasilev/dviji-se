@@ -6,12 +6,14 @@ import (
 	"server/util/jsonutils"
 )
 
-type ApiResponse map[string]any
-type JSONSuccessResponse struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
+type (
+	ApiResponse         map[string]any
+	JSONSuccessResponse struct {
+		Success bool        `json:"success"`
+		Message string      `json:"message"`
+		Data    interface{} `json:"data"`
+	}
+)
 
 type JSONFailedValidationResponse struct {
 	Success bool               `json:"success"`
@@ -21,6 +23,36 @@ type JSONFailedValidationResponse struct {
 type JSONErrorResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+func SendApiResponse(writer http.ResponseWriter, req *http.Request, status int, body any, message string) {
+	switch status {
+	case http.StatusOK:
+		SendOkWithBody(writer, body)
+		break
+	case http.StatusCreated:
+		SendCreatedAt(writer, message)
+		break
+	case http.StatusNotFound:
+		SendNotFoundResponse(writer, message)
+		break
+	case http.StatusInternalServerError:
+		SendInternalServerResponse(writer, req)
+		break
+	case http.StatusConflict:
+		SendConflictResponse(writer, message)
+		break
+	case http.StatusBadRequest:
+		SendBadRequestResponse(writer, message)
+		break
+	default:
+		SendOkWithBody(writer, nil)
+		break
+	}
+}
+
+func SendCreatedAt(writer http.ResponseWriter, uri string) {
+	jsonutils.WriteCreatedAt(writer, uri, nil)
 }
 
 func SendOkWithBody(writer http.ResponseWriter, data interface{}) {
@@ -62,6 +94,10 @@ func SendInternalServerResponse(writer http.ResponseWriter, req *http.Request) {
 	reqId := requestIdFromContext(ctx)
 	writer.Header().Set("X-REQUEST-ID", reqId)
 	SendErrorResponse(writer, "internal.server.error", http.StatusInternalServerError)
+}
+
+func SendConflictResponse(writer http.ResponseWriter, message string) {
+	SendErrorResponse(writer, message, http.StatusConflict)
 }
 
 func requestIdFromContext(ctx context.Context) string {

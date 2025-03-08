@@ -23,5 +23,7 @@ go.work.sum
 
 # env file
 .env
+*.key
+*.pub
 
 docker/postgres_vol

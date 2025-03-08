@@ -5,8 +5,6 @@ CREATE TABLE users
   password VARCHAR NOT NULL,
   first_name VARCHAR(50),
   last_name VARCHAR(50),
-  role VARCHAR(100) NOT NULL,
-  permissions VARCHAR NOT NULL,
   status VARCHAR(50) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
   updated_at TIMESTAMPTZ,
