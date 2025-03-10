@@ -1,5 +1,27 @@
 package templates
 
-templ header(title string) {
+templ head(title string) {
+  <head>
+    <title>{ title }</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="static/css/styles.css" />
+  </head>
+}
 
+templ header(activeLink string) {
+  <header>
+    <ul>
+    </ul>
+  </header>
+}
+
+templ Layout(contents templ.Component, title string) {
+    @head(title)
+
+    <body class="tw:flex tw:flex-col tw:h-full tw:bg-slate-900 flex flex-col h-full bg-slate-900">
+       <main>
+        @contents
+      </main>
+    </body>
 }

@@ -5,16 +5,28 @@ go-install-templ: ## Installs the templ Templating system for Go
 	@go install github.com/a-h/templ/cmd/templ@latest
 
 build:
-	@go build -o ./bin/app ./cmd/app/main.go
+	@go build -o ./bin/main ./cmd/main.go
 
 test: 
 	@go test -v ./...
 
 run: build
-	@./bin/app
+	@./bin/main
 
 migrate-new:
 	@go run ./cmd/db/main.go
 
 watch:
-	@go build -o ./tmp/app ./cmd/app/main.go && air
+	@go build -o ./tmp/main ./cmd/main.go && air
+#	@air
+## tailwind css
+get-install-tailwindcss: ## Installs the tailwindcss cli
+	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
+	chmod +x tailwindcss-linux-x64
+	mv tailwindcss-linux-x64 tailwindcss
+
+tailwind-watch: ## compile tailwindcss and watch for changes
+	./tailwindcss -i ./web/static/css/main.css -o ./web/static/css/styles.css --watch
+
+tailwind-build: ## one-time compile tailwindcss styles
+	./tailwindcss -i ./web/static/css/main.css -o ./web/static/css/styles.css

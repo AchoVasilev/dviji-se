@@ -2,15 +2,33 @@ package routes
 
 import (
 	"database/sql"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"path/filepath"
 )
 
 func RegisterRoutes(db *sql.DB) *http.ServeMux {
+	slog.Info("Registering routes")
+
 	mux := http.NewServeMux()
-	fileServer := http.FileServer(http.Dir("../../../web/static"))
+	rootDir, err := getRootDir()
+	if err != nil {
+		panic(err)
+	}
+
+	staticDir := filepath.Join(rootDir, "web/static")
+	fmt.Println("Serving static files from: ", staticDir)
+	fileServer := http.FileServer(http.Dir(staticDir))
+
 	mux.Handle("GET /static/", http.StripPrefix("/static/", fileServer))
 
+	BaseRoutes(mux)
 	CategoriesRoutes(mux, db)
 
 	return mux
+}
+
+func getRootDir() (string, error) {
+	return filepath.Abs("./")
 }
