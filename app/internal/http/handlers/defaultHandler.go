@@ -15,8 +15,8 @@ func NewDefaultHandler() *DefaultHandler {
 }
 
 func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *http.Request) {
-  err := templates.Layout(nil, "Home").Render(req.Context(), writer)
-  if err != nil {
-    slog.Info(err.Error())
-  }
+	err := templates.Layout(nil, "Home").Render(req.Context(), writer)
+	if err != nil {
+		slog.Info(err.Error())
+	}
 }

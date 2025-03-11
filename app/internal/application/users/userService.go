@@ -4,17 +4,23 @@ import (
 	"context"
 	"server/internal/domain/user"
 	"server/internal/http/handlers/models"
+	"server/util"
 	"server/util/securityutil"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type UserService struct {
-	userRepository *user.UserRepository
+type userRepository interface {
+	Create(user.User) error
+	FindByEmail(ctx context.Context, email string) (*user.User, error)
 }
 
-func NewUserService(userRepository *user.UserRepository) *UserService {
+type UserService struct {
+	userRepository userRepository
+}
+
+func NewUserService(userRepository userRepository) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 	}
@@ -25,15 +31,9 @@ func (userService *UserService) GetUserByEmail(ctx context.Context, email string
 }
 
 func (userService *UserService) RegisterUser(input *models.CreateUserResource) (uuid.UUID, error) {
-	hashed, err := securityutil.HashPassword(input.Password)
-	if err != nil {
-		return uuid.Nil, err
-	}
+	hashed := util.Must(securityutil.HashPassword(input.Password))
 
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return uuid.Nil, err
-	}
+	id := util.Must(uuid.NewRandom())
 
 	user := user.User{
 		Id:        id,
@@ -43,7 +43,7 @@ func (userService *UserService) RegisterUser(input *models.CreateUserResource) (
 		Status:    "Active",
 	}
 
-	err = userService.userRepository.Create(user)
+	err := userService.userRepository.Create(user)
 	if err != nil {
 		return uuid.Nil, err
 	}

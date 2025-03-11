@@ -22,11 +22,10 @@ func NewCategoriesHandler(categoryService *categories.CategoryService) *Categori
 }
 
 func (controller *CategoriesHandler) GetCategories(writer http.ResponseWriter, req *http.Request) {
-	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
+	ctx, cancel := context.WithTimeout(context.Background(), cancelTime)
 	defer cancel()
 
 	allCategories, err := controller.categoryService.GetCategories(ctx)
-
 	if err != nil {
 		slog.Error(err.Error())
 		httputils.SendInternalServerResponse(writer, req)
@@ -45,7 +44,7 @@ func (controller *CategoriesHandler) GetCategories(writer http.ResponseWriter, r
 
 func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *http.Request) {
 	slog.Info("Creating a new category")
-	var ctx, cancel = context.WithTimeout(context.Background(), cancelTime)
+	ctx, cancel := context.WithTimeout(context.Background(), cancelTime)
 	defer cancel()
 
 	var input models.CreateCategoryResource
@@ -55,7 +54,6 @@ func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *htt
 	}
 
 	result, err := controller.categoryService.Create(ctx, input)
-
 	if err != nil {
 		slog.Error(err.Error())
 		httputils.SendInternalServerResponse(writer, req)

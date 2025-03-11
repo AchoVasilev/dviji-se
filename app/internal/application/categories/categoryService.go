@@ -9,11 +9,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type CategoryService struct {
-	categoryRepository *category.CategoryRepository
+type categoryRepository interface {
+	FindAll(ctx context.Context) ([]category.Category, error)
+	Create(ctx context.Context, category category.Category) (*category.Category, error)
 }
 
-func NewCategoryService(categoryRepository *category.CategoryRepository) *CategoryService {
+type CategoryService struct {
+	categoryRepository categoryRepository
+}
+
+func NewCategoryService(categoryRepository categoryRepository) *CategoryService {
 	return &CategoryService{categoryRepository: categoryRepository}
 }
 
