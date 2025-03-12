@@ -31,9 +31,9 @@ func (userService *UserService) GetUserByEmail(ctx context.Context, email string
 }
 
 func (userService *UserService) RegisterUser(input *models.CreateUserResource) (uuid.UUID, error) {
-	hashed := util.Must(securityutil.HashPassword(input.Password))
+	hashed := util.MustProduce(securityutil.HashPassword(input.Password))
 
-	id := util.Must(uuid.NewRandom())
+	id := util.MustProduce(uuid.NewRandom())
 
 	user := user.User{
 		Id:        id,

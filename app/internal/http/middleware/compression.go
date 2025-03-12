@@ -42,8 +42,8 @@ func (crw *compressedResponseWriter) Close() {
 }
 
 func initCompressionResponseWriter(writer http.ResponseWriter, req *http.Request) *compressedResponseWriter {
-	encodings := strings.Split(req.Header.Get(acceptEncodingHeader), ",")
-	for _, encoding := range encodings {
+	encodings := strings.SplitSeq(req.Header.Get(acceptEncodingHeader), ",")
+	for encoding := range encodings {
 		switch strings.TrimSpace(encoding) {
 		case gzipEncoding:
 			slog.Info("Using gzip compression")

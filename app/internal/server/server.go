@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"server/internal/http/middleware"
 	"server/internal/http/routes"
 )
 
@@ -18,20 +19,20 @@ var api *ApiServer
 func Initialize(db *sql.DB) {
 	router := routes.RegisterRoutes(db)
 
-	//stack := middleware.CreateChain(
-	//	middleware.Recovery,
-	//	middleware.EnableCompression,
-	//	middleware.EnableCORS,
-	//	middleware.PopulateRequestId,
-	//	middleware.AppendLogger,
-	//)
+	stack := middleware.CreateChain(
+		middleware.Recovery,
+		middleware.EnableCompression,
+		middleware.EnableCORS,
+		middleware.PopulateRequestId,
+		middleware.AppendLogger,
+	)
 
 	port := os.Getenv("PORT")
 	api = &ApiServer{
 		port: port,
 		http: &http.Server{
 			Addr:    ":" + port,
-			Handler: router,
+			Handler: stack(router),
 		},
 	}
 }
