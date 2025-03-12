@@ -18,6 +18,5 @@ func Recovery(next http.Handler) http.Handler {
 		}()
 
 		next.ServeHTTP(writer, req)
-		return
 	})
 }

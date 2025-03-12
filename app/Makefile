@@ -4,7 +4,12 @@ go-install-air: ## Installs the air build reload system using 'go install'
 go-install-templ: ## Installs the templ Templating system for Go
 	@go install github.com/a-h/templ/cmd/templ@latest
 
+templ-generate:
+	templ generate
+
 build:
+	make tailwind-build
+	make templ generate
 	@go build -o ./bin/main ./cmd/main.go
 
 test: 
@@ -29,4 +34,4 @@ tailwind-watch: ## compile tailwindcss and watch for changes
 	./tailwindcss -i ./web/static/css/main.css -o ./web/static/css/styles.css --watch
 
 tailwind-build: ## one-time compile tailwindcss styles
-	./tailwindcss -i ./web/static/css/main.css -o ./web/static/css/styles.css
+	./tailwindcss -i ./web/static/css/main.css -o ./web/static/css/styles.css --minify

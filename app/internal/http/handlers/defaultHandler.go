@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"log/slog"
 	"net/http"
+	"server/util"
 	"server/web/templates"
 )
 
@@ -15,8 +15,10 @@ func NewDefaultHandler() *DefaultHandler {
 }
 
 func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *http.Request) {
-	err := templates.Layout(nil, "Home").Render(req.Context(), writer)
-	if err != nil {
-		slog.Info(err.Error())
-	}
+	util.Must(templates.Layout(templates.Home(), "Home", "/").Render(req.Context(), writer))
+}
+
+func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
+	writer.WriteHeader(http.StatusNotFound)
+	util.Must(templates.Layout(templates.NotFound(), "Not found", "/not-found").Render(req.Context(), writer))
 }
