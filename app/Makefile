@@ -23,7 +23,7 @@ migrate-new:
 
 watch:
 	@go build -o ./tmp/main ./cmd/main.go && air
-#	@air
+
 ## tailwind css
 get-install-tailwindcss: ## Installs the tailwindcss cli
 	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
