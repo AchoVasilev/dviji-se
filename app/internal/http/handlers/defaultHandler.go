@@ -15,6 +15,11 @@ func NewDefaultHandler() *DefaultHandler {
 }
 
 func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		handler.HandleNotFound(writer, req)
+		return
+	}
+
 	util.Must(templates.Layout(templates.Home(), "Home", "/").Render(req.Context(), writer))
 }
 

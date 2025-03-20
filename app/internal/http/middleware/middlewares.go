@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"mime"
 	"net/http"
+	"path/filepath"
 	"server/util/securityutil"
 )
 
@@ -26,7 +28,7 @@ func ContentSecurityPolicy(next http.Handler) http.Handler {
 			nonces = Nonces{
 				Htmx:        securityutil.GenerateRandomString(16),
 				Tw:          securityutil.GenerateRandomString(16),
-				HtmxCssHash: "sha-256-1fbqxnervovy3dhe0nsuqcgsmrehf9spw6m7he19bwwjq9fxey",
+				HtmxCssHash: "sha-256-bsV5JivYxvGywDAZ22EZJKBFip65Ng9xoJVLbBg7bdo=",
 			}
 		}
 
@@ -73,9 +75,16 @@ func GetTwNonce(ctx context.Context) string {
 	return nonces.Tw
 }
 
-func TextHTML(next http.Handler) http.Handler {
+func ContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		ext := filepath.Ext(r.URL.Path)
+		mimeType := mime.TypeByExtension(ext)
+
+		if mimeType == "" {
+			mimeType = "text/html; charset=utf-8"
+		}
+
+		w.Header().Set("Content-Type", mimeType)
 		next.ServeHTTP(w, r)
 	})
 }

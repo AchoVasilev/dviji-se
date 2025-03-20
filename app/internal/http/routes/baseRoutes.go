@@ -9,4 +9,5 @@ func BaseRoutes(mux *http.ServeMux) {
 	handler := handlers.NewDefaultHandler()
 
 	mux.HandleFunc("GET /", handler.HandleHomePage)
+	mux.HandleFunc("GET /not-found", handler.HandleNotFound)
 }

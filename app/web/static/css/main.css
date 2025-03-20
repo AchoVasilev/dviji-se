@@ -1,2 +1,11 @@
 @import "tailwindcss";
-@config "../../../tailwind.config.js"
+@config "../../../tailwind.config.js";
+
+.btn-red {
+	@apply border select-none font-semibold text-center transition-all ease-in focus:shadow-none text-sm py-3 px-6 bg-red-900 shadow-sm text-white border-red-800 hover:bg-red-800 duration-150 rounded-full hover:shadow-none;
+}
+
+.section-bg {
+	@apply py-7 px-7 bg-blue-700;
+	background-size: cover;
+}
