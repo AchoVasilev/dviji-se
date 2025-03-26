@@ -1,7 +1,7 @@
 package templates
 
 templ Home() {
-	<section class="section-bg-blue">
+	<section class="section-bg-blue pb-15">
 		<section class="flex flex-row ml-30 mr-30">
 			<section class="flex-1 flex justify-end">
 				<img src="static/img/running-man.png"/>
@@ -21,64 +21,68 @@ templ Home() {
 			</section>
 		</section>
 	</section>
-	<div class="flex flex-col md:flex-row items-center gap-6 w-full max-w-5xl">
-		<div class="flex flex-col items-center gap-4">
-			<img src="static/img/running.webp" alt="Side Image" class="w-28 h-40 rounded-xl shadow-lg object-cover"/>
-		</div>
-		<div class="relative w-64 h-96 rounded-xl overflow-hidden shadow-lg">
-			<img src="static/img/nutrition.webp" alt="Middle Image" class="w-full h-full object-cover"/>
-			<div class="absolute bottom-0 w-full bg-blue-600 text-white p-3 text-sm font-semibold">
-				Stephanie Nelson
-				<br/>
-				MyFitnessPal Registered Dietitian
+	//philosophy section
+	<section class="section-bg-dark flex justify-center">
+		<section class="flex flex-row items-center gap-6 w-full max-w-7xl pt-20 pb-20">
+			<div class="flex flex-col items-center gap-4">
+				<img src="static/img/running.webp" alt="Side Image" class="w-28 h-40 rounded-xl shadow-lg object-cover"/>
 			</div>
-		</div>
-		<div class="flex flex-col items-center gap-4">
-			<img src="static/img/strength-training.webp" alt="Side Image" class="w-28 h-40 rounded-xl shadow-lg object-cover"/>
-		</div>
-		<div class="flex-1 text-left md:ml-8">
-			<p class="text-sm uppercase text-gray-400">Our Philosophy</p>
-			<h1 class="text-3xl font-bold">Knowledge is power</h1>
-			<p class="mt-4 text-gray-300 text-lg">
-				“Studies show people who keep a food diary are more likely to hit their goals. MyFitnessPal simplifies nutrition
-				and calorie tracking, provides the data you want, and helps you make sense of it all.
-			</p>
-			<p class="mt-4 text-gray-300 text-lg">
-				Healthy eating is a continuous journey of self-discovery. And the more you track, the more empowered you’ll become
-				to make healthy choices that support your goals.”
-			</p>
-			<p class="mt-6 text-gray-400 text-sm">Stephanie Nelson, MyFitnessPal Registered Dietitian</p>
-		</div>
-	</div>
-	<section class="section-bg-dark">
-		<section class="mx-30 my-30 flex flex-row">
-			<section class="grid grid-cols-3 gap-6 items-center">
-				<div class="flex justify-center">
-					<img src="static/img/running.webp" class="w-full z-0 h-full object-fill"/>
-				</div>
-				<div class="h-full">
-					<img src="static/img/nutrition.webp" class="w-full z-0 h-full object-fill"/>
-				</div>
-				<div class="flex justify-center">
-					<img src="static/img/strength-training.webp" class="w-full z-0 h-full object-fill"/>
-				</div>
-			</section>
-			<section>
-				<h3>
-					Знанието е сила
-				</h3>
-				<p>
+			<div class="relative w-64 h-96 rounded-xl overflow-hidden shadow-lg">
+				<img src="static/img/nutrition.webp" alt="Middle Image" class="w-full h-full object-cover"/>
+			</div>
+			<div class="flex flex-col items-center gap-4">
+				<img
+					src="static/img/strength-training.webp"
+					alt="Side Image"
+					class="w-28 h-40 rounded-xl shadow-lg object-cover"
+				/>
+			</div>
+			<div class="flex-1 text-left md:ml-8">
+				<p class="text-sm text-gray-400 mb-2">Нашата философия</p>
+				<h1 class="text-3xl font-bold text-white">Знанието е сила</h1>
+				<p class="mt-4 text-gray-300 text-lg">
 					Проучванията показват, спортуването може да ви накара да се чувстване по-щастливи, също така и да намалите
 					рисковете от хронични заболявания, да подобрите дейността на мозъка, както и качеството си на сън. Спортуването
 					е здравословно за мускулната и костната система, като спомага за изграждане на мускулатурата и плътността на
 					костите.
 				</p>
-				<p>
+				<p class="mt-4 text-gray-300 text-lg">
 					Спортуването може да подобри и сексуалния живот. Честото спортуване подобрява сърдечната дейност,
 					кръвообращението, тонизира мускулатурата и може да подобри и мобилността и гъвкавостта ви, като всичко това може
 					да доведе до по-добър сексуален живот.
 				</p>
-			</section>
+			</div>
 		</section>
+	</section>
+	//blog section
+	<section class="section-bg-dark-inverted flex justify-center">
+		<div class="mt-16 w-full max-w-4xl">
+			<h2 class="text-3xl font-bold text-center">From our experts</h2>
+			<div class="mt-6 space-y-6">
+				<div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+					<img src="static/img/background2.png" alt="Blog Image" class="w-full h-48 object-cover"/>
+					<div class="p-6">
+						<h3 class="text-xl font-semibold">Essential Guide to Food Logging</h3>
+						<p class="text-gray-300 mt-2">
+							Whether your goal is to lose weight, build strength, perform at your peak or
+							improve your overall health, keeping an accurate food journal of what you eat and drink is essential...
+						</p>
+						<a href="#" class="text-blue-400 mt-4 inline-block">Read more on MyFitnessPal blog ›</a>
+					</div>
+				</div>
+				<div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+					<img src="static/img/background2.png" alt="Blog Image" class="w-full h-48 object-cover"/>
+					<div class="p-6">
+						<h3 class="text-xl font-semibold">11 Things You’ll Learn Using MyFitnessPal</h3>
+						<p class="text-gray-300 mt-2">
+							There’s no easier way to track your food, activity, steps, water, weight, and
+							measurements than MyFitnessPal. That’s why more than 200 million people use the app to achieve their health
+							and fitness goals...
+						</p>
+						<a href="#" class="text-blue-400 mt-4 inline-block">Read more on MyFitnessPal blog ›</a>
+					</div>
+				</div>
+			</div>
+		</div>
 	</section>
 }

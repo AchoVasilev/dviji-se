@@ -2,14 +2,14 @@ go-install-air: ## Installs the air build reload system using 'go install'
 	@go install github.com/air-verse/air@latest
 
 go-install-templ: ## Installs the templ Templating system for Go
-	@go install github.com/a-h/templ/cmd/templ@latest
+	@go get -tool github.com/a-h/templ/cmd/templ@latest
 
 templ-generate:
-	templ generate
+	@go tool templ generate
 
 build:
 	make tailwind-build
-	make templ generate
+	make templ-generate
 	@go build -o ./bin/main ./cmd/main.go
 
 test: 
