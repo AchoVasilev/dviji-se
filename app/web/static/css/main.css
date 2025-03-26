@@ -5,7 +5,28 @@
 	@apply border select-none font-semibold text-center transition-all ease-in focus:shadow-none text-sm py-3 px-6 bg-red-900 shadow-sm text-white border-red-800 hover:bg-red-800 duration-150 rounded-full hover:shadow-none;
 }
 
-.section-bg {
-	@apply py-7 px-7 bg-blue-700;
+.nav-item-on {
+	@apply text-gray-800 dark:text-gray-200 border-b-2 border-blue-500 mx-1.5 sm:mx-6;
+}
+
+.nav-item-off {
+	@apply border-b-2 border-transparent hover:text-gray-800 dark:hover:text-gray-200 hover:border-blue-500 mx-1.5 sm:mx-6;
+}
+
+
+.section-bg-blue {
+	@apply py-7 px-7;
+	background-image: linear-gradient(200deg, #0052be 60%, #14047c 100%);
 	background-size: cover;
+}
+
+.section-bg-dark {
+	@apply py-7 px-7;
+	background-image: linear-gradient(200deg, #24262a 60%, #070514 100%);
+	background-size: cover;
+
+}
+
+.bg-blue-n {
+	background-color: #0052be;
 }

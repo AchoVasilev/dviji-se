@@ -1,20 +1,84 @@
 package templates
 
 templ Home() {
-<section>
-	<section class="section-bg flex flex-row justify-between">
-		<section class="flex-1">
-			<img src="static/img/running-man.png" />
-		</section>
-		<section class="flex-1">
-			<h1 class="text-4xl">Geometria Title Goes Here <span class="title-style"></span></h1>
-			<p class="text-2xl">
-				Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore
-				magna aliqua. Ut enim ad minim veniam, quis nostrud
-			</p>
-			<a class="btn-red" href="#">LEARN MORE</a>
-			<a class="btn-red" href="#">DISCOVER</a>
+	<section class="section-bg-blue">
+		<section class="flex flex-row ml-30 mr-30">
+			<section class="flex-1 flex justify-end">
+				<img src="static/img/running-man.png"/>
+			</section>
+			<section class="flex-1 flex flex-col">
+				<section class="mb-6">
+					<h1 class="text-6xl text-white mb-6 tracking-wider">Спортът - начин на мислене и живот</h1>
+					<p class="text-lg/6 text-white tracking-wider">
+						Правете напредък с нашите съвети и тренировки. Тук ще намерите информация за хранителни режими, рецепти,
+						тренировки, а също така и екопътеки.
+					</p>
+				</section>
+				<section class="mt-6">
+					<a class="btn-red mr-2" href="#">LEARN MORE</a>
+					<a class="btn-red ml-2" href="#">DISCOVER</a>
+				</section>
+			</section>
 		</section>
 	</section>
-</section>
+	<div class="flex flex-col md:flex-row items-center gap-6 w-full max-w-5xl">
+		<div class="flex flex-col items-center gap-4">
+			<img src="static/img/running.webp" alt="Side Image" class="w-28 h-40 rounded-xl shadow-lg object-cover"/>
+		</div>
+		<div class="relative w-64 h-96 rounded-xl overflow-hidden shadow-lg">
+			<img src="static/img/nutrition.webp" alt="Middle Image" class="w-full h-full object-cover"/>
+			<div class="absolute bottom-0 w-full bg-blue-600 text-white p-3 text-sm font-semibold">
+				Stephanie Nelson
+				<br/>
+				MyFitnessPal Registered Dietitian
+			</div>
+		</div>
+		<div class="flex flex-col items-center gap-4">
+			<img src="static/img/strength-training.webp" alt="Side Image" class="w-28 h-40 rounded-xl shadow-lg object-cover"/>
+		</div>
+		<div class="flex-1 text-left md:ml-8">
+			<p class="text-sm uppercase text-gray-400">Our Philosophy</p>
+			<h1 class="text-3xl font-bold">Knowledge is power</h1>
+			<p class="mt-4 text-gray-300 text-lg">
+				“Studies show people who keep a food diary are more likely to hit their goals. MyFitnessPal simplifies nutrition
+				and calorie tracking, provides the data you want, and helps you make sense of it all.
+			</p>
+			<p class="mt-4 text-gray-300 text-lg">
+				Healthy eating is a continuous journey of self-discovery. And the more you track, the more empowered you’ll become
+				to make healthy choices that support your goals.”
+			</p>
+			<p class="mt-6 text-gray-400 text-sm">Stephanie Nelson, MyFitnessPal Registered Dietitian</p>
+		</div>
+	</div>
+	<section class="section-bg-dark">
+		<section class="mx-30 my-30 flex flex-row">
+			<section class="grid grid-cols-3 gap-6 items-center">
+				<div class="flex justify-center">
+					<img src="static/img/running.webp" class="w-full z-0 h-full object-fill"/>
+				</div>
+				<div class="h-full">
+					<img src="static/img/nutrition.webp" class="w-full z-0 h-full object-fill"/>
+				</div>
+				<div class="flex justify-center">
+					<img src="static/img/strength-training.webp" class="w-full z-0 h-full object-fill"/>
+				</div>
+			</section>
+			<section>
+				<h3>
+					Знанието е сила
+				</h3>
+				<p>
+					Проучванията показват, спортуването може да ви накара да се чувстване по-щастливи, също така и да намалите
+					рисковете от хронични заболявания, да подобрите дейността на мозъка, както и качеството си на сън. Спортуването
+					е здравословно за мускулната и костната система, като спомага за изграждане на мускулатурата и плътността на
+					костите.
+				</p>
+				<p>
+					Спортуването може да подобри и сексуалния живот. Честото спортуване подобрява сърдечната дейност,
+					кръвообращението, тонизира мускулатурата и може да подобри и мобилността и гъвкавостта ви, като всичко това може
+					да доведе до по-добър сексуален живот.
+				</p>
+			</section>
+		</section>
+	</section>
 }
