@@ -13,7 +13,14 @@ func Recovery(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				slog.Error("Caught panic: %v. Stack trace: %s", err, string(debug.Stack()))
 
-				httputils.SendInternalServerResponse(writer, req)
+				acceptHeader := req.Header.Get("Accept")
+				if acceptHeader == "application/json" {
+					req.Header.Set("Content-Type", "application/json")
+					httputils.SendInternalServerResponse(writer, req)
+				} else {
+					req.Header.Set("Content-Type", "text/html; charset=utf-8")
+					http.Redirect(writer, req, "/error", http.StatusSeeOther)
+				}
 			}
 		}()
 

@@ -2,16 +2,19 @@ package handlers
 
 import (
 	"net/http"
+	"server/internal/application/categories"
 	"server/util"
 	"server/web/templates"
 )
 
 type DefaultHandler struct {
-	// categoryService *categories.CategoryService
+	categoryService *categories.CategoryService
 }
 
-func NewDefaultHandler() *DefaultHandler {
-	return &DefaultHandler{}
+func NewDefaultHandler(categoryService *categories.CategoryService) *DefaultHandler {
+	return &DefaultHandler{
+		categoryService: categoryService,
+	}
 }
 
 func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *http.Request) {
@@ -20,10 +23,17 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 		return
 	}
 
-	util.Must(templates.Layout(templates.Home(), "Home", "/").Render(req.Context(), writer))
+	categories := util.MustProduce(handler.categoryService.GetCategories(req.Context()))
+	util.Must(templates.Layout(templates.Home(categories), "Home", "/").Render(req.Context(), writer))
 }
 
 func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
 	util.Must(templates.Layout(templates.NotFound(), "Not found", "/not-found").Render(req.Context(), writer))
+}
+
+func (handler *DefaultHandler) HandleError(writer http.ResponseWriter, req *http.Request) {
+	requestId := req.Context().Value("requestId")
+	writer.WriteHeader(http.StatusInternalServerError)
+	util.Must(templates.Layout(templates.Error(requestId), "Error", "/error").Render(req.Context(), writer))
 }

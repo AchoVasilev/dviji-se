@@ -1,6 +1,8 @@
 package templates
 
-templ Home() {
+import "server/internal/domain/category"
+
+templ Home(categories []category.Category) {
 	<section class="section-bg-blue pb-15">
 		<section class="flex flex-row ml-30 mr-30">
 			<section class="flex-1 flex justify-end">
@@ -25,7 +27,7 @@ templ Home() {
 	<section class="section-bg-dark flex justify-center">
 		<section class="flex flex-row items-center gap-6 w-full max-w-7xl pt-20 pb-20">
 			<div class="flex flex-col items-center gap-4">
-				<img src="static/img/running.webp" alt="Side Image" class="w-28 h-40 rounded-xl shadow-lg object-cover"/>
+				<img src="static/img/running.webp" alt="Side Image" class="w-40 h-62 rounded-xl shadow-lg object-cover"/>
 			</div>
 			<div class="relative w-64 h-96 rounded-xl overflow-hidden shadow-lg">
 				<img src="static/img/nutrition.webp" alt="Middle Image" class="w-full h-full object-cover"/>
@@ -34,7 +36,7 @@ templ Home() {
 				<img
 					src="static/img/strength-training.webp"
 					alt="Side Image"
-					class="w-28 h-40 rounded-xl shadow-lg object-cover"
+					class="w-40 h-62 rounded-xl shadow-lg object-cover"
 				/>
 			</div>
 			<div class="flex-1 text-left md:ml-8">
@@ -56,33 +58,26 @@ templ Home() {
 	</section>
 	//blog section
 	<section class="section-bg-dark-inverted flex justify-center">
-		<div class="mt-16 w-full max-w-4xl">
-			<h2 class="text-3xl font-bold text-center">From our experts</h2>
-			<div class="mt-6 space-y-6">
-				<div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-					<img src="static/img/background2.png" alt="Blog Image" class="w-full h-48 object-cover"/>
-					<div class="p-6">
-						<h3 class="text-xl font-semibold">Essential Guide to Food Logging</h3>
-						<p class="text-gray-300 mt-2">
-							Whether your goal is to lose weight, build strength, perform at your peak or
-							improve your overall health, keeping an accurate food journal of what you eat and drink is essential...
-						</p>
-						<a href="#" class="text-blue-400 mt-4 inline-block">Read more on MyFitnessPal blog ›</a>
+		<section class="mt-16 w-full max-w-4xl">
+			<h2 class="text-3xl font-bold text-center text-white">Нашите блог категории</h2>
+			for _, category := range categories {
+				<a href="#" class="shadow-2xl relative">
+					<div class="h-full relative shadow-2xl shadow-green-900 overflow-hidden group">
+						<div
+							class="absolute-bottom-10 group-hover:top-0 left-0 w-full h-full group-hover:bg-green-900 transition-all ease-in-out duration-500"
+						>
+							<div class="w-full h-full p-5 relative">
+								<div
+									class="absolute bottom-0 group-hover:bottom-24 text-white text-left transition-all ease-in-out duration-500"
+								>
+									<h2 class="text-2xl font-bold text-white mb-0 pb-1">{ category.Name }</h2>
+								</div>
+							</div>
+						</div>
+						<img src={ category.ImageUrl } class="w-full z-0 h-full object-fill example"/>
 					</div>
-				</div>
-				<div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-					<img src="static/img/background2.png" alt="Blog Image" class="w-full h-48 object-cover"/>
-					<div class="p-6">
-						<h3 class="text-xl font-semibold">11 Things You’ll Learn Using MyFitnessPal</h3>
-						<p class="text-gray-300 mt-2">
-							There’s no easier way to track your food, activity, steps, water, weight, and
-							measurements than MyFitnessPal. That’s why more than 200 million people use the app to achieve their health
-							and fitness goals...
-						</p>
-						<a href="#" class="text-blue-400 mt-4 inline-block">Read more on MyFitnessPal blog ›</a>
-					</div>
-				</div>
-			</div>
-		</div>
+				</a>
+			}
+		</section>
 	</section>
 }

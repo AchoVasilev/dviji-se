@@ -23,7 +23,7 @@ func RegisterRoutes(db *sql.DB) *http.ServeMux {
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", fileServer))
 
-	BaseRoutes(mux)
+	BaseRoutes(mux, db)
 	CategoriesRoutes(mux, db)
 
 	return mux
