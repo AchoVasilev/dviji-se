@@ -36,3 +36,13 @@
 .bg-blue-n {
 	background-color: #0052be;
 }
+
+#menu-toggle:checked+#menu {
+	display: block;
+}
+
+@media (width <=64rem) {
+	.login {
+		display: none;
+	}
+}

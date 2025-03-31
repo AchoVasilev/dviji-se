@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"server/internal/application/categories"
 	"server/internal/http/handlers/models"
+	"server/util"
 	"server/util/httputils"
+	"server/web/templates"
 	"time"
 )
 
@@ -39,7 +41,7 @@ func (controller *CategoriesHandler) GetCategories(writer http.ResponseWriter, r
 		response = append(response, resource.CreateCategoryResponseFrom(&category))
 	}
 
-	httputils.SendOkWithBody(writer, response)
+	util.Must(templates.CategoriesList(response).Render(req.Context(), writer))
 }
 
 func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *http.Request) {

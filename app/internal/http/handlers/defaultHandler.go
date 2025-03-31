@@ -23,8 +23,7 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 		return
 	}
 
-	categories := util.MustProduce(handler.categoryService.GetCategories(req.Context()))
-	util.Must(templates.Layout(templates.Home(categories), "Home", "/").Render(req.Context(), writer))
+	util.Must(templates.Layout(templates.Home(), "Home", "/").Render(req.Context(), writer))
 }
 
 func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
@@ -33,7 +32,7 @@ func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *h
 }
 
 func (handler *DefaultHandler) HandleError(writer http.ResponseWriter, req *http.Request) {
-	requestId := req.Context().Value("requestId")
+	requestId := req.Context().Value("requestId").(string)
 	writer.WriteHeader(http.StatusInternalServerError)
 	util.Must(templates.Layout(templates.Error(requestId), "Error", "/error").Render(req.Context(), writer))
 }

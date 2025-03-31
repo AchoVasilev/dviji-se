@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
+	"server/internal/http/middleware"
 )
 
 func RegisterRoutes(db *sql.DB) *http.ServeMux {
@@ -21,7 +22,7 @@ func RegisterRoutes(db *sql.DB) *http.ServeMux {
 	fmt.Println("Serving static files from: ", staticDir)
 	fileServer := http.FileServer(http.Dir(staticDir))
 
-	mux.Handle("GET /static/", http.StripPrefix("/static/", fileServer))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", middleware.CacheStaticAssets(fileServer, staticDir)))
 
 	BaseRoutes(mux, db)
 	CategoriesRoutes(mux, db)
