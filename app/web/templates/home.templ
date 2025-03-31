@@ -2,13 +2,13 @@ package templates
 
 templ Home() {
 	<section class="section-bg-blue pb-15">
-		<section class="flex justify-center items-center lg:flex-row ml-30 mr-30">
+		<section class="flex justify-center items-center lg:flex-row flex-wrap ml-30 mr-30 sm:ml-5 sm:mr-5">
 			<section class="flex-1 flex justify-end">
-				<img src="static/img/running-man.png" alt="Running man" loading="lazy"/>
+				<img src="static/img/running-man.png" alt="Running man"/>
 			</section>
 			<section class="flex-1 flex flex-col">
 				<section class="mb-6">
-					<h1 class="text-6xl text-white mb-6 tracking-wider">Спортът - начин на мислене и живот</h1>
+					<h1 class="text-white mb-6 tracking-wider text-6xl heading">Спортът - начин на мислене и живот</h1>
 					<p class="text-lg/6 text-white tracking-wider">
 						Правете напредък с нашите съвети и тренировки. Тук ще намерите информация за хранителни режими, рецепти,
 						тренировки, а също така и екопътеки.
@@ -26,14 +26,18 @@ templ Home() {
 		<section class="flex items-center gap-6 lg:flex-row flex-wrap w-full max-w-7xl pt-20 pb-20">
 			<section class="flex flex-row justify-center items-center gap-4">
 				<div class="flex flex-col items-center">
-					<img src="static/img/running.webp" alt="Side Image" class="w-40 h-62 rounded-xl shadow-lg object-cover"/>
+					<img
+						src="static/img/running-resized.webp"
+						alt="Side Image"
+						class="w-40 h-62 rounded-xl shadow-lg object-cover"
+					/>
 				</div>
 				<div class="relative w-64 h-96 rounded-xl overflow-hidden shadow-lg">
-					<img src="static/img/nutrition.webp" alt="Middle Image" class="w-full h-full object-cover"/>
+					<img src="static/img/nutrition-resized.webp" alt="Middle Image" class="w-full h-full object-cover"/>
 				</div>
 				<div class="flex flex-col items-center">
 					<img
-						src="static/img/strength-training.webp"
+						src="static/img/strength-training-resized.webp"
 						alt="Side Image"
 						class="w-40 h-62 rounded-xl shadow-lg object-cover"
 					/>

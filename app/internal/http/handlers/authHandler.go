@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"server/internal/application/users"
 	"server/internal/http/handlers/models"
+	"server/util"
 	"server/util/httputils"
+	"server/web/templates"
 )
 
 type AuthHandler struct {
@@ -84,4 +86,12 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 
 func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.Request) {
 	return
+}
+
+func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
+	util.Must(templates.SimpleLayout(templates.Login(), "Вход").Render(req.Context(), writer))
+}
+
+func (handler *AuthHandler) GetRegister(writer http.ResponseWriter, req *http.Request) {
+	util.Must(templates.SimpleLayout(templates.Register(), "Регистрация").Render(req.Context(), writer))
 }

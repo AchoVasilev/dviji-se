@@ -2,7 +2,6 @@ package routes
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"path/filepath"
@@ -19,13 +18,13 @@ func RegisterRoutes(db *sql.DB) *http.ServeMux {
 	}
 
 	staticDir := filepath.Join(rootDir, "web/static")
-	fmt.Println("Serving static files from: ", staticDir)
 	fileServer := http.FileServer(http.Dir(staticDir))
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", middleware.CacheStaticAssets(fileServer, staticDir)))
 
 	BaseRoutes(mux, db)
 	CategoriesRoutes(mux, db)
+	AuthRoutes(mux, db)
 
 	return mux
 }

@@ -13,6 +13,10 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 	userService := users.NewUserService(userRepository)
 	authHandler := handlers.NewAuthHandler(userService)
 
+	mux.HandleFunc("GET /login", authHandler.GetLogin)
+	mux.HandleFunc("GET /register", authHandler.GetRegister)
+
+	// api requests
 	mux.HandleFunc("POST /register", authHandler.HandleRegister)
 
 	mux.HandleFunc("POST /login", authHandler.HandleLogin)

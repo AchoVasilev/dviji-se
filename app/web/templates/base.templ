@@ -2,11 +2,11 @@ package templates
 
 templ head(title string) {
 	<head>
-		<title>{ title }</title>
+		<title>Движи се - { title }</title>
 		<meta charset="UTF-8"/>
 		<meta name="description" content="Здравословен начин на живот, тренировки, хранителни режими и рецепти"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-		<link rel="icon" type="image/png" href="static/img/logo.png"/>
+		<link rel="icon" type="image/png" href="static/img/logo-reversed.png"/>
 		<link rel="stylesheet" href="static/css/styles.css"/>
 		<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 	</head>
@@ -17,7 +17,7 @@ templ header(activeLink string) {
 		<nav class="lg:px-16 px-6 bg-blue-n shadow-md flex flex-wrap items-center py-3">
 			<section class="flex-1 flex justify-start">
 				<a href="/" class="flex text-lg font-semibold">
-					<img src="static/img/logo.png" width="50" height="50" class="p-2" alt="Logo"/>
+					<img src="static/img/moveit.png" width="150" height="50" class="p-2" alt="Logo"/>
 				</a>
 			</section>
 			<label for="menu-toggle" class="cursor-pointer lg:hidden block">
@@ -98,7 +98,7 @@ templ footer() {
 		<div class="flex items-center justify-center">
 			<div class="mb-6 md:mb-0 mr-8">
 				<a href="#" class="flex flex-col items-center">
-					<img src="static/img/logo.png" class="mr-4 h-20" alt="Logo" loading="lazy"/>
+					<img src="static/img/logo-reversed.png" class="mr-4 h-20" alt="Logo" loading="lazy"/>
 					<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Движи се</span>
 				</a>
 			</div>
@@ -208,6 +208,19 @@ templ Layout(contents templ.Component, title string, activeLink string) {
 				@contents
 			</main>
 			@footer()
+			<script type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
+		</body>
+	</html>
+}
+
+templ SimpleLayout(contents templ.Component, title string) {
+	<!DOCTYPE html>
+	<html lang="bg">
+		@head(title)
+		<body class="flex flex-col h-full">
+			<main>
+				@contents
+			</main>
 			<script type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
 		</body>
 	</html>
