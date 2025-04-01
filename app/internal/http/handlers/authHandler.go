@@ -88,10 +88,14 @@ func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.R
 	return
 }
 
+func (handler *AuthHandler) GetLoginRegister(writer http.ResponseWriter, req *http.Request) {
+	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход").Render(req.Context(), writer))
+}
+
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.Login(), "Вход").Render(req.Context(), writer))
+	util.Must(templates.Login().Render(req.Context(), writer))
 }
 
 func (handler *AuthHandler) GetRegister(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.Register(), "Регистрация").Render(req.Context(), writer))
+	util.Must(templates.Register().Render(req.Context(), writer))
 }

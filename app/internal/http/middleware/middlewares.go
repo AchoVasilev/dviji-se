@@ -118,7 +118,7 @@ func CacheStaticAssets(next http.Handler, staticDir string) http.Handler {
 		case ".css", ".js":
 			w.Header().Set("Cache-Control", "public, max-age=86400") // 1 day
 		case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg":
-			w.Header().Set("Cache-Control", "public, max-age=604800, immutable") // 7 days
+			w.Header().Set("Cache-Control", "public, max-age=31556952, immutable") // 1 year
 		case ".html":
 			w.Header().Set("Cache-Control", "no-cache") // Always request fresh
 		default:
