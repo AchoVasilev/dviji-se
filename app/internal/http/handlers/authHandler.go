@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"server/internal/application/users"
 	"server/internal/http/handlers/models"
+	"server/internal/http/middleware"
 	"server/util"
 	"server/util/httputils"
 	"server/web/templates"
@@ -89,7 +90,8 @@ func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.R
 }
 
 func (handler *AuthHandler) GetLoginRegister(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход").Render(req.Context(), writer))
+	slog.Info("Token: " + middleware.GetCSRF(req.Context()))
+	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {

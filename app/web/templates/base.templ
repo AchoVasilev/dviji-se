@@ -1,11 +1,12 @@
 package templates
 
-templ head(title string) {
+templ head(title string, csrfToken string) {
 	<head>
 		<title>Движи се - { title }</title>
 		<meta charset="UTF-8"/>
 		<meta name="description" content="Здравословен начин на живот, тренировки, хранителни режими и рецепти"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta name="csrf-token" content={ csrfToken }/>
 		<link rel="icon" type="image/png" href="static/img/logo-reversed.png"/>
 		<link rel="stylesheet" href="static/css/styles.css"/>
 		<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
@@ -198,10 +199,10 @@ templ footer() {
 	</footer>
 }
 
-templ Layout(contents templ.Component, title string, activeLink string) {
+templ Layout(contents templ.Component, title string, activeLink string, csrfToken string) {
 	<!DOCTYPE html>
 	<html lang="bg">
-		@head(title)
+		@head(title, csrfToken)
 		<body class="flex flex-col h-full">
 			@header(activeLink)
 			<main>
@@ -213,15 +214,16 @@ templ Layout(contents templ.Component, title string, activeLink string) {
 	</html>
 }
 
-templ SimpleLayout(contents templ.Component, title string) {
+templ SimpleLayout(contents templ.Component, title string, csrfToken string) {
 	<!DOCTYPE html>
 	<html lang="bg">
-		@head(title)
+		@head(title, csrfToken)
 		<body class="flex flex-col h-full">
 			<main>
 				@contents
 			</main>
-			<script type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
+			<script defer type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
+			<script defer type="text/javascript" src="./../static/scripts/token.js"></script>
 		</body>
 	</html>
 }

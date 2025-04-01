@@ -23,6 +23,8 @@ func Initialize(db *sql.DB) {
 		middleware.Recovery,
 		middleware.EnableCompression,
 		middleware.EnableCORS,
+		middleware.CSRFValidate,
+		middleware.CSRFCookie,
 		middleware.ContentType,
 		//	middleware.ContentSecurityPolicy,
 		middleware.PopulateRequestId,

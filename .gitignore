@@ -29,5 +29,6 @@ go.work.sum
 docker/postgres_vol
 
 app/web/templates/*.go
+app/node_modules
 app/tmp
 app/bin

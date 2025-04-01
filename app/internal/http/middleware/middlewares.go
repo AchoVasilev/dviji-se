@@ -14,6 +14,9 @@ import (
 	"path/filepath"
 	"server/util/securityutil"
 	"strings"
+	"time"
+
+	"golang.org/x/net/xsrftoken"
 )
 
 type contextKey string
@@ -24,6 +27,107 @@ type Nonces struct {
 	Htmx        string
 	Tw          string
 	HtmxCssHash string
+}
+
+var XSRFKey contextKey = "xsrf"
+
+func CSRFCookie(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			xsrfCookie, err := r.Cookie("csrf_token")
+			if err != nil || xsrfCookie == nil {
+				key := os.Getenv("XSRF")
+				csrfToken := xsrftoken.Generate(key, "", http.MethodPost)
+				http.SetCookie(w, &http.Cookie{
+					Name:     "csrf_token",
+					Value:    csrfToken,
+					Expires:  time.Now().Add(24 * time.Hour),
+					HttpOnly: true,
+					Secure:   true,
+					SameSite: http.SameSiteStrictMode,
+				})
+
+				w.Header().Set("X-CSRF-TOKEN", csrfToken)
+				ctx := context.WithValue(r.Context(), XSRFKey, csrfToken)
+				r = r.WithContext(ctx)
+			}
+
+			if xsrfCookie != nil {
+				ctx := context.WithValue(r.Context(), XSRFKey, xsrfCookie.Value)
+				r = r.WithContext(ctx)
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func GetCSRF(ctx context.Context) string {
+	token, ok := ctx.Value(XSRFKey).(string)
+	if !ok {
+		return ""
+	}
+
+	return token
+}
+
+func CSRFValidate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		cookie, err := r.Cookie("csrf_token")
+		if err != nil {
+			http.Error(w, "Access forbidden", http.StatusForbidden)
+			slog.Warn("No CSRF token")
+			if !strings.HasPrefix(r.URL.Path, "/api") {
+				w.Header().Set("HX-Redirect", "/error")
+			}
+
+			return
+		}
+
+		key := os.Getenv("XSRF")
+		isValid := xsrftoken.Valid(cookie.Value, key, "", http.MethodPost)
+		if !isValid {
+			http.Error(w, "Access forbidden", http.StatusForbidden)
+			slog.Warn("Invalid CSRF token")
+
+			if !strings.HasPrefix(r.URL.Path, "/api") {
+				w.Header().Set("HX-Redirect", "/error")
+			}
+
+			return
+		}
+
+		csrfHeader := r.Header.Get("X-CSRF-Token")
+		if csrfHeader == "" {
+			http.Error(w, "Access forbidden", http.StatusForbidden)
+			slog.Warn("Invalid CSRF token")
+
+			if !strings.HasPrefix(r.URL.Path, "/api") {
+				w.Header().Set("HX-Redirect", "/error")
+			}
+
+			return
+		}
+
+		isValid = xsrftoken.Valid(csrfHeader, key, "", http.MethodPost)
+		if !isValid {
+			http.Error(w, "Access forbidden", http.StatusForbidden)
+			slog.Warn("Invalid CSRF token")
+
+			if !strings.HasPrefix(r.URL.Path, "/api") {
+				w.Header().Set("HX-Redirect", "/error")
+			}
+
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func ContentSecurityPolicy(next http.Handler) http.Handler {
