@@ -41,7 +41,6 @@ func (repo *UserRepository) Create(user User) error {
 			&role.Name,
 			&role.Permissions,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -77,7 +76,7 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (*Use
 		JOIN roles r ON r.id = ur.role_id
 		JOIN users_permissions up ON u.id = up.user_id
 		JOIN permissions p ON p.id = up.permission_id
-		WHERE u.email = ? AND u.is_deleted = FALSE`, email)
+		WHERE u.email = $1 AND u.is_deleted = FALSE`, email)
 	defer rows.Close()
 
 	if err != nil {
@@ -99,7 +98,6 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (*Use
 			&user.Roles,
 			&user.Permissions,
 		)
-
 		if err != nil {
 			return nil, err
 		}

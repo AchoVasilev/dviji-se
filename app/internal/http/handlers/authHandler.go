@@ -90,7 +90,6 @@ func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.R
 }
 
 func (handler *AuthHandler) GetLoginRegister(writer http.ResponseWriter, req *http.Request) {
-	slog.Info("Token: " + middleware.GetCSRF(req.Context()))
 	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
