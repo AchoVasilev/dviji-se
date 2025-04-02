@@ -18,7 +18,7 @@ VALUES ('272e0edd-11e8-4709-bbba-5d36d77dd428', 'ADMIN'),
         ('312e0edd-11e8-4709-bbba-5d36d77dd455', 'MODERATOR');
 
 INSERT INTO permissions(id, name)
-VALUES  ('123v0edd-11e8-4709-bbba-5d36d77dd245', 'comment:write'),
+VALUES  ('26eb876b-f959-45fa-95ca-65d98b1d14a0', 'comment:write'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd315', 'comment:create'),
         ('612e0edd-11e8-4709-bbba-5d36d77dd136', 'post:write'),
         ('443e0edd-11e8-4709-bbba-5d36d77dd654', 'post:create'),
@@ -26,15 +26,15 @@ VALUES  ('123v0edd-11e8-4709-bbba-5d36d77dd245', 'comment:write'),
         ('123e0edd-11e8-4709-bbba-5d36d77dd987', 'permission:remove');
 
 INSERT INTO roles_permissions(role_id, permission_id)
-VALUES ('272e0edd-11e8-4709-bbba-5d36d77dd428', '123v0edd-11e8-4709-bbba-5d36d77dd245'),
+VALUES ('272e0edd-11e8-4709-bbba-5d36d77dd428', '26eb876b-f959-45fa-95ca-65d98b1d14a0'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd428', '272e0edd-11e8-4709-bbba-5d36d77dd315'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd428', '612e0edd-11e8-4709-bbba-5d36d77dd136'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd428', '443e0edd-11e8-4709-bbba-5d36d77dd654'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd428', '554e0edd-11e8-4709-bbba-5d36d77dd432'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd428', '123e0edd-11e8-4709-bbba-5d36d77dd987'),
-        ('312e0edd-11e8-4709-bbba-5d36d77dd455', '123v0edd-11e8-4709-bbba-5d36d77dd245'),
+        ('312e0edd-11e8-4709-bbba-5d36d77dd455', '26eb876b-f959-45fa-95ca-65d98b1d14a0'),
         ('312e0edd-11e8-4709-bbba-5d36d77dd455', '272e0edd-11e8-4709-bbba-5d36d77dd315'),
         ('312e0edd-11e8-4709-bbba-5d36d77dd455', '612e0edd-11e8-4709-bbba-5d36d77dd136'),
         ('312e0edd-11e8-4709-bbba-5d36d77dd455', '443e0edd-11e8-4709-bbba-5d36d77dd654'),
-        ('272e0edd-11e8-4709-bbba-5d36d77dd315', '123v0edd-11e8-4709-bbba-5d36d77dd245'),
+        ('272e0edd-11e8-4709-bbba-5d36d77dd315', '26eb876b-f959-45fa-95ca-65d98b1d14a0'),
         ('272e0edd-11e8-4709-bbba-5d36d77dd315', '272e0edd-11e8-4709-bbba-5d36d77dd315');

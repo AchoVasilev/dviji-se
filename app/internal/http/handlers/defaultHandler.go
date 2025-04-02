@@ -33,7 +33,7 @@ func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *h
 }
 
 func (handler *DefaultHandler) HandleError(writer http.ResponseWriter, req *http.Request) {
-	requestId := req.Context().Value("requestId").(string)
+	requestId := middleware.RequestIdFromContext(req.Context())
 	writer.WriteHeader(http.StatusInternalServerError)
 	util.Must(templates.Layout(templates.Error(requestId), "Error", "/error", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
 }

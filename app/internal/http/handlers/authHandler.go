@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -46,11 +47,11 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 		httputils.SendInternalServerResponse(writer, req)
 		return
 	}
-
-	if user != nil {
-		httputils.SendConflictResponse(writer, "User exists")
-		return
-	}
+	slog.Info(user.Email)
+	//	if user != nil {
+	//		httputils.SendConflictResponse(writer, "User exists")
+	//		return
+	//	}
 
 	id, err := handler.userService.RegisterUser(input)
 	if err != nil {
@@ -69,20 +70,31 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 	defer cancel()
 
 	input := new(models.LoginResource)
-	success := httputils.ProcessRequestBody(writer, req, input)
-	if !success {
+	result := httputils.ProcessBody(writer, req, input)
+	if result.ParsingError != nil {
+		slog.Error(result.ParsingError.Error())
+		http.Error(writer, "internal.server.error", http.StatusInternalServerError)
+		writer.Header().Add("HX-Redirect", "/error")
+		return
+	}
+
+	if result.ValidationErrors != nil {
+		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
 	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		slog.Error(err.Error())
 		httputils.SendInternalServerResponse(writer, req)
 		return
 	}
-	if user != nil {
-		slog.Info("Success")
-	}
+
+	slog.Info(user.Email)
+
+	//	if user == nil {
+	//		slog.Info("Success")
+	//	}
 }
 
 func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.Request) {

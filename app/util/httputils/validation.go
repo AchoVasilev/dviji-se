@@ -17,7 +17,13 @@ type ValidationError struct {
 	Error string `json:"error"`
 }
 
-func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload interface{}) bool {
+type ValidationResult struct {
+	Success          bool
+	ParsingError     error
+	ValidationErrors []*ValidationError
+}
+
+func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload any) bool {
 	if err := jsonutils.ParseJSON(req, payload); err != nil {
 		slog.Error("Could not parse request body. Error: %v. Stacktrace: %s", err.Error(), string(debug.Stack()))
 		SendInternalServerResponse(writer, req)
@@ -32,7 +38,24 @@ func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload i
 	return true
 }
 
-func validatePayload(payload interface{}) []*ValidationError {
+func ProcessBody(writer http.ResponseWriter, req *http.Request, payload any) *ValidationResult {
+	if err := jsonutils.ParseJSON(req, payload); err != nil {
+		return &ValidationResult{
+			Success:          false,
+			ParsingError:     err,
+			ValidationErrors: nil,
+		}
+	}
+
+	errors := validatePayload(payload)
+	return &ValidationResult{
+		ParsingError:     nil,
+		ValidationErrors: errors,
+		Success:          errors != nil,
+	}
+}
+
+func validatePayload(payload any) []*ValidationError {
 	var validate *validator.Validate
 	validate = validator.New(validator.WithRequiredStructEnabled())
 

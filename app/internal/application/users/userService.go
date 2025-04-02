@@ -13,7 +13,7 @@ import (
 
 type userRepository interface {
 	Create(user.User) error
-	FindByEmail(ctx context.Context, email string) (*user.User, error)
+	FindByEmail(ctx context.Context, email string) (user.User, error)
 }
 
 type UserService struct {
@@ -26,7 +26,7 @@ func NewUserService(userRepository userRepository) *UserService {
 	}
 }
 
-func (userService *UserService) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
+func (userService *UserService) GetUserByEmail(ctx context.Context, email string) (user.User, error) {
 	return userService.userRepository.FindByEmail(ctx, email)
 }
 
@@ -51,10 +51,10 @@ func (userService *UserService) RegisterUser(input *models.CreateUserResource) (
 	return id, nil
 }
 
-func (userService *UserService) LoginUser(ctx context.Context, email string, password string) (*user.User, error) {
+func (userService *UserService) LoginUser(ctx context.Context, email string, password string) (user.User, error) {
 	user, err := userService.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return user, err
 	}
 
 	return user, nil

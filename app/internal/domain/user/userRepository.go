@@ -69,38 +69,35 @@ func (repo *UserRepository) Create(user User) error {
 	return err
 }
 
-func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (*User, error) {
-	rows, err := repo.db.QueryContext(ctx, `
+func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User, error) {
+	row := repo.db.QueryRowContext(ctx, `
 		SELECT * FROM users u 
 		JOIN users_roles ur ON u.id = ur.user_id
 		JOIN roles r ON r.id = ur.role_id
 		JOIN users_permissions up ON u.id = up.user_id
 		JOIN permissions p ON p.id = up.permission_id
 		WHERE u.email = $1 AND u.is_deleted = FALSE`, email)
-	defer rows.Close()
 
-	if err != nil {
-		return nil, err
+	var user User
+	if row.Err() != nil {
+		return user, row.Err()
 	}
 
-	user := new(User)
-	for rows.Next() {
-		err := rows.Scan(
-			&user.Id,
-			&user.Email,
-			&user.FirstName,
-			&user.LastName,
-			&user.Password,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-			&user.Status,
-			&user.IsDeleted,
-			&user.Roles,
-			&user.Permissions,
-		)
-		if err != nil {
-			return nil, err
-		}
+	err := row.Scan(
+		&user.Id,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.Password,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.Status,
+		&user.IsDeleted,
+		&user.Roles,
+		&user.Permissions,
+	)
+	if err != nil {
+		return user, err
 	}
 
 	return user, nil

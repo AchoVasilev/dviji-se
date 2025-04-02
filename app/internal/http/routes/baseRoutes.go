@@ -15,4 +15,5 @@ func BaseRoutes(mux *http.ServeMux, db *sql.DB) {
 
 	mux.HandleFunc("GET /", handler.HandleHomePage)
 	mux.HandleFunc("GET /not-found", handler.HandleNotFound)
+	mux.HandleFunc("GET /error", handler.HandleError)
 }

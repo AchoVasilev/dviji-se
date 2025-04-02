@@ -64,7 +64,7 @@ CREATE TABLE users_permissions
   CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id),
   CONSTRAINT fk_permission_id FOREIGN KEY(permission_id) REFERENCES permissions(id),
 
-  CONSTRAINT pk_users_permissions_id PRIMARY KEY(user_id, role_id)
+  CONSTRAINT pk_users_permissions_id PRIMARY KEY(user_id, permission_id)
 );
 
 CREATE TABLE roles_permissions
