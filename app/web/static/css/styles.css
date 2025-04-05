@@ -6,6 +6,10 @@
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-red-50: oklch(0.971 0.013 17.38);
+    --color-red-500: oklch(0.637 0.237 25.331);
+    --color-red-600: oklch(0.577 0.245 27.325);
+    --color-red-700: oklch(0.505 0.213 27.518);
     --color-red-800: oklch(0.444 0.177 26.899);
     --color-red-900: oklch(0.396 0.141 25.723);
     --color-orange-500: oklch(0.705 0.213 47.604);
@@ -233,9 +237,6 @@
   .bottom-0 {
     bottom: calc(var(--spacing) * 0);
   }
-  .z-2 {
-    z-index: 2;
-  }
   .z-10 {
     z-index: 10;
   }
@@ -247,6 +248,9 @@
   }
   .m-2 {
     margin: calc(var(--spacing) * 2);
+  }
+  .m-5 {
+    margin: calc(var(--spacing) * 5);
   }
   .mx-4 {
     margin-inline: calc(var(--spacing) * 4);
@@ -746,11 +750,11 @@
   .text-\[\#FF6A3D\] {
     color: #FF6A3D;
   }
+  .text-blue-300 {
+    color: var(--color-blue-300);
+  }
   .text-blue-400 {
     color: var(--color-blue-400);
-  }
-  .text-blue-600 {
-    color: var(--color-blue-600);
   }
   .text-gray-200 {
     color: var(--color-gray-200);
@@ -769,6 +773,9 @@
   }
   .text-gray-900 {
     color: var(--color-gray-900);
+  }
+  .text-red-600 {
+    color: var(--color-red-600);
   }
   .text-white {
     color: var(--color-white);
@@ -1150,9 +1157,9 @@
       background-color: var(--color-gray-900);
     }
   }
-  .dark\:text-blue-500 {
+  .dark\:text-blue-400 {
     @media (prefers-color-scheme: dark) {
-      color: var(--color-blue-500);
+      color: var(--color-blue-400);
     }
   }
   .dark\:text-gray-300 {
@@ -1168,6 +1175,11 @@
   .dark\:text-gray-600 {
     @media (prefers-color-scheme: dark) {
       color: var(--color-gray-600);
+    }
+  }
+  .dark\:text-red-500 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-red-500);
     }
   }
   .dark\:text-white {
@@ -1357,6 +1369,108 @@
   .heading {
     font-size: 2.8rem;
   }
+}
+.input-field {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+  border-color: var(--color-gray-300);
+  background-color: var(--color-gray-50);
+  padding: calc(var(--spacing) * 2.5);
+  color: var(--color-gray-900);
+  &:focus {
+    border-color: var(--color-blue-600);
+  }
+  &:focus {
+    --tw-ring-color: var(--color-blue-600);
+  }
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--color-gray-600);
+  }
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--color-gray-700);
+  }
+  @media (prefers-color-scheme: dark) {
+    color: var(--color-white);
+  }
+  @media (prefers-color-scheme: dark) {
+    &::placeholder {
+      color: var(--color-gray-400);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    &:focus {
+      border-color: var(--color-blue-500);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    &:focus {
+      --tw-ring-color: var(--color-blue-500);
+    }
+  }
+}
+.input-field-label {
+  margin-bottom: calc(var(--spacing) * 2);
+  display: block;
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  --tw-font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+  @media (prefers-color-scheme: dark) {
+    color: var(--color-white);
+  }
+}
+.input-error {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+  border-color: var(--color-red-500);
+  background-color: var(--color-red-50);
+  padding: calc(var(--spacing) * 2.5);
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  color: var(--color-red-900);
+  &::placeholder {
+    color: var(--color-red-700);
+  }
+  &:focus {
+    border-color: var(--color-red-500);
+  }
+  &:focus {
+    --tw-ring-color: var(--color-red-500);
+  }
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--color-red-500);
+  }
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--color-gray-700);
+  }
+  @media (prefers-color-scheme: dark) {
+    color: var(--color-red-500);
+  }
+  @media (prefers-color-scheme: dark) {
+    &::placeholder {
+      color: var(--color-red-500);
+    }
+  }
+}
+.error {
+  color: var(--color-red-500);
+  @media (prefers-color-scheme: dark) {
+    color: var(--color-red-500);
+  }
+  display: block;
+}
+.d-none {
+  display: none;
+}
+.d-block {
+  display: block;
 }
 @property --tw-translate-x {
   syntax: "*";

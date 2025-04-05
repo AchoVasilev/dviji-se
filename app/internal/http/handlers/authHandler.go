@@ -31,13 +31,24 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 	defer cancel()
 
 	input := new(models.CreateUserResource)
-	success := httputils.ProcessRequestBody(writer, req, input)
-	if !success {
+	result := httputils.ProcessBody(writer, req, input)
+	if result.ParsingError != nil {
+		slog.Error(result.ParsingError.Error())
+		http.Error(writer, "internal.server.error", http.StatusInternalServerError)
+		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
 	if input.Password != input.RepeatPassword {
-		httputils.SendBadRequestResponse(writer, "Email or password do not match")
+		result.ValidationErrors = append(result.ValidationErrors, &httputils.ValidationError{
+			Value: "",
+			Field: "repeatPassword",
+			Error: "Паролите не съвпадат",
+		})
+	}
+
+	if result.ValidationErrors != nil {
+		util.Must(templates.FormErrors(result.ValidationErrors).Render(req.Context(), writer))
 		return
 	}
 
@@ -101,12 +112,16 @@ func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.R
 	return
 }
 
-func (handler *AuthHandler) GetLoginRegister(writer http.ResponseWriter, req *http.Request) {
+func (handler *AuthHandler) GetLoginLayout(writer http.ResponseWriter, req *http.Request) {
 	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
 	util.Must(templates.Login().Render(req.Context(), writer))
+}
+
+func (handler *AuthHandler) GetRegisterLayour(writer http.ResponseWriter, req *http.Request) {
+	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Register()), "Регистрация", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *AuthHandler) GetRegister(writer http.ResponseWriter, req *http.Request) {

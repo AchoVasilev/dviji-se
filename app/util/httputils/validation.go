@@ -1,7 +1,6 @@
 package httputils
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"reflect"
@@ -15,6 +14,7 @@ import (
 type ValidationError struct {
 	Field string `json:"field"`
 	Error string `json:"error"`
+	Value string `json:"value"`
 }
 
 type ValidationResult struct {
@@ -72,12 +72,20 @@ func validatePayload(payload any) []*ValidationError {
 				key = strings.ToLower(validationErr.StructField())
 			}
 
-			fmt.Println(validationErr.Field())
-			currentErr := &ValidationError{
-				Field: key,
-				Error: getErrorMessage(validationErr.Tag()),
+			var currentErr *ValidationError
+			if validationErr.Tag() == "password" {
+				currentErr = &ValidationError{
+					Field: key,
+					Error: getErrorMessage(validationErr.Tag()),
+					Value: "",
+				}
+			} else {
+				currentErr = &ValidationError{
+					Field: key,
+					Error: getErrorMessage(validationErr.Tag()),
+					Value: validationErr.Value().(string),
+				}
 			}
-
 			errors = append(errors, currentErr)
 		}
 	}

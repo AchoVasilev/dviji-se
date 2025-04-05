@@ -1,194 +1,144 @@
 package templates
 
 templ LoginRegister(content templ.Component) {
-	<section class="bg-gray-50 dark:bg-gray-900">
-		<div class="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:h-screen">
-			<a href="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-				<img class="w-12 h-12 mr-2" src="static/img/logo-reversed.png" alt="logo"/>
-				Движи се
-			</a>
-			<section
-				class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700"
-			>
-				<div class="p-6 space-y-4 md:space-y-6 sm:p-8" id="template-container">
-					@content
-				</div>
-				<div class="flex items-center mb-3 ml-2 mr-2">
-					<hr class="h-0 border-b border-solid border-gray-500 grow"/>
-					<p class="mx-4 text-white">или</p>
-					<hr class="h-0 border-b border-solid border-gray-500 grow"/>
-				</div>
-				<section class="flex items-center justify-center pb-4">
-					<a
-						href="#"
-						class="flex items-center justify-center py-2 px-5 text-sm font-medium transition duration-300 rounded-2xl text-white bg-gray-700 hover:bg-gray-500 focus:ring-4 focus:ring-gray-400"
-					>
-						<img class="h-5 mr-2" src="static/img/google.svg" alt="Използвай Google"/>
-						Google
-					</a>
-				</section>
+<section class="bg-gray-50 dark:bg-gray-900">
+	<div class="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:h-screen">
+		<a href="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
+			<img class="w-12 h-12 mr-2" src="static/img/logo-reversed.png" alt="logo" />
+			Движи се
+		</a>
+		<section
+			class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+			<div class="p-6 space-y-4 md:space-y-6 sm:p-8" id="template-container">
+				@content
+			</div>
+			<div class="flex items-center mb-3 ml-2 mr-2">
+				<hr class="h-0 border-b border-solid border-gray-500 grow" />
+				<p class="mx-4 text-white">или</p>
+				<hr class="h-0 border-b border-solid border-gray-500 grow" />
+			</div>
+			<section class="flex items-center justify-center pb-4">
+				<a href="#"
+					class="flex items-center justify-center py-2 px-5 text-sm font-medium transition duration-300 rounded-2xl text-white bg-gray-700 hover:bg-gray-500 focus:ring-4 focus:ring-gray-400">
+					<img class="h-5 mr-2" src="static/img/google.svg" alt="Използвай Google" />
+					Google
+				</a>
 			</section>
-		</div>
-	</section>
+		</section>
+	</div>
+</section>
+<script defer type="text/javascript" src="/static/scripts/validation.js"></script>
 }
 
 templ Login() {
-	<title>Движи се - Вход</title>
-	<section class="flex flex-wrap items-center justify-center pb-2 border-b border-solid border-gray-500 lg:flex-row">
-		<h2 class="nav-item-on">Вход</h2>
-		<a
-			class="nav-item-off text-white cursor-pointer"
-			hx-get="/register"
-			hx-target="#template-container"
-			hx-swap="innerHTML"
-			hx-replace-url="/register"
-		>Регистрация</a>
-	</section>
-	<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-		Влезте с акаунта си
-	</h1>
-	<form
-		class="space-y-4 md:space-y-6"
-		hx-post="/login"
-		id="login-form"
-		hx-validate="true"
-		hx-ext="json-enc"
-		hx-swap="none"
-	>
-		<div>
-			<label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Имейл</label>
-			<input
-				name="email"
-				id="email"
-				type="email"
-				class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				placeholder="name@email.com"
-				required
-				oninvalid="this.setCustomValidity('Въведете валиден имейл')"
-				oninput="this.setCustomValidity('')"
-				onblur="this.reportValidity()"
-			/>
-		</div>
-		<div>
-			<label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Парола</label>
-			<input
-				type="password"
-				name="password"
-				id="password"
-				placeholder="••••••••"
-				minlength="6"
-				class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				required
-				oninvalid="this.setCustomValidity('Паролата трябва да е поне 6 символа')"
-				oninput="this.setCustomValidity('')"
-			/>
-		</div>
-		<div class="flex items-center justify-between">
-			<div class="flex items-start">
-				<div class="flex items-center h-5">
-					<input
-						id="remember"
-						aria-describedby="remember"
-						type="checkbox"
-						class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
-					/>
-				</div>
-				<div class="ml-3 text-sm">
-					<label for="remember" class="text-gray-500 dark:text-gray-300">Запомни ме</label>
-				</div>
+<title>Движи се - Вход</title>
+<section class="flex flex-wrap items-center justify-center pb-2 border-b border-solid border-gray-500 lg:flex-row">
+	<h2 class="nav-item-on">Вход</h2>
+	<a class="nav-item-off text-white cursor-pointer" href="/register" hx-get="/register/template"
+		hx-target="#template-container" hx-swap="innerHTML" hx-replace-url="/register">Регистрация</a>
+</section>
+<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+	Влезте с акаунта си
+</h1>
+<form class="space-y-4 md:space-y-6" action="POST" hx-post="/login" id="login-form" hx-validate="true" hx-ext="json-enc"
+	hx-swap="none">
+	<div>
+		<label for="email" class="input-field-label" id="email-label">Имейл</label>
+		<input name="email" id="email" type="text" class="input-field" pattern="[^@\s]+@[^@\s]+"
+			title="Въведете имейл адрес" placeholder="name@email.com" lang="en" spellcheck="false" autocomplete="on"
+			inputmode="email" required oninvalid="addErrorToElement('email', 'Въведете валиден имейл')"
+			onblur="addErrorToElement('email', 'Въведете валиден имейл')" oninput="checkElementValidity('email')" />
+		<p class="hidden" id="error-email"></p>
+	</div>
+	<div>
+		<label for="password" class="input-field-label" id="password-label">Парола</label>
+		<input type="password" name="password" id="password" placeholder="••••••••" minlength="6" class="input-field"
+			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+			onblur="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+			oninput="checkElementValidity('password')" />
+		<p class="hidden" id="error-password"></p>
+	</div>
+	<div class="flex items-center justify-between">
+		<div class="flex items-start">
+			<div class="flex items-center h-5">
+				<input id="remember" aria-describedby="remember" type="checkbox"
+					class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" />
 			</div>
-			<a href="#" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">
-				Забравена парола?
-			</a>
+			<div class="ml-3 text-sm">
+				<label for="remember" class="text-gray-500 dark:text-gray-300">Запомни ме</label>
+			</div>
 		</div>
-		<button
-			type="submit"
-			class="w-full cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-		>
-			Вход
-		</button>
-		<p class="text-sm font-light text-gray-500 dark:text-gray-400">
-			Все още нямате профил?
-			<a href="/register" class="font-medium text-blue-600 hover:underline dark:text-blue-500">Регистрация</a>
-		</p>
-	</form>
+		<a href="#" class="text-sm font-medium text-blue-300 hover:underline dark:text-blue-400">
+			Забравена парола?
+		</a>
+	</div>
+	<button type="submit"
+		class="w-full cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+		Вход
+	</button>
+	<p class="text-sm font-light text-gray-500 dark:text-gray-400">
+		Все още нямате профил?
+		<a href="/register" class="font-medium text-blue-300 hover:underline dark:text-blue-400">Регистрация</a>
+	</p>
+</form>
 }
 
 templ Register() {
-	<title>Движи се - Регистрация</title>
-	<section class="flex flex-wrap items-center justify-center pb-2 border-b border-solid border-gray-500 lg:flex-row">
-		<a
-			class="text-white nav-item-off cursor-pointer"
-			hx-get="/login/template"
-			hx-target="#template-container"
-			hx-swap="innerHTML"
-			hx-replace-url="/login"
-		>Вход</a>
-		<h2 class="nav-item-on">Регистрация</h2>
-	</section>
-	<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-		Регистрирайте се
-	</h1>
-	<form class="space-y-4 md:space-y-6" action="#">
-		<div>
-			<label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Имейл</label>
-			<input
-				type="email"
-				name="email"
-				id="email"
-				class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				placeholder="name@email.com"
-				required=""
-			/>
+<title>Движи се - Регистрация</title>
+<section class="flex flex-wrap items-center justify-center pb-2 border-b border-solid border-gray-500 lg:flex-row">
+	<a class="text-white nav-item-off cursor-pointer" href="/login" hx-get="/login/template"
+		hx-target="#template-container" hx-swap="innerHTML" hx-replace-url="/login">Вход</a>
+	<h2 class="nav-item-on">Регистрация</h2>
+</section>
+<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+	Регистрирайте се
+</h1>
+<form class="space-y-4 md:space-y-6" action="POST" hx-post="/register" id="register-form" hx-validate="true"
+	hx-ext="json-enc" hx-swap="none">
+	<div>
+		<label for="email" class="input-field-label" id="email-label">Имейл</label>
+		<input name="email" id="email" type="text" class="input-field" pattern="[^@\s]+@[^@\s]+"
+			title="Въведете имейл адрес" placeholder="name@email.com" lang="en" spellcheck="false" autocomplete="on"
+			inputmode="email" required oninvalid="addErrorToElement('email', 'Въведете валиден имейл')"
+			onblur="addErrorToElement('email', 'Въведете валиден имейл')" oninput="checkElementValidity('email')" />
+		<p class="hidden" id="error-email"></p>
+	</div>
+	<div>
+		<label for="password" class="input-field-label" id="password-label">Парола</label>
+		<input type="password" name="password" id="password" placeholder="••••••••" minlength="6" class="input-field"
+			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+			onblur="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+			oninput="checkElementValidity('password')" />
+		<p class="hidden" id="error-password"></p>
+	</div>
+	<div>
+		<label for="repeat-password" class="input-field-label" id="repeat-password-label">
+			Повтори
+			парола
+		</label>
+		<input type="password" name="repeatPassword" id="repeat-password" placeholder="" class="input-field" required
+			onblur="checkRepeatPassword('repeat-password', 'Паролите не съвпадат')"
+			oninput="checkRepeatPassword('repeat-password')" />
+		<p class="hidden" id="error-repeat-password"></p>
+	</div>
+	<div class="flex items-start mb-5">
+		<div class="flex items-center h-5">
+			<input id="terms" type="checkbox" value=""
+				class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
+				required oninvalid="this.setCustomValidity('Моля, съгласете се с правилата и условията')"
+				onchange="this.setCustomValidity('')" />
 		</div>
-		<div>
-			<label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Парола</label>
-			<input
-				type="password"
-				name="password"
-				id="password"
-				placeholder="••••••••"
-				class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				required=""
-			/>
-		</div>
-		<div>
-			<label for="repeat-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-				Повтори
-				парола
-			</label>
-			<input
-				type="password"
-				name="repeat-password"
-				id="repeat-password"
-				placeholder=""
-				class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				required=""
-			/>
-		</div>
-		<div class="flex items-start mb-5">
-			<div class="flex items-center h-5">
-				<input
-					id="terms"
-					type="checkbox"
-					value=""
-					class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-					required
-				/>
-			</div>
-			<label for="terms" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-				Приемам <a href="#" class="text-blue-600 hover:underline dark:text-blue-500">правилата и условията</a>
-			</label>
-		</div>
-		<button
-			type="submit"
-			class="w-full cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-		>
-			Региистрация
-		</button>
-		<p class="text-sm font-light text-gray-500 dark:text-gray-400">
-			Имате профил?
-			<a href="/login" class="font-medium text-blue-600 hover:underline dark:text-blue-500">Вход</a>
-		</p>
-	</form>
+		<label for="terms" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+			Приемам <a href="#" class="text-blue-300 hover:underline dark:text-blue-400">правилата и условията</a>
+		</label>
+	</div>
+	<button type="submit"
+		class="w-full cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+		Региистрация
+	</button>
+	<p class="text-sm font-light text-gray-500 dark:text-gray-400">
+		Имате профил?
+		<a href="/login" class="font-medium text-blue-300 hover:underline dark:text-blue-400">Вход</a>
+	</p>
+</form>
 }

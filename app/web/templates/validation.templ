@@ -1,0 +1,52 @@
+package templates
+
+import "server/util/httputils"
+
+templ FormErrors(errors []*httputils.ValidationError) {
+for _, err := range errors {
+if err.Field == "email" {
+@InvalidEmail(err.Value)
+}
+if err.Field == "password" {
+@InvalidPassword()
+}
+if err.Field == "repeatPassword" {
+@InvalidRepeatPassword()
+}
+}
+}
+
+templ InvalidEmail(email string) {
+<label for="email" class="input-field-label error" id="email-label" hx-swap-oob="true">Имейл</label>
+<input name="email" id="email" type="text" class="input-field input-error" pattern="[^@\s]+@[^@\s]+"
+	title="Въведете имейл адрес" placeholder="name@email.com" lang="en" spellcheck="false" autocomplete="on"
+	inputmode="email" required oninvalid="addErrorToElement('email', 'Въведете валиден имейл')"
+	onblur="addErrorToElement('email', 'Въведете валиден имейл')" oninput="checkElementValidity('email')" value={ email }
+	hx-swap-oob="true" />
+@InvalidMessage("Невалиден имейл", "error-email")
+}
+
+templ InvalidPassword() {
+<label for="password" class="input-field-label error" id="password-label" hx-swap-oob="true">Парола</label>
+<input type="password" name="password" id="password" placeholder="••••••••" minlength="6"
+	class="input-field input-error" required
+	oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+	onblur="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+	oninput="checkElementValidity('password')" hx-swap-oob="true" />
+@InvalidMessage("Невалидна парола", "error-password")
+}
+
+templ InvalidRepeatPassword() {
+<label for="repeat-password" class="input-field-label" id="repeat-password-label error" hx-swap-oob="true">
+	Повтори
+	парола
+</label>
+<input type="password" name="repeatPassword" id="repeat-password" placeholder="" class="input-field input-error"
+	required onblur="checkRepeatPassword('repeat-password', 'Паролите не съвпадат')"
+	oninput="checkRepeatPassword('repeat-password')" hx-swap-oob="true" />
+@InvalidMessage("Паролите не съвпадат", "error-repeat-password")
+}
+
+templ InvalidMessage(message string, elementId string) {
+<p class="error" id={ elementId } hx-swap-oob="true">{ message }</p>
+}
