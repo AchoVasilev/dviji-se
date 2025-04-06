@@ -11,8 +11,8 @@ type User struct {
 	Id          uuid.UUID
 	Email       string
 	Password    string
-	FirstName   string
-	LastName    string
+	FirstName   sql.NullString
+	LastName    sql.NullString
 	Status      UserStatus
 	Roles       []Role
 	Permissions []Permission

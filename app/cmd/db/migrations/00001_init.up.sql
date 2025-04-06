@@ -1,7 +1,7 @@
 CREATE TABLE users
 (
   id UUID NOT NULL,
-  email VARCHAR NOT NULL,
+  email VARCHAR NOT NULL UNIQUE,
   password VARCHAR NOT NULL,
   first_name VARCHAR(50),
   last_name VARCHAR(50),

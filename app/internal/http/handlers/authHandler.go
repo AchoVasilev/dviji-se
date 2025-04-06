@@ -34,7 +34,6 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 	result := httputils.ProcessBody(writer, req, input)
 	if result.ParsingError != nil {
 		slog.Error(result.ParsingError.Error())
-		http.Error(writer, "internal.server.error", http.StatusInternalServerError)
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
@@ -48,25 +47,30 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 	}
 
 	if result.ValidationErrors != nil {
+		writer.WriteHeader(http.StatusUnprocessableEntity)
 		util.Must(templates.FormErrors(result.ValidationErrors).Render(req.Context(), writer))
 		return
 	}
 
 	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		slog.Error(err.Error())
-		httputils.SendInternalServerResponse(writer, req)
+		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
+
 	slog.Info(user.Email)
-	//	if user != nil {
-	//		httputils.SendConflictResponse(writer, "User exists")
-	//		return
-	//	}
+	slog.Info(input.Email)
+	if user.Email == input.Email {
+		writer.WriteHeader(http.StatusConflict)
+		util.Must(templates.InvalidMessage("Потребител с този имейл съществува", "error-email").Render(req.Context(), writer))
+		return
+	}
 
 	id, err := handler.userService.RegisterUser(input)
 	if err != nil {
-		httputils.SendInternalServerResponse(writer, req)
+		slog.Error(err.Error())
+		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
