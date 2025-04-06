@@ -14,6 +14,7 @@ import (
 type userRepository interface {
 	Create(user.User) error
 	FindByEmail(ctx context.Context, email string) (user.User, error)
+	ExistsByEmail(ctx context.Context, email string) (bool, error)
 }
 
 type UserService struct {
@@ -28,6 +29,10 @@ func NewUserService(userRepository userRepository) *UserService {
 
 func (userService *UserService) GetUserByEmail(ctx context.Context, email string) (user.User, error) {
 	return userService.userRepository.FindByEmail(ctx, email)
+}
+
+func (userService *UserService) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	return userService.userRepository.ExistsByEmail(ctx, email)
 }
 
 func (userService *UserService) RegisterUser(input *models.CreateUserResource) (uuid.UUID, error) {

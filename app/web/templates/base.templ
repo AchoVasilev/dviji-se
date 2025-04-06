@@ -1,13 +1,14 @@
 package templates
 
-templ head(title string, csrfToken string) {
+import "server/util/jsonutils"
+
+templ head(title string) {
 
 <head>
 	<title>Движи се - { title }</title>
 	<meta charset="UTF-8" />
 	<meta name="description" content="Здравословен начин на живот, тренировки, хранителни режими и рецепти" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="csrf-token" content={ csrfToken } />
 	<meta name="htmx-config" content='{
           "responseHandling":[
 	      {"code":"204", "swap": false},
@@ -186,9 +187,10 @@ templ footer() {
 }
 
 templ Layout(contents templ.Component, title string, activeLink string, csrfToken string) {
+{{ tokenHeader := jsonutils.MarshalJSON(templ.KV("X-CSRF-TOKEN", csrfToken)) }}
 <!DOCTYPE html>
-<html lang="bg">
-@head(title, csrfToken)
+<html lang="bg" hx-headers={ tokenHeader }>
+@head(title)
 
 <body class="flex flex-col h-full">
 	@header(activeLink)
@@ -203,9 +205,10 @@ templ Layout(contents templ.Component, title string, activeLink string, csrfToke
 }
 
 templ SimpleLayout(contents templ.Component, title string, csrfToken string) {
+{{ tokenHeader := jsonutils.MarshalJSON(jsonutils.KeyValue{"X-CSRF-TOKEN": csrfToken}) }}
 <!DOCTYPE html>
-<html lang="bg">
-@head(title, csrfToken)
+<html lang="bg" hx-headers={ tokenHeader }>
+@head(title)
 
 <body class="flex flex-col h-full">
 	<main>
@@ -213,7 +216,6 @@ templ SimpleLayout(contents templ.Component, title string, csrfToken string) {
 	</main>
 	<script defer type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
 	<script defer src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
-	<script defer type="text/javascript" src="./../static/scripts/token.js"></script>
 </body>
 
 </html>

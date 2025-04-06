@@ -27,3 +27,15 @@ func ParseJSON(req *http.Request, value any) error {
 
 	return json.NewDecoder(req.Body).Decode(&value)
 }
+
+func MarshalJSON(value any) string {
+	result, err := json.Marshal(value)
+	if err != nil {
+		slog.Error(err.Error())
+		panic(err)
+	}
+
+	return string(result)
+}
+
+type KeyValue map[string]string

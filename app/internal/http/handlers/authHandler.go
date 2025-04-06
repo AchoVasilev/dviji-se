@@ -52,16 +52,15 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 		return
 	}
 
-	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
+	exists, err := handler.userService.ExistsByEmail(ctx, input.Email)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error(err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
-	slog.Info(user.Email)
-	slog.Info(input.Email)
-	if user.Email == input.Email {
+	if exists {
+		slog.Info(fmt.Sprintf("Attempt to register with existing user. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusConflict)
 		util.Must(templates.InvalidMessage("Потребител с този имейл съществува", "error-email").Render(req.Context(), writer))
 		return
@@ -75,7 +74,8 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 	}
 
 	slog.Info(fmt.Sprintf("User successfully created. [id=%s]", id.String()))
-	httputils.SendCreatedAt(writer, fmt.Sprintf("/users/%s", id.String()))
+	writer.WriteHeader(http.StatusOK)
+	writer.Header().Add("HX-Redirect", "/")
 }
 
 func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Request) {
@@ -94,7 +94,8 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 	}
 
 	if result.ValidationErrors != nil {
-		writer.Header().Add("HX-Redirect", "/error")
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		util.Must(templates.FormErrors(result.ValidationErrors).Render(req.Context(), writer))
 		return
 	}
 

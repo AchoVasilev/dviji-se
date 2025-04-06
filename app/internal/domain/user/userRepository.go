@@ -79,7 +79,7 @@ func (repo *UserRepository) Create(user User) error {
 	var permissionsQuery strings.Builder
 	permissionsQuery.WriteString("INSERT INTO users_permissions VALUES ")
 
-	args := []interface{}{}
+	args := []any{}
 	argPos := 1
 
 	for i, perm := range role.Permissions {
@@ -184,4 +184,12 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User
 	}
 
 	return user, nil
+}
+
+func (repo *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND is_deleted = FALSE)`
+	err := repo.db.QueryRowContext(ctx, query, email).Scan(&exists)
+
+	return exists, err
 }
