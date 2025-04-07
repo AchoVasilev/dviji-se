@@ -99,10 +99,17 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 		return
 	}
 
-	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
+	exists, err := handler.userService.ExistsByEmail(ctx, input.Email)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error(err.Error())
-		httputils.SendInternalServerResponse(writer, req)
+		writer.Header().Add("HX-Redirect", "/error")
+		return
+	}
+
+	if !exists {
+		slog.Info(fmt.Sprintf("Attempt to login with non-existing user. [email=%s]", input.Email))
+		writer.WriteHeader(http.StatusNotFound)
+		util.Must(templates.InvalidMessage("Потребител с този имейл не съществува", "error-email").Render(req.Context(), writer))
 		return
 	}
 
