@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"server/util/httputils"
 	"server/util/securityutil"
 	"strings"
 	"time"
@@ -38,14 +39,7 @@ func CSRFCookie(next http.Handler) http.Handler {
 			if err != nil || xsrfCookie == nil {
 				key := os.Getenv("XSRF")
 				csrfToken := xsrftoken.Generate(key, "", http.MethodPost)
-				http.SetCookie(w, &http.Cookie{
-					Name:     "csrf_token",
-					Value:    csrfToken,
-					Expires:  time.Now().Add(24 * time.Hour),
-					HttpOnly: true,
-					Secure:   true,
-					SameSite: http.SameSiteStrictMode,
-				})
+				httputils.SetHttpOnlyCookie("csrf_token", csrfToken, time.Now().Add(24*time.Hour), w)
 
 				w.Header().Set("X-CSRF-TOKEN", csrfToken)
 				ctx := context.WithValue(r.Context(), XSRFKey, csrfToken)
