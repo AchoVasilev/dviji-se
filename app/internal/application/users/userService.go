@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-	"errors"
 	"server/internal/domain/user"
 	"server/internal/http/handlers/models"
 	"server/util"
@@ -11,8 +10,6 @@ import (
 
 	"github.com/google/uuid"
 )
-
-var ErrHashNotMatch = errors.New("Hashes didn't match")
 
 type userRepository interface {
 	Create(user.User) error
@@ -63,11 +60,6 @@ func (userService *UserService) LoginUser(ctx context.Context, email string, pas
 	user, err := userService.GetUserByEmail(ctx, email)
 	if err != nil {
 		return user, err
-	}
-
-	hashMatch := securityutil.CompareHash(user.Password, password)
-	if !hashMatch {
-		return user, ErrHashNotMatch
 	}
 
 	return user, nil

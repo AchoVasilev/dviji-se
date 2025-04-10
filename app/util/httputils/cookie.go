@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type AuthCookie string
+
+var AuthCookieName AuthCookie = "dviji_se_login"
+
 func SetHttpOnlyCookie(name string, value string, expirationTime time.Time, writer http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:     name,
