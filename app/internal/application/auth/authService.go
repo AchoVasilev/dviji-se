@@ -25,8 +25,8 @@ func (auth *AuthService) Authenticate(user user.User, password string, ctx conte
 		return nil, ErrHashNotMatch
 	}
 
-	token, tokenTime := securityutil.GenerateAccessToken(user.Id.String(), user.Email)
-	refreshToken, refreshTokenTime := securityutil.GenerateRefreshToken(user.Id.String(), user.Email)
+	token, tokenTime := securityutil.GenerateAccessToken(user)
+	refreshToken, refreshTokenTime := securityutil.GenerateRefreshToken(user)
 	return &TokenResult{
 		Token:            token,
 		TokenTime:        tokenTime,

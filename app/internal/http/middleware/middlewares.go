@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"server/util/ctxutils"
 	"server/util/httputils"
 	"server/util/securityutil"
 	"strings"
@@ -30,8 +31,6 @@ type Nonces struct {
 	HtmxCssHash string
 }
 
-var XSRFKey contextKey = "xsrf"
-
 func CSRFCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
@@ -39,30 +38,21 @@ func CSRFCookie(next http.Handler) http.Handler {
 			if err != nil || xsrfCookie == nil {
 				key := os.Getenv("XSRF")
 				csrfToken := xsrftoken.Generate(key, "", http.MethodPost)
-				httputils.SetHttpOnlyCookie("csrf_token", csrfToken, time.Now().Add(24*time.Hour), w)
+				httputils.SetHttpOnlyCookie(httputils.XSRFCookieName, csrfToken, time.Now().Add(24*time.Hour), w)
 
 				w.Header().Set("X-CSRF-TOKEN", csrfToken)
-				ctx := context.WithValue(r.Context(), XSRFKey, csrfToken)
+				ctx := ctxutils.WithCSRFToken(r.Context(), csrfToken)
 				r = r.WithContext(ctx)
 			}
 
 			if xsrfCookie != nil {
-				ctx := context.WithValue(r.Context(), XSRFKey, xsrfCookie.Value)
+				ctx := ctxutils.WithCSRFToken(r.Context(), xsrfCookie.Value)
 				r = r.WithContext(ctx)
 			}
 		}
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func GetCSRF(ctx context.Context) string {
-	token, ok := ctx.Value(XSRFKey).(string)
-	if !ok {
-		return ""
-	}
-
-	return token
 }
 
 func CSRFValidate(next http.Handler) http.Handler {

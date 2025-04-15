@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 	"server/internal/application/categories"
-	"server/internal/http/middleware"
 	"server/util"
+	"server/util/ctxutils"
 	"server/web/templates"
 )
 
@@ -24,16 +24,16 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 		return
 	}
 
-	util.Must(templates.Layout(templates.Home(), "Home", "/", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.Layout(templates.Home(), "Home", "/", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
-	util.Must(templates.Layout(templates.NotFound(), "Not found", "/not-found", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.Layout(templates.NotFound(), "Not found", "/not-found", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *DefaultHandler) HandleError(writer http.ResponseWriter, req *http.Request) {
-	requestId := middleware.RequestIdFromContext(req.Context())
+	requestId := ctxutils.RequestIdFromContext(req.Context())
 	writer.WriteHeader(http.StatusInternalServerError)
-	util.Must(templates.Layout(templates.Error(requestId), "Error", "/error", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.Layout(templates.Error(requestId), "Error", "/error", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
 }

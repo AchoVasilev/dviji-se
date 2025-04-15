@@ -6,16 +6,19 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"server/internal/application/auth"
 	"server/internal/application/users"
 	"server/internal/http/handlers/models"
-	"server/internal/http/middleware"
 	"server/util"
+	"server/util/ctxutils"
 	"server/util/httputils"
+	"server/util/securityutil"
 	"server/web/templates"
 )
 
 type AuthHandler struct {
 	userService *users.UserService
+	authService *auth.AuthService
 }
 
 func NewAuthHandler(userService *users.UserService) *AuthHandler {
@@ -99,25 +102,31 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 		return
 	}
 
-	exists, err := handler.userService.ExistsByEmail(ctx, input.Email)
+	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error(err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
-	if !exists {
-		slog.Info(fmt.Sprintf("Attempt to login with non-existing user. [email=%s]", input.Email))
+	if err == sql.ErrNoRows || user.Email == "" {
+		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
-		util.Must(templates.InvalidMessage("Потребител с този имейл не съществува", "error-email").Render(req.Context(), writer))
+		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(req.Context(), writer))
 		return
 	}
 
-	slog.Info(user.Email)
+	// remember me func
 
-	//	if user == nil {
-	//		slog.Info("Success")
-	//	}
+	tokenResult, err := handler.authService.Authenticate(user, input.Password, req.Context())
+	if err == auth.ErrHashNotMatch {
+		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
+		writer.WriteHeader(http.StatusNotFound)
+		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(req.Context(), writer))
+		return
+	}
+
+	httputils.SetHttpOnlyCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, writer)
 }
 
 func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.Request) {
@@ -125,7 +134,7 @@ func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.R
 }
 
 func (handler *AuthHandler) GetLoginLayout(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
@@ -133,7 +142,7 @@ func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Reque
 }
 
 func (handler *AuthHandler) GetRegisterLayour(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Register()), "Регистрация", middleware.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Register()), "Регистрация", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 
 func (handler *AuthHandler) GetRegister(writer http.ResponseWriter, req *http.Request) {

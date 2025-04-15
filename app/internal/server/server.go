@@ -26,6 +26,7 @@ func Initialize(db *sql.DB) {
 		middleware.CSRFValidate,
 		middleware.CSRFCookie,
 		middleware.ContentType,
+		middleware.CheckAuth,
 		//	middleware.ContentSecurityPolicy,
 		middleware.PopulateRequestId,
 		middleware.AppendLogger,

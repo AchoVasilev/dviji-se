@@ -5,13 +5,17 @@ import (
 	"time"
 )
 
-type AuthCookie string
+type CookieName string
 
-var AuthCookieName AuthCookie = "dviji_se_login"
+const (
+	AuthCookieName    CookieName = "X-LOGIN-TOKEN"
+	RefreshCookieName CookieName = "X-REFRESH-TOKEN"
+	XSRFCookieName    CookieName = "csrf_token"
+)
 
-func SetHttpOnlyCookie(name string, value string, expirationTime time.Time, writer http.ResponseWriter) {
+func SetHttpOnlyCookie(name CookieName, value string, expirationTime time.Time, writer http.ResponseWriter) {
 	cookie := &http.Cookie{
-		Name:     name,
+		Name:     string(name),
 		Value:    value,
 		Expires:  expirationTime,
 		Path:     "/",

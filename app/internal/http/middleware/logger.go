@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"server/util/ctxutils"
 )
 
 func AppendLogger(next http.Handler) http.Handler {
@@ -13,7 +14,7 @@ func AppendLogger(next http.Handler) http.Handler {
 		}))
 
 		ctx := req.Context()
-		reqId := RequestIdFromContext(ctx)
+		reqId := ctxutils.RequestIdFromContext(ctx)
 
 		logger = logger.With("requestId", reqId)
 
