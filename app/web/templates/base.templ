@@ -2,12 +2,11 @@ package templates
 
 import "server/util/jsonutils"
 
-templ head(title string) {
-
+templ head(title string, description string) {
 <head>
-	<title>Движи се - { title }</title>
+	<title>{ title } - Движи се</title>
 	<meta charset="UTF-8" />
-	<meta name="description" content="Здравословен начин на живот, тренировки, хранителни режими и рецепти" />
+	<meta name="description" content={ description } />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta name="htmx-config" content='{
           "responseHandling":[
@@ -20,8 +19,8 @@ templ head(title string) {
 	      {"code":"...", "swap": true}
 	    ]
 	  }' />
-	<link rel="icon" type="image/png" href="static/img/logo-reversed.png" />
-	<link rel="stylesheet" href="static/css/styles.css" />
+	<link rel="icon" type="image/png" href="/static/img/logo-reversed.png" />
+	<link rel="stylesheet" href="/static/css/styles.css" />
 	<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
 }
@@ -31,7 +30,7 @@ templ header(activeLink string) {
 	<nav class="lg:px-16 px-6 bg-blue-n shadow-md flex flex-wrap items-center py-3">
 		<section class="flex-1 flex justify-start">
 			<a href="/" class="flex text-lg font-semibold">
-				<img src="static/img/moveit.png" width="150" height="50" class="p-2" alt="Logo" />
+				<img src="/static/img/moveit.png" width="150" height="50" class="p-2" alt="Движи се - начало" />
 			</a>
 		</section>
 		<label for="menu-toggle" class="cursor-pointer lg:hidden block">
@@ -94,8 +93,8 @@ templ footer() {
 <footer class="section-bg-dark">
 	<div class="flex items-center justify-center">
 		<div class="mb-6 md:mb-0 mr-8">
-			<a href="#" class="flex flex-col items-center">
-				<img src="static/img/logo-reversed.png" class="mr-4 h-20" alt="Logo" loading="lazy" />
+			<a href="/" class="flex flex-col items-center">
+				<img src="/static/img/logo-reversed.png" class="mr-4 h-20" alt="Движи се лого" loading="lazy" />
 				<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Движи се</span>
 			</a>
 		</div>
@@ -187,11 +186,11 @@ templ footer() {
 </footer>
 }
 
-templ Layout(contents templ.Component, title string, activeLink string, csrfToken string) {
+templ Layout(contents templ.Component, title string, description string, activeLink string, csrfToken string) {
 {{ tokenHeader := jsonutils.MarshalJSON(templ.KV("X-CSRF-TOKEN", csrfToken)) }}
 <!DOCTYPE html>
 <html lang="bg" hx-headers={ tokenHeader }>
-@head(title)
+@head(title, description)
 
 <body class="flex flex-col h-full">
 	@header(activeLink)
@@ -199,23 +198,23 @@ templ Layout(contents templ.Component, title string, activeLink string, csrfToke
 		@contents
 	</main>
 	@footer()
-	<script type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
+	<script type="text/javascript" src="/static/scripts/htmx.min.js"></script>
 </body>
 
 </html>
 }
 
-templ SimpleLayout(contents templ.Component, title string, csrfToken string) {
+templ SimpleLayout(contents templ.Component, title string, description string, csrfToken string) {
 {{ tokenHeader := jsonutils.MarshalJSON(jsonutils.KeyValue{"X-CSRF-TOKEN": csrfToken}) }}
 <!DOCTYPE html>
 <html lang="bg" hx-headers={ tokenHeader }>
-@head(title)
+@head(title, description)
 
 <body class="flex flex-col h-full">
 	<main>
 		@contents
 	</main>
-	<script defer type="text/javascript" src="./../static/scripts/htmx.min.js"></script>
+	<script defer type="text/javascript" src="/static/scripts/htmx.min.js"></script>
 	<script defer src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 </body>
 

@@ -24,16 +24,34 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 		return
 	}
 
-	util.Must(templates.Layout(templates.Home(), "Home", "/", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.Layout(
+		templates.Home(),
+		"Начало",
+		"Тренировки, хранителни режими и рецепти за здравословен начин на живот.",
+		"/",
+		ctxutils.GetCSRF(req.Context()),
+	).Render(req.Context(), writer))
 }
 
 func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
-	util.Must(templates.Layout(templates.NotFound(), "Not found", "/not-found", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.Layout(
+		templates.NotFound(),
+		"Страницата не е намерена",
+		"Страницата, която търсите, не съществува.",
+		"/not-found",
+		ctxutils.GetCSRF(req.Context()),
+	).Render(req.Context(), writer))
 }
 
 func (handler *DefaultHandler) HandleError(writer http.ResponseWriter, req *http.Request) {
 	requestId := ctxutils.RequestIdFromContext(req.Context())
 	writer.WriteHeader(http.StatusInternalServerError)
-	util.Must(templates.Layout(templates.Error(requestId), "Error", "/error", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
+	util.Must(templates.Layout(
+		templates.Error(requestId),
+		"Грешка",
+		"Възникна неочаквана грешка.",
+		"/error",
+		ctxutils.GetCSRF(req.Context()),
+	).Render(req.Context(), writer))
 }

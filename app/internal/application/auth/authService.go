@@ -19,14 +19,14 @@ type TokenResult struct {
 
 type AuthService struct{}
 
-func (auth *AuthService) Authenticate(user user.User, password string, ctx context.Context) (*TokenResult, error) {
+func (auth *AuthService) Authenticate(user user.User, password string, rememberMe bool, ctx context.Context) (*TokenResult, error) {
 	hashMatch := securityutil.CompareHash(user.Password, password)
 	if !hashMatch {
 		return nil, ErrHashNotMatch
 	}
 
-	token, tokenTime := securityutil.GenerateAccessToken(user)
-	refreshToken, refreshTokenTime := securityutil.GenerateRefreshToken(user)
+	token, tokenTime := securityutil.GenerateAccessToken(user, rememberMe)
+	refreshToken, refreshTokenTime := securityutil.GenerateRefreshToken(user, rememberMe)
 	return &TokenResult{
 		Token:            token,
 		TokenTime:        tokenTime,

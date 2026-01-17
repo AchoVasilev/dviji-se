@@ -2,8 +2,10 @@ package securityutil
 
 import "golang.org/x/crypto/bcrypt"
 
+const bcryptCost = 12
+
 func HashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
 		return "", err
 	}

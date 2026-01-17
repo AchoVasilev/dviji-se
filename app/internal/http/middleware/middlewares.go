@@ -37,7 +37,7 @@ func CSRFCookie(next http.Handler) http.Handler {
 			xsrfCookie, err := r.Cookie("csrf_token")
 			if err != nil || xsrfCookie == nil {
 				key := os.Getenv("XSRF")
-				csrfToken := xsrftoken.Generate(key, "", http.MethodPost)
+				csrfToken := xsrftoken.Generate(key, "", "")
 				httputils.SetHttpOnlyCookie(httputils.XSRFCookieName, csrfToken, time.Now().Add(24*time.Hour), w)
 
 				w.Header().Set("X-CSRF-TOKEN", csrfToken)
@@ -69,13 +69,13 @@ func CSRFValidate(next http.Handler) http.Handler {
 		}
 
 		key := os.Getenv("XSRF")
-		if !xsrftoken.Valid(cookie.Value, key, "", http.MethodPost) {
+		if !xsrftoken.Valid(cookie.Value, key, "", "") {
 			csrfError(w, r, "Invalid CSRF cookie")
 			return
 		}
 
 		csrfHeader := r.Header.Get("X-CSRF-Token")
-		if csrfHeader == "" || !xsrftoken.Valid(csrfHeader, key, "", http.MethodPost) {
+		if csrfHeader == "" || !xsrftoken.Valid(csrfHeader, key, "", "") {
 			csrfError(w, r, "Invalid CSRF header")
 			return
 		}
@@ -92,6 +92,17 @@ func csrfError(w http.ResponseWriter, r *http.Request, msg string) {
 	}
 }
 
+func SecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func ContentSecurityPolicy(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nonces, found := getNonces(r.Context())
@@ -99,7 +110,7 @@ func ContentSecurityPolicy(next http.Handler) http.Handler {
 			nonces = Nonces{
 				Htmx:        securityutil.GenerateRandomString(16),
 				Tw:          securityutil.GenerateRandomString(16),
-				HtmxCssHash: "sha-256-bsV5JivYxvGywDAZ22EZJKBFip65Ng9xoJVLbBg7bdo=",
+				HtmxCssHash: "sha256-bsV5JivYxvGywDAZ22EZJKBFip65Ng9xoJVLbBg7bdo=",
 			}
 		}
 

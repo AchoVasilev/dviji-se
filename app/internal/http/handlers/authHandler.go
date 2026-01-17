@@ -115,9 +115,7 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 		return
 	}
 
-	// remember me func
-
-	tokenResult, err := handler.authService.Authenticate(user, input.Password, ctx)
+	tokenResult, err := handler.authService.Authenticate(user, input.Password, input.RememberMe, ctx)
 	if err == auth.ErrHashNotMatch {
 		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
@@ -131,7 +129,7 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 		return
 	}
 
-	httputils.SetHttpOnlyCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, writer)
+	httputils.SetAuthCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, input.RememberMe, writer)
 	writer.Header().Set("HX-Redirect", "/")
 	writer.WriteHeader(http.StatusOK)
 }
@@ -140,18 +138,34 @@ func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.R
 	return
 }
 
-func (handler *AuthHandler) GetLoginLayout(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Login()), "Вход", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
-}
-
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.Login().Render(req.Context(), writer))
-}
+	ctx := req.Context()
 
-func (handler *AuthHandler) GetRegisterLayout(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Register()), "Регистрация", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
+	if httputils.IsHTMXRequest(req) {
+		util.Must(templates.Login().Render(ctx, writer))
+		return
+	}
+
+	util.Must(templates.SimpleLayout(
+		templates.LoginRegister(templates.Login()),
+		"Вход",
+		"Влезте в профила си и продължете към здравословен начин на живот.",
+		ctxutils.GetCSRF(ctx),
+	).Render(ctx, writer))
 }
 
 func (handler *AuthHandler) GetRegister(writer http.ResponseWriter, req *http.Request) {
-	util.Must(templates.Register().Render(req.Context(), writer))
+	ctx := req.Context()
+
+	if httputils.IsHTMXRequest(req) {
+		util.Must(templates.Register().Render(ctx, writer))
+		return
+	}
+
+	util.Must(templates.SimpleLayout(
+		templates.LoginRegister(templates.Register()),
+		"Регистрация",
+		"Създайте профил и започнете пътя към по-здравословен живот.",
+		ctxutils.GetCSRF(ctx),
+	).Render(ctx, writer))
 }

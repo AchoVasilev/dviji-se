@@ -13,15 +13,11 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 	userService := users.NewUserService(userRepository)
 	authHandler := handlers.NewAuthHandler(userService)
 
-	mux.HandleFunc("GET /login", authHandler.GetLoginLayout)
-	mux.HandleFunc("GET /login/template", authHandler.GetLogin)
-	mux.HandleFunc("GET /register", authHandler.GetRegisterLayout)
-	mux.HandleFunc("GET /register/template", authHandler.GetRegister)
+	mux.HandleFunc("GET /login", authHandler.GetLogin)
+	mux.HandleFunc("GET /register", authHandler.GetRegister)
 
 	// api requests
 	mux.HandleFunc("POST /register", authHandler.HandleRegister)
-
 	mux.HandleFunc("POST /login", authHandler.HandleLogin)
-
 	mux.HandleFunc("POST /refresh-token", authHandler.RefreshToken)
 }

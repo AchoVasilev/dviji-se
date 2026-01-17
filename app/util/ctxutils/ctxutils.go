@@ -64,10 +64,10 @@ func GetCSRF(ctx context.Context) string {
 }
 
 func GetUser(ctx context.Context) (*securityutil.LoggedInUser, error) {
-	user, ok := ctx.Value(loggedUser).(securityutil.LoggedInUser)
-	if !ok {
+	user, ok := ctx.Value(loggedUser).(*securityutil.LoggedInUser)
+	if !ok || user == nil {
 		return nil, errors.New("User not logged in")
 	}
 
-	return &user, nil
+	return user, nil
 }

@@ -11,6 +11,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Token durations
+const (
+	AccessTokenDuration     = 15 * time.Minute
+	RefreshTokenDuration    = 24 * time.Hour
+	RememberMeAccessDuration  = 7 * 24 * time.Hour  // 7 days
+	RememberMeRefreshDuration = 30 * 24 * time.Hour // 30 days
+)
+
 type Claims struct {
 	Id          string            `json:"id"`
 	Username    string            `json:"username"`
@@ -26,16 +34,26 @@ type LoggedInUser struct {
 	Permissions []user.Permission
 }
 
-func GenerateAccessToken(user user.User) (string, time.Time) {
+func GenerateAccessToken(user user.User, rememberMe bool) (string, time.Time) {
 	secret := os.Getenv("JWT_KEY")
+	duration := AccessTokenDuration
+	if rememberMe {
+		duration = RememberMeAccessDuration
+	}
+	expiration := time.Now().UTC().Add(duration)
 
-	return generateToken(user, time.Now().UTC(), []byte(secret))
+	return generateToken(user, expiration, []byte(secret))
 }
 
-func GenerateRefreshToken(user user.User) (string, time.Time) {
+func GenerateRefreshToken(user user.User, rememberMe bool) (string, time.Time) {
 	secret := os.Getenv("JWT_REFRESH_KEY")
+	duration := RefreshTokenDuration
+	if rememberMe {
+		duration = RememberMeRefreshDuration
+	}
+	expiration := time.Now().UTC().Add(duration)
 
-	return generateToken(user, time.Now().UTC(), []byte(secret))
+	return generateToken(user, expiration, []byte(secret))
 }
 
 func UserFromToken(tokenStr string) (*LoggedInUser, error) {
