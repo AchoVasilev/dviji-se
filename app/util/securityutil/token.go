@@ -45,21 +45,54 @@ func UserFromToken(tokenStr string) (*LoggedInUser, error) {
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
-
-	if ok && token.Valid {
-		return &LoggedInUser{
-			Id:          claims["id"].(string),
-			Username:    claims["username"].(string),
-			Roles:       claims["roles"].([]user.Role),
-			Permissions: claims["permissions"].([]user.Permission),
-		}, nil
+	if !ok || !token.Valid {
+		return nil, errors.New("Invalid user claims")
 	}
 
-	return nil, errors.New("Invalid user claims")
+	id, ok := claims["id"].(string)
+	if !ok {
+		return nil, errors.New("Invalid id claim")
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return nil, errors.New("Invalid username claim")
+	}
+
+	roles, ok := claims["roles"].([]user.Role)
+	if !ok {
+		roles = []user.Role{}
+	}
+
+	permissions, ok := claims["permissions"].([]user.Permission)
+	if !ok {
+		permissions = []user.Permission{}
+	}
+
+	return &LoggedInUser{
+		Id:          id,
+		Username:    username,
+		Roles:       roles,
+		Permissions: permissions,
+	}, nil
+}
+
+func ValidateRefreshToken(tokenStr string) (*jwt.Token, error) {
+	token, err := parseToken(tokenStr, os.Getenv("JWT_REFRESH_KEY"))
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		return token, nil
+	}
+
+	return nil, errors.New("Invalid refresh token provided")
 }
 
 func validateToken(tokenStr string) (*jwt.Token, error) {
-	token, err := parseToken(tokenStr)
+	token, err := parseToken(tokenStr, os.Getenv("JWT_KEY"))
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +105,13 @@ func validateToken(tokenStr string) (*jwt.Token, error) {
 	return nil, errors.New("Invalid token provided")
 }
 
-func parseToken(tokenStr string) (*jwt.Token, error) {
+func parseToken(tokenStr string, secret string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return []byte(os.Getenv("JWT_KEY")), nil
+		return []byte(secret), nil
 	})
 
 	return token, err

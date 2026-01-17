@@ -22,18 +22,15 @@ func CheckAuth(h http.Handler) http.Handler {
 		if hasBearerPrefix {
 			token := strings.TrimPrefix(authHeader, "Bearer ")
 			loggedInUser, err := securityutil.UserFromToken(token)
-			if err != nil {
-				h.ServeHTTP(w, r)
+			if err == nil {
+				h.ServeHTTP(w, r.WithContext(ctxutils.WithLoggedUser(r.Context(), loggedInUser)))
 				return
 			}
-
-			h.ServeHTTP(w, r.WithContext(ctxutils.WithLoggedUser(r.Context(), loggedInUser)))
-			return
 		}
 
 		if authCookie.Value != "" {
 			loggedInUser, err := securityutil.UserFromToken(authCookie.Value)
-			if err != nil {
+			if err == nil {
 				h.ServeHTTP(w, r.WithContext(ctxutils.WithLoggedUser(r.Context(), loggedInUser)))
 				return
 			}

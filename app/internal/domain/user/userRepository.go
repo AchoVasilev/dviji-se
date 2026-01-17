@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type UserRepository struct {
@@ -107,80 +105,64 @@ func (repo *UserRepository) Create(user User) error {
 }
 
 func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User, error) {
-	rows, err := repo.db.QueryContext(ctx, `
-	SELECT
-		u.id, u.email, u.first_name, u.last_name, u.password, u.status, u.created_at, u.updated_at, u.is_deleted,
-		r.id, r.name, r.created_at, r.updated_at, r.updated_by, r.is_deleted,
-		p.id, p.name, p.created_at, p.updated_at, p.updated_by, p.is_deleted
-	FROM users u
-	JOIN users_roles ur ON u.id = ur.user_id
-	JOIN roles r ON r.id = ur.role_id
-	JOIN users_permissions up ON u.id = up.user_id
-	JOIN permissions p ON p.id = up.permission_id
-	WHERE u.email = $1 AND u.is_deleted = FALSE`, email)
+	// 1. Get user
+	var user User
+	var firstName, lastName sql.NullString
+	var updatedAt sql.NullTime
+
+	err := repo.db.QueryRowContext(ctx, `
+		SELECT id, email, first_name, last_name, password, status, created_at, updated_at, is_deleted
+		FROM users
+		WHERE email = $1 AND is_deleted = FALSE`, email).Scan(
+		&user.Id, &user.Email, &firstName, &lastName, &user.Password,
+		&user.Status, &user.CreatedAt, &updatedAt, &user.IsDeleted,
+	)
 	if err != nil {
 		return User{}, err
 	}
 
-	defer rows.Close()
+	user.FirstName = firstName
+	user.LastName = lastName
+	user.UpdatedAt = updatedAt
 
-	var user User
+	// 2. Get roles
+	roleRows, err := repo.db.QueryContext(ctx, `
+		SELECT r.id, r.name, r.created_at, r.updated_at, r.updated_by, r.is_deleted
+		FROM roles r
+		JOIN users_roles ur ON r.id = ur.role_id
+		WHERE ur.user_id = $1 AND r.is_deleted = FALSE`, user.Id)
+	if err != nil {
+		return User{}, err
+	}
+	defer roleRows.Close()
+
 	user.Roles = []Role{}
-	user.Permissions = []Permission{}
-	seenRoles := map[uuid.UUID]bool{}
-	seenPerms := map[uuid.UUID]bool{}
-
-	for rows.Next() {
-		var (
-			uid        uuid.UUID
-			email      string
-			firstName  sql.NullString
-			lastName   sql.NullString
-			password   string
-			status     UserStatus
-			createdAt  time.Time
-			updatedAt  sql.NullTime
-			isDeleted  bool
-			role       Role
-			permission Permission
-		)
-
-		err := rows.Scan(
-			&uid, &email, &firstName, &lastName, &password, &status, &createdAt, &updatedAt, &isDeleted,
-			&role.Id, &role.Name, &role.CreatedAt, &role.UpdatedAt, &role.UpdatedBy, &role.IsDeleted,
-			&permission.Id, &permission.Name, &permission.CreatedAt, &permission.UpdatedAt, &permission.UpdatedBy, &permission.IsDeleted,
-		)
-		if err != nil {
+	for roleRows.Next() {
+		var role Role
+		if err := roleRows.Scan(&role.Id, &role.Name, &role.CreatedAt, &role.UpdatedAt, &role.UpdatedBy, &role.IsDeleted); err != nil {
 			return User{}, err
 		}
-
-		if user.Id == uuid.Nil {
-			user = User{
-				Id:        uid,
-				Email:     email,
-				FirstName: firstName,
-				LastName:  lastName,
-				Password:  password,
-				Status:    status,
-				CreatedAt: createdAt,
-				UpdatedAt: updatedAt,
-				IsDeleted: isDeleted,
-			}
-		}
-
-		if !seenRoles[role.Id] {
-			user.Roles = append(user.Roles, role)
-			seenRoles[role.Id] = true
-		}
-
-		if !seenPerms[permission.Id] {
-			user.Permissions = append(user.Permissions, permission)
-			seenPerms[permission.Id] = true
-		}
+		user.Roles = append(user.Roles, role)
 	}
 
-	if user.Id == uuid.Nil {
-		return User{}, sql.ErrNoRows
+	// 3. Get permissions
+	permRows, err := repo.db.QueryContext(ctx, `
+		SELECT p.id, p.name, p.created_at, p.updated_at, p.updated_by, p.is_deleted
+		FROM permissions p
+		JOIN users_permissions up ON p.id = up.permission_id
+		WHERE up.user_id = $1 AND p.is_deleted = FALSE`, user.Id)
+	if err != nil {
+		return User{}, err
+	}
+	defer permRows.Close()
+
+	user.Permissions = []Permission{}
+	for permRows.Next() {
+		var perm Permission
+		if err := permRows.Scan(&perm.Id, &perm.Name, &perm.CreatedAt, &perm.UpdatedAt, &perm.UpdatedBy, &perm.IsDeleted); err != nil {
+			return User{}, err
+		}
+		user.Permissions = append(user.Permissions, perm)
 	}
 
 	return user, nil

@@ -15,7 +15,7 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 
 	mux.HandleFunc("GET /login", authHandler.GetLoginLayout)
 	mux.HandleFunc("GET /login/template", authHandler.GetLogin)
-	mux.HandleFunc("GET /register", authHandler.GetRegisterLayour)
+	mux.HandleFunc("GET /register", authHandler.GetRegisterLayout)
 	mux.HandleFunc("GET /register/template", authHandler.GetRegister)
 
 	// api requests

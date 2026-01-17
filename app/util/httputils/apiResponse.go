@@ -1,8 +1,8 @@
 package httputils
 
 import (
-	"context"
 	"net/http"
+	"server/util/ctxutils"
 	"server/util/jsonutils"
 )
 
@@ -90,26 +90,11 @@ func SendBadRequestResponse(writer http.ResponseWriter, message string) {
 }
 
 func SendInternalServerResponse(writer http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	reqId := requestIdFromContext(ctx)
+	reqId := ctxutils.RequestIdFromContext(req.Context())
 	writer.Header().Set("X-REQUEST-ID", reqId)
 	SendErrorResponse(writer, "internal.server.error", http.StatusInternalServerError)
 }
 
 func SendConflictResponse(writer http.ResponseWriter, message string) {
 	SendErrorResponse(writer, message, http.StatusConflict)
-}
-
-func requestIdFromContext(ctx context.Context) string {
-	value := ctx.Value("requestId")
-	if value == nil {
-		return ""
-	}
-
-	id, ok := value.(string)
-	if !ok {
-		return ""
-	}
-
-	return id
 }

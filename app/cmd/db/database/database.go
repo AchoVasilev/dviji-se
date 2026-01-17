@@ -24,6 +24,7 @@ type dbConfig struct {
 	user                  string
 	password              string
 	dbName                string
+	sslMode               string
 	maxConnections        int
 	maxConnectionLifeTime time.Duration
 }
@@ -105,12 +106,13 @@ func initDbConfig() *dbConfig {
 		user:                  os.Getenv("DBUSER"),
 		password:              os.Getenv("DBPASSWORD"),
 		dbName:                os.Getenv("DBNAME"),
+		sslMode:               os.Getenv("DBSSLMODE"),
 		maxConnections:        connections,
 		maxConnectionLifeTime: 1 * time.Minute,
 	}
 }
 
 func (dbConfig *dbConfig) connectionString() string {
-	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		dbConfig.host, dbConfig.port, dbConfig.user, dbConfig.dbName, dbConfig.password)
+	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+		dbConfig.host, dbConfig.port, dbConfig.user, dbConfig.dbName, dbConfig.password, dbConfig.sslMode)
 }

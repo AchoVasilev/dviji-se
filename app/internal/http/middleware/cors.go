@@ -2,13 +2,18 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 )
 
-var origins = []string{
-	"localhost:4200",
-}
+var origins = func() []string {
+	envOrigins := os.Getenv("CORS_ORIGINS")
+	if envOrigins == "" {
+		return []string{}
+	}
+	return strings.Split(envOrigins, ",")
+}()
 
 var methods = []string{"GET", "POST", "PUT", "PATCH", "OPTIONS"}
 

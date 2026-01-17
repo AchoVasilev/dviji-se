@@ -12,7 +12,6 @@ import (
 	"server/util"
 	"server/util/ctxutils"
 	"server/util/httputils"
-	"server/util/securityutil"
 	"server/web/templates"
 )
 
@@ -30,7 +29,7 @@ func NewAuthHandler(userService *users.UserService) *AuthHandler {
 func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http.Request) {
 	slog.Info("Registering new user")
 
-	ctx, cancel := context.WithTimeout(context.Background(), cancelTime)
+	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
 	defer cancel()
 
 	input := new(models.CreateUserResource)
@@ -84,7 +83,7 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Request) {
 	slog.Info("Handling user login")
 
-	ctx, cancel := context.WithTimeout(context.Background(), cancelTime)
+	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
 	defer cancel()
 
 	input := new(models.LoginResource)
@@ -98,7 +97,7 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 
 	if result.ValidationErrors != nil {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
-		util.Must(templates.FormErrors(result.ValidationErrors).Render(req.Context(), writer))
+		util.Must(templates.FormErrors(result.ValidationErrors).Render(ctx, writer))
 		return
 	}
 
@@ -112,21 +111,29 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 	if err == sql.ErrNoRows || user.Email == "" {
 		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
-		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(req.Context(), writer))
+		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(ctx, writer))
 		return
 	}
 
 	// remember me func
 
-	tokenResult, err := handler.authService.Authenticate(user, input.Password, req.Context())
+	tokenResult, err := handler.authService.Authenticate(user, input.Password, ctx)
 	if err == auth.ErrHashNotMatch {
 		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
-		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(req.Context(), writer))
+		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(ctx, writer))
+		return
+	}
+
+	if err != nil {
+		slog.Error(err.Error())
+		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
 	httputils.SetHttpOnlyCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, writer)
+	writer.Header().Set("HX-Redirect", "/")
+	writer.WriteHeader(http.StatusOK)
 }
 
 func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.Request) {
@@ -141,7 +148,7 @@ func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Reque
 	util.Must(templates.Login().Render(req.Context(), writer))
 }
 
-func (handler *AuthHandler) GetRegisterLayour(writer http.ResponseWriter, req *http.Request) {
+func (handler *AuthHandler) GetRegisterLayout(writer http.ResponseWriter, req *http.Request) {
 	util.Must(templates.SimpleLayout(templates.LoginRegister(templates.Register()), "Регистрация", ctxutils.GetCSRF(req.Context())).Render(req.Context(), writer))
 }
 

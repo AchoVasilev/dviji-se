@@ -64,54 +64,32 @@ func CSRFValidate(next http.Handler) http.Handler {
 
 		cookie, err := r.Cookie("csrf_token")
 		if err != nil {
-			http.Error(w, "Access forbidden", http.StatusForbidden)
-			slog.Warn("No CSRF token")
-			if !strings.HasPrefix(r.URL.Path, "/api") {
-				w.Header().Set("HX-Redirect", "/error")
-			}
-
+			csrfError(w, r, "No CSRF token")
 			return
 		}
 
 		key := os.Getenv("XSRF")
-		isValid := xsrftoken.Valid(cookie.Value, key, "", http.MethodPost)
-		if !isValid {
-			http.Error(w, "Access forbidden", http.StatusForbidden)
-			slog.Warn("Invalid CSRF token")
-
-			if !strings.HasPrefix(r.URL.Path, "/api") {
-				w.Header().Set("HX-Redirect", "/error")
-			}
-
+		if !xsrftoken.Valid(cookie.Value, key, "", http.MethodPost) {
+			csrfError(w, r, "Invalid CSRF cookie")
 			return
 		}
 
 		csrfHeader := r.Header.Get("X-CSRF-Token")
-		if csrfHeader == "" {
-			http.Error(w, "Access forbidden", http.StatusForbidden)
-			slog.Warn("Invalid CSRF token")
-
-			if !strings.HasPrefix(r.URL.Path, "/api") {
-				w.Header().Set("HX-Redirect", "/error")
-			}
-
-			return
-		}
-
-		isValid = xsrftoken.Valid(csrfHeader, key, "", http.MethodPost)
-		if !isValid {
-			http.Error(w, "Access forbidden", http.StatusForbidden)
-			slog.Warn("Invalid CSRF token")
-
-			if !strings.HasPrefix(r.URL.Path, "/api") {
-				w.Header().Set("HX-Redirect", "/error")
-			}
-
+		if csrfHeader == "" || !xsrftoken.Valid(csrfHeader, key, "", http.MethodPost) {
+			csrfError(w, r, "Invalid CSRF header")
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func csrfError(w http.ResponseWriter, r *http.Request, msg string) {
+	slog.Warn(msg)
+	http.Error(w, "Access forbidden", http.StatusForbidden)
+	if !strings.HasPrefix(r.URL.Path, "/api") {
+		w.Header().Set("HX-Redirect", "/error")
+	}
 }
 
 func ContentSecurityPolicy(next http.Handler) http.Handler {
@@ -189,6 +167,22 @@ func ContentType(next http.Handler) http.Handler {
 func CacheStaticAssets(next http.Handler, staticDir string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		filePath := filepath.Join(staticDir, r.URL.Path)
+		absStaticDir, err := filepath.Abs(staticDir)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		absFilePath, err := filepath.Abs(filePath)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		if !strings.HasPrefix(absFilePath, absStaticDir) {
+			http.NotFound(w, r)
+			return
+		}
 
 		etag, err := generateETag(filePath)
 		if err != nil {
