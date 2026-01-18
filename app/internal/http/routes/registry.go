@@ -25,6 +25,8 @@ func RegisterRoutes(db *sql.DB) *http.ServeMux {
 	BaseRoutes(mux, db)
 	CategoriesRoutes(mux, db)
 	AuthRoutes(mux, db)
+	BlogRoutes(mux, db)
+	AdminRoutes(mux, db)
 
 	return mux
 }

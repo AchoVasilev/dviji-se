@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"server/internal/config"
 	"server/util/ctxutils"
 	"server/util/httputils"
 	"server/util/securityutil"
@@ -36,8 +37,7 @@ func CSRFCookie(next http.Handler) http.Handler {
 		if r.Method == http.MethodGet {
 			xsrfCookie, err := r.Cookie("csrf_token")
 			if err != nil || xsrfCookie == nil {
-				key := os.Getenv("XSRF")
-				csrfToken := xsrftoken.Generate(key, "", "")
+				csrfToken := xsrftoken.Generate(config.XSRFKey(), "", "")
 				httputils.SetHttpOnlyCookie(httputils.XSRFCookieName, csrfToken, time.Now().Add(24*time.Hour), w)
 
 				w.Header().Set("X-CSRF-TOKEN", csrfToken)
@@ -68,14 +68,14 @@ func CSRFValidate(next http.Handler) http.Handler {
 			return
 		}
 
-		key := os.Getenv("XSRF")
-		if !xsrftoken.Valid(cookie.Value, key, "", "") {
+		xsrfKey := config.XSRFKey()
+		if !xsrftoken.Valid(cookie.Value, xsrfKey, "", "") {
 			csrfError(w, r, "Invalid CSRF cookie")
 			return
 		}
 
 		csrfHeader := r.Header.Get("X-CSRF-Token")
-		if csrfHeader == "" || !xsrftoken.Valid(csrfHeader, key, "", "") {
+		if csrfHeader == "" || !xsrftoken.Valid(csrfHeader, xsrfKey, "", "") {
 			csrfError(w, r, "Invalid CSRF header")
 			return
 		}
@@ -115,15 +115,32 @@ func ContentSecurityPolicy(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), NonceKey, nonces)
-		cspHeader := fmt.Sprintf(`
-		  default-src 'self'; 
-		  script-src 'nonce-%s'; 
-		  style-src 'nonce-%s' '%s'; 
-		  img-src 'self' https:;
-		  connect-src 'self'; 
-		  frame-ancestors 'none'; 
-		  form-action 'self'; 
-		  object-src 'none';`, nonces.Htmx, nonces.Tw, nonces.HtmxCssHash)
+
+		var cspHeader string
+		if strings.HasPrefix(r.URL.Path, "/admin") {
+			// More permissive CSP for admin routes (TinyMCE needs inline styles)
+			cspHeader = fmt.Sprintf(`
+			  default-src 'self';
+			  script-src 'self' 'nonce-%s' https://unpkg.com https://cdn.tiny.cloud;
+			  style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud;
+			  img-src 'self' https: data: blob:;
+			  connect-src 'self' https://cdn.tiny.cloud;
+			  frame-ancestors 'none';
+			  form-action 'self';
+			  object-src 'none';`, nonces.Htmx)
+		} else {
+			// Strict CSP for public routes
+			// HtmxCssHash is for HTMX's injected .htmx-indicator style
+			cspHeader = fmt.Sprintf(`
+			  default-src 'self';
+			  script-src 'self' 'nonce-%s' https://unpkg.com;
+			  style-src 'self' '%s';
+			  img-src 'self' https: data:;
+			  connect-src 'self';
+			  frame-ancestors 'none';
+			  form-action 'self';
+			  object-src 'none';`, nonces.Htmx, nonces.HtmxCssHash)
+		}
 
 		w.Header().Set("Content-Security-Policy", cspHeader)
 

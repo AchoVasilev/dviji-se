@@ -3,16 +3,17 @@
 ## Critical Priority
 
 ### Rate Limiting
-- [ ] Implement rate limiting middleware for authentication endpoints
+- [x] Implement rate limiting middleware for authentication endpoints
   - Login: 5 attempts per 15 minutes per IP
   - Register: 3 accounts per hour per IP
-  - Consider using `golang.org/x/time/rate` or `github.com/ulule/limiter`
+  - Implemented in `internal/http/middleware/ratelimit.go`
 
 ### Authorization
-- [ ] Create authorization middleware to check user roles/permissions
+- [x] Create authorization middleware to check user roles/permissions
+- [x] Protect admin endpoints (RequireAuth + RequireAdmin middleware)
+- [x] Add role-based access control (RBAC) checks in handlers
 - [ ] Protect category endpoints (create, update, delete)
 - [ ] Protect user-specific endpoints
-- [ ] Add role-based access control (RBAC) checks in handlers
 
 ## High Priority
 
@@ -51,9 +52,93 @@
 
 ### Password Features
 - [ ] Implement password change endpoint
-- [ ] Implement forgot password flow
+- [x] Implement forgot password flow
+  - Password reset token generation and validation
+  - Email sending (logs email in dev mode when SMTP not configured)
+
+### Email
+- [x] Set up email service infrastructure (`internal/infrastructure/email`)
+- [ ] Configure production SMTP (SendGrid/Mailgun/AWS SES)
+- [x] Create email templates (password reset)
+- [x] Implement password reset token generation and validation
+
+## Testing
+
+- [x] Unit tests: securityutil (password hashing, JWT)
+- [x] Unit tests: PostService (slug generation, reading time)
+- [x] Unit tests: AuthService and PasswordResetService
+- [x] Unit tests: middleware (rate limiting, admin, auth)
+- [x] Unit tests: httputils (validation, cookies)
+- [x] Integration tests: testcontainers infrastructure
+- [x] Integration tests: auth API (register, login, password reset)
+- [x] Integration tests: blog API (list, view, category filter)
+- [x] Integration tests: admin API (create post, auth/role checks)
+
+---
+
+# Blog Features TODO
+
+## High Priority
+
+### Search
+- [ ] Add full-text search for posts
+  - Search by title, content, excerpt
+  - `GET /blog/search?q={query}`
+  - Search results page template
+  - Consider PostgreSQL full-text search or add search index
+
+### RSS Feed
+- [ ] Implement RSS feed endpoint
+  - `GET /feed.xml` or `GET /rss`
+  - Include title, description, link, pubDate for each post
+  - Only published posts, ordered by date
+
+## Medium Priority
+
+### Post Scheduling
+- [ ] Allow scheduling posts for future publication
+  - Add `scheduled_at` field to posts table
+  - Background job to publish scheduled posts
+  - Show scheduled status in admin
+
+### Tags
+- [ ] Implement tagging system
+  - Create `tags` and `posts_tags` tables
+  - Add tag input to post form
+  - Filter posts by tag: `GET /blog/tag/{slug}`
+  - Display tags on post cards and single post view
+
+### View Counter
+- [ ] Track post views
+  - Add `view_count` column to posts
+  - Increment on each unique view (consider IP/session dedup)
+  - Display view count on admin dashboard
+
+### Related Posts
+- [ ] Show truly related posts instead of just recent
+  - Match by category and/or tags
+  - Exclude current post from results
+
+## Low Priority
+
+### SEO & Discovery
+- [ ] Add XML sitemap (`/sitemap.xml`)
+- [ ] Add Open Graph meta tags for social sharing
+- [ ] Add Schema.org Article markup
+
+### Admin Enhancements
+- [ ] Post duplication (clone existing post)
+- [ ] Bulk actions (publish/archive multiple posts)
+- [ ] Advanced filters (date range, author)
+- [ ] Post revision history
+
+### User Experience
+- [ ] Post preview before publishing
+- [ ] Reading list / bookmarks for users
+- [ ] Infinite scroll option for blog list
 
 ## Notes
 
 - `local.env` is for development/testing only - production uses secure secrets management
 - JWT secrets in `local.env` are intentionally simple for testing
+- Run tests: `go test ./...` (all) or `go test -short ./...` (skip integration)

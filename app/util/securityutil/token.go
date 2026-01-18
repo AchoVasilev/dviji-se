@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
+	"server/internal/config"
 	"server/internal/domain/user"
 	"time"
 
@@ -35,25 +35,23 @@ type LoggedInUser struct {
 }
 
 func GenerateAccessToken(user user.User, rememberMe bool) (string, time.Time) {
-	secret := os.Getenv("JWT_KEY")
 	duration := AccessTokenDuration
 	if rememberMe {
 		duration = RememberMeAccessDuration
 	}
 	expiration := time.Now().UTC().Add(duration)
 
-	return generateToken(user, expiration, []byte(secret))
+	return generateToken(user, expiration, []byte(config.JWTAccessKey()))
 }
 
 func GenerateRefreshToken(user user.User, rememberMe bool) (string, time.Time) {
-	secret := os.Getenv("JWT_REFRESH_KEY")
 	duration := RefreshTokenDuration
 	if rememberMe {
 		duration = RememberMeRefreshDuration
 	}
 	expiration := time.Now().UTC().Add(duration)
 
-	return generateToken(user, expiration, []byte(secret))
+	return generateToken(user, expiration, []byte(config.JWTRefreshKey()))
 }
 
 func UserFromToken(tokenStr string) (*LoggedInUser, error) {
@@ -77,14 +75,32 @@ func UserFromToken(tokenStr string) (*LoggedInUser, error) {
 		return nil, errors.New("Invalid username claim")
 	}
 
-	roles, ok := claims["roles"].([]user.Role)
-	if !ok {
-		roles = []user.Role{}
+	// Parse roles from JWT claims (they come as []interface{} of maps)
+	var roles []user.Role
+	if rolesRaw, ok := claims["roles"].([]interface{}); ok {
+		for _, r := range rolesRaw {
+			if roleMap, ok := r.(map[string]interface{}); ok {
+				role := user.Role{}
+				if name, ok := roleMap["name"].(string); ok {
+					role.Name = name
+				}
+				roles = append(roles, role)
+			}
+		}
 	}
 
-	permissions, ok := claims["permissions"].([]user.Permission)
-	if !ok {
-		permissions = []user.Permission{}
+	// Parse permissions from JWT claims
+	var permissions []user.Permission
+	if permsRaw, ok := claims["permissions"].([]interface{}); ok {
+		for _, p := range permsRaw {
+			if permMap, ok := p.(map[string]interface{}); ok {
+				perm := user.Permission{}
+				if name, ok := permMap["name"].(string); ok {
+					perm.Name = name
+				}
+				permissions = append(permissions, perm)
+			}
+		}
 	}
 
 	return &LoggedInUser{
@@ -96,7 +112,7 @@ func UserFromToken(tokenStr string) (*LoggedInUser, error) {
 }
 
 func ValidateRefreshToken(tokenStr string) (*jwt.Token, error) {
-	token, err := parseToken(tokenStr, os.Getenv("JWT_REFRESH_KEY"))
+	token, err := parseToken(tokenStr, config.JWTRefreshKey())
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +126,7 @@ func ValidateRefreshToken(tokenStr string) (*jwt.Token, error) {
 }
 
 func validateToken(tokenStr string) (*jwt.Token, error) {
-	token, err := parseToken(tokenStr, os.Getenv("JWT_KEY"))
+	token, err := parseToken(tokenStr, config.JWTAccessKey())
 	if err != nil {
 		return nil, err
 	}
@@ -135,15 +151,27 @@ func parseToken(tokenStr string, secret string) (*jwt.Token, error) {
 	return token, err
 }
 
-func generateToken(user user.User, expirationTime time.Time, secret []byte) (string, time.Time) {
-	claims := &Claims{
-		Id:       user.Id.String(),
-		Username: user.Email,
-		Claims: jwt.MapClaims{
-			"exp": expirationTime,
-			"iat": time.Now().UTC(),
-			"iss": "dviji-se",
-		},
+func generateToken(u user.User, expirationTime time.Time, secret []byte) (string, time.Time) {
+	// Build roles for JWT (only include name to keep token small)
+	rolesForJwt := make([]map[string]string, len(u.Roles))
+	for i, r := range u.Roles {
+		rolesForJwt[i] = map[string]string{"name": r.Name}
+	}
+
+	// Build permissions for JWT
+	permsForJwt := make([]map[string]string, len(u.Permissions))
+	for i, p := range u.Permissions {
+		permsForJwt[i] = map[string]string{"name": p.Name}
+	}
+
+	claims := jwt.MapClaims{
+		"id":          u.Id.String(),
+		"username":    u.Email,
+		"roles":       rolesForJwt,
+		"permissions": permsForJwt,
+		"exp":         expirationTime.Unix(),
+		"iat":         time.Now().UTC().Unix(),
+		"iss":         "dviji-se",
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -19,6 +19,10 @@ type TokenResult struct {
 
 type AuthService struct{}
 
+func NewAuthService() *AuthService {
+	return &AuthService{}
+}
+
 func (auth *AuthService) Authenticate(user user.User, password string, rememberMe bool, ctx context.Context) (*TokenResult, error) {
 	hashMatch := securityutil.CompareHash(user.Password, password)
 	if !hashMatch {

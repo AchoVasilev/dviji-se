@@ -1,0 +1,162 @@
+package admin
+
+import (
+	"fmt"
+	"server/internal/http/handlers/models"
+	"server/util/ctxutils"
+	"server/web/templates"
+)
+
+templ PostsList(posts []models.PostListItem, page int, totalPages int, total int, currentStatus string) {
+	@templates.Layout(postsListContent(posts, page, totalPages, total, currentStatus), "Публикации", "Управление на публикациите", "/admin/posts", ctxutils.GetCSRF(ctx))
+}
+
+templ postsListContent(posts []models.PostListItem, page int, totalPages int, total int, currentStatus string) {
+	<div class="min-h-screen bg-gray-100">
+		<div class="bg-blue-n text-white py-6 px-8 flex justify-between items-center">
+			<div>
+				<h1 class="text-3xl font-bold">Публикации</h1>
+				<p class="text-blue-200 mt-1">Общо: { fmt.Sprintf("%d", total) } публикации</p>
+			</div>
+			<a href="/admin/posts/new" class="btn-red inline-flex items-center">
+				<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+				</svg>
+				Нова публикация
+			</a>
+		</div>
+		<div class="p-8">
+			<!-- Filters -->
+			<div class="bg-white rounded-lg shadow p-4 mb-6">
+				<div class="flex flex-wrap gap-2">
+					<a href="/admin/posts" class={ "px-4 py-2 rounded-lg", templ.KV("bg-blue-600 text-white", currentStatus == ""), templ.KV("bg-gray-200 text-gray-700 hover:bg-gray-300", currentStatus != "") }>
+						Всички
+					</a>
+					<a href="/admin/posts?status=created" class={ "px-4 py-2 rounded-lg", templ.KV("bg-blue-600 text-white", currentStatus == "created"), templ.KV("bg-gray-200 text-gray-700 hover:bg-gray-300", currentStatus != "created") }>
+						Създадени
+					</a>
+					<a href="/admin/posts?status=draft" class={ "px-4 py-2 rounded-lg", templ.KV("bg-blue-600 text-white", currentStatus == "draft"), templ.KV("bg-gray-200 text-gray-700 hover:bg-gray-300", currentStatus != "draft") }>
+						Чернови
+					</a>
+					<a href="/admin/posts?status=published" class={ "px-4 py-2 rounded-lg", templ.KV("bg-blue-600 text-white", currentStatus == "published"), templ.KV("bg-gray-200 text-gray-700 hover:bg-gray-300", currentStatus != "published") }>
+						Публикувани
+					</a>
+					<a href="/admin/posts?status=archived" class={ "px-4 py-2 rounded-lg", templ.KV("bg-blue-600 text-white", currentStatus == "archived"), templ.KV("bg-gray-200 text-gray-700 hover:bg-gray-300", currentStatus != "archived") }>
+						Архивирани
+					</a>
+				</div>
+			</div>
+			<!-- Posts Table -->
+			<div class="bg-white rounded-lg shadow overflow-hidden">
+				<table class="min-w-full divide-y divide-gray-200">
+					<thead class="bg-gray-50">
+						<tr>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Заглавие</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Автор</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+							<th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+						</tr>
+					</thead>
+					<tbody class="bg-white divide-y divide-gray-200">
+						if len(posts) == 0 {
+							<tr>
+								<td colspan="6" class="px-6 py-8 text-center text-gray-500">
+									Няма публикации.
+								</td>
+							</tr>
+						} else {
+							for _, post := range posts {
+								<tr class="hover:bg-gray-50">
+									<td class="px-6 py-4">
+										<div class="flex items-center">
+											if post.CoverImageUrl != "" {
+												<img src={ post.CoverImageUrl } alt="" class="w-10 h-10 rounded object-cover mr-3"/>
+											} else {
+												<div class="w-10 h-10 rounded bg-gray-200 mr-3 flex items-center justify-center">
+													<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+													</svg>
+												</div>
+											}
+											<div class="max-w-xs">
+												<div class="text-sm font-medium text-gray-900 truncate">{ post.Title }</div>
+												<div class="text-sm text-gray-500 truncate">{ post.Slug }</div>
+											</div>
+										</div>
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ post.CategoryName }</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ post.AuthorFirstName } { post.AuthorLastName }</td>
+									<td class="px-6 py-4 whitespace-nowrap">
+										@statusBadge(post.Status)
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+										{ post.CreatedAt.Format("02.01.2006") }
+									</td>
+									<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+										<div class="flex justify-end gap-2">
+											if post.Status == "published" {
+												<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="text-gray-600 hover:text-gray-900" title="Преглед">
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+													</svg>
+												</a>
+											}
+											<a href={ templ.SafeURL(fmt.Sprintf("/admin/posts/%s", post.Id.String())) } class="text-blue-600 hover:text-blue-900" title="Редактирай">
+												<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+												</svg>
+											</a>
+											<button
+												hx-delete={ fmt.Sprintf("/admin/posts/%s", post.Id.String()) }
+												hx-confirm="Сигурни ли сте, че искате да изтриете тази публикация?"
+												hx-swap="none"
+												class="text-red-600 hover:text-red-900"
+												title="Изтрий"
+											>
+												<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+												</svg>
+											</button>
+										</div>
+									</td>
+								</tr>
+							}
+						}
+					</tbody>
+				</table>
+			</div>
+			<!-- Pagination -->
+			if totalPages > 1 {
+				<div class="mt-6 flex justify-center">
+					<nav class="flex gap-2">
+						if page > 1 {
+							<a href={ templ.SafeURL(fmt.Sprintf("/admin/posts?page=%d%s", page-1, statusQuery(currentStatus))) } class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">
+								Предишна
+							</a>
+						}
+						for i := 1; i <= totalPages; i++ {
+							<a href={ templ.SafeURL(fmt.Sprintf("/admin/posts?page=%d%s", i, statusQuery(currentStatus))) } class={ "px-4 py-2 rounded-lg shadow", templ.KV("bg-blue-600 text-white", i == page), templ.KV("bg-white hover:bg-gray-50", i != page) }>
+								{ fmt.Sprintf("%d", i) }
+							</a>
+						}
+						if page < totalPages {
+							<a href={ templ.SafeURL(fmt.Sprintf("/admin/posts?page=%d%s", page+1, statusQuery(currentStatus))) } class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">
+								Следваща
+							</a>
+						}
+					</nav>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+func statusQuery(status string) string {
+	if status != "" {
+		return "&status=" + status
+	}
+	return ""
+}

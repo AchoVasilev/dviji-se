@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+tmp/
+server
+*.exe
+
+# Development
+.air.toml
+local.env
+*.log
+
+# Node (not needed in container)
+node_modules/
+package*.json
+
+# Tests (not needed in production image)
+tests/
+*_test.go
+coverage.out
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Tailwind CLI (downloaded in build)
+tailwindcss
+tailwindcss-*

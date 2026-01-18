@@ -174,3 +174,32 @@ func (repo *UserRepository) ExistsByEmail(ctx context.Context, email string) (bo
 
 	return exists, err
 }
+
+func (repo *UserRepository) UpdatePassword(ctx context.Context, userId string, hashedPassword string) error {
+	query := `UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2 AND is_deleted = FALSE`
+	_, err := repo.db.ExecContext(ctx, query, hashedPassword, userId)
+	return err
+}
+
+func (repo *UserRepository) FindById(ctx context.Context, userId string) (User, error) {
+	var user User
+	var firstName, lastName sql.NullString
+	var updatedAt sql.NullTime
+
+	err := repo.db.QueryRowContext(ctx, `
+		SELECT id, email, first_name, last_name, password, status, created_at, updated_at, is_deleted
+		FROM users
+		WHERE id = $1 AND is_deleted = FALSE`, userId).Scan(
+		&user.Id, &user.Email, &firstName, &lastName, &user.Password,
+		&user.Status, &user.CreatedAt, &updatedAt, &user.IsDeleted,
+	)
+	if err != nil {
+		return User{}, err
+	}
+
+	user.FirstName = firstName
+	user.LastName = lastName
+	user.UpdatedAt = updatedAt
+
+	return user, nil
+}

@@ -162,4 +162,48 @@ templ Home() {
 			</ul>
 		</section>
 	</section>
+	//recent posts section
+	<section class="section-bg-dark flex justify-center">
+		<section class="mt-16 mb-16 w-full max-w-6xl px-4">
+			<div class="flex justify-between items-center mb-8">
+				<h2 class="text-3xl font-bold text-white">Последни публикации</h2>
+				<a href="/blog" class="text-red-500 hover:text-red-400 font-medium">Виж всички &rarr;</a>
+			</div>
+			<div
+				hx-get="/blog/recent?limit=6"
+				hx-trigger="revealed"
+				hx-swap="innerHTML"
+			>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div class="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
+						<div class="h-48 bg-gray-700"></div>
+						<div class="p-6">
+							<div class="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
+							<div class="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
+							<div class="h-4 bg-gray-700 rounded w-full mb-4"></div>
+							<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+						</div>
+					</div>
+					<div class="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
+						<div class="h-48 bg-gray-700"></div>
+						<div class="p-6">
+							<div class="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
+							<div class="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
+							<div class="h-4 bg-gray-700 rounded w-full mb-4"></div>
+							<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+						</div>
+					</div>
+					<div class="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
+						<div class="h-48 bg-gray-700"></div>
+						<div class="p-6">
+							<div class="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
+							<div class="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
+							<div class="h-4 bg-gray-700 rounded w-full mb-4"></div>
+							<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</section>
 }

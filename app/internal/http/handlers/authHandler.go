@@ -16,13 +16,20 @@ import (
 )
 
 type AuthHandler struct {
-	userService *users.UserService
-	authService *auth.AuthService
+	userService          *users.UserService
+	authService          *auth.AuthService
+	passwordResetService *auth.PasswordResetService
 }
 
-func NewAuthHandler(userService *users.UserService) *AuthHandler {
+func NewAuthHandler(
+	userService *users.UserService,
+	authService *auth.AuthService,
+	passwordResetService *auth.PasswordResetService,
+) *AuthHandler {
 	return &AuthHandler{
-		userService: userService,
+		userService:          userService,
+		authService:          authService,
+		passwordResetService: passwordResetService,
 	}
 }
 
@@ -168,4 +175,119 @@ func (handler *AuthHandler) GetRegister(writer http.ResponseWriter, req *http.Re
 		"Създайте профил и започнете пътя към по-здравословен живот.",
 		ctxutils.GetCSRF(ctx),
 	).Render(ctx, writer))
+}
+
+func (handler *AuthHandler) GetForgotPassword(writer http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	util.Must(templates.SimpleLayout(
+		templates.ForgotPassword(),
+		"Забравена парола",
+		"Възстановете достъпа до вашия акаунт.",
+		ctxutils.GetCSRF(ctx),
+	).Render(ctx, writer))
+}
+
+func (handler *AuthHandler) HandleForgotPassword(writer http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
+	defer cancel()
+
+	input := new(models.ForgotPasswordResource)
+	result := httputils.ProcessBody(writer, req, input)
+	if result.ParsingError != nil {
+		slog.Error(result.ParsingError.Error())
+		writer.Header().Add("HX-Redirect", "/error")
+		return
+	}
+
+	if result.ValidationErrors != nil {
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		util.Must(templates.FormErrors(result.ValidationErrors).Render(ctx, writer))
+		return
+	}
+
+	// Always return success to prevent email enumeration
+	err := handler.passwordResetService.RequestReset(ctx, input.Email)
+	if err != nil {
+		slog.Error("Failed to process password reset request", "error", err)
+		// Still return success to prevent enumeration
+	}
+
+	util.Must(templates.ForgotPasswordSuccess().Render(ctx, writer))
+}
+
+func (handler *AuthHandler) GetResetPassword(writer http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	token := req.URL.Query().Get("token")
+
+	if token == "" {
+		http.Redirect(writer, req, "/forgot-password", http.StatusSeeOther)
+		return
+	}
+
+	// Validate token without using it
+	valid, err := handler.passwordResetService.ValidateToken(ctx, token)
+	if err != nil || !valid {
+		util.Must(templates.SimpleLayout(
+			templates.ResetPasswordInvalid(),
+			"Невалиден линк",
+			"Линкът за смяна на парола е невалиден или изтекъл.",
+			ctxutils.GetCSRF(ctx),
+		).Render(ctx, writer))
+		return
+	}
+
+	util.Must(templates.SimpleLayout(
+		templates.ResetPassword(token),
+		"Нова парола",
+		"Задайте нова парола за вашия акаунт.",
+		ctxutils.GetCSRF(ctx),
+	).Render(ctx, writer))
+}
+
+func (handler *AuthHandler) HandleResetPassword(writer http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
+	defer cancel()
+
+	input := new(models.ResetPasswordResource)
+	result := httputils.ProcessBody(writer, req, input)
+	if result.ParsingError != nil {
+		slog.Error(result.ParsingError.Error())
+		writer.Header().Add("HX-Redirect", "/error")
+		return
+	}
+
+	if input.Password != input.RepeatPassword {
+		result.ValidationErrors = append(result.ValidationErrors, &httputils.ValidationError{
+			Value: "",
+			Field: "repeatPassword",
+			Error: "Паролите не съвпадат",
+		})
+	}
+
+	if result.ValidationErrors != nil {
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		util.Must(templates.FormErrors(result.ValidationErrors).Render(ctx, writer))
+		return
+	}
+
+	err := handler.passwordResetService.ResetPassword(ctx, input.Token, input.Password)
+	if err == auth.ErrInvalidToken {
+		writer.WriteHeader(http.StatusBadRequest)
+		util.Must(templates.InvalidMessage("Линкът е невалиден или изтекъл. Моля, заявете нов.", "error-token").Render(ctx, writer))
+		return
+	}
+	if err == auth.ErrPasswordWeak {
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		util.Must(templates.InvalidMessage("Паролата трябва да е поне 8 символа", "error-password").Render(ctx, writer))
+		return
+	}
+	if err != nil {
+		slog.Error("Failed to reset password", "error", err)
+		writer.Header().Add("HX-Redirect", "/error")
+		return
+	}
+
+	writer.Header().Set("HX-Redirect", "/login")
+	writer.WriteHeader(http.StatusOK)
 }

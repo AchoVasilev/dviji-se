@@ -52,9 +52,9 @@ templ Login() {
 	</div>
 	<div>
 		<label for="password" class="input-field-label" id="password-label">Парола</label>
-		<input type="password" name="password" id="password" placeholder="••••••••" minlength="6" class="input-field"
-			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
-			onblur="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+		<input type="password" name="password" id="password" placeholder="••••••••" minlength="8" class="input-field"
+			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 8 символа')"
+			onblur="addErrorToElement('password', 'Паролата трябва да е поне 8 символа')"
 			oninput="checkElementValidity('password')" />
 		<p class="hidden" id="error-password"></p>
 	</div>
@@ -68,7 +68,7 @@ templ Login() {
 				<label for="remember" class="text-gray-500 dark:text-gray-300">Запомни ме</label>
 			</div>
 		</div>
-		<a href="#" class="text-sm font-medium text-blue-300 hover:underline dark:text-blue-400">
+		<a href="/forgot-password" class="text-sm font-medium text-blue-300 hover:underline dark:text-blue-400">
 			Забравена парола?
 		</a>
 	</div>
@@ -105,9 +105,9 @@ templ Register() {
 	</div>
 	<div>
 		<label for="password" class="input-field-label" id="password-label">Парола</label>
-		<input type="password" name="password" id="password" placeholder="••••••••" minlength="6" class="input-field"
-			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
-			onblur="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+		<input type="password" name="password" id="password" placeholder="••••••••" minlength="8" class="input-field"
+			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 8 символа')"
+			onblur="addErrorToElement('password', 'Паролата трябва да е поне 8 символа')"
 			oninput="checkElementValidity('password')" />
 		<p class="hidden" id="error-password"></p>
 	</div>

@@ -2,18 +2,10 @@ package middleware
 
 import (
 	"net/http"
-	"os"
+	"server/internal/config"
 	"slices"
 	"strings"
 )
-
-var origins = func() []string {
-	envOrigins := os.Getenv("CORS_ORIGINS")
-	if envOrigins == "" {
-		return []string{}
-	}
-	return strings.Split(envOrigins, ",")
-}()
 
 var methods = []string{"GET", "POST", "PUT", "PATCH", "OPTIONS"}
 
@@ -21,6 +13,7 @@ var headers = []string{"Accept", "Accept-Encoding", "Content-Type", "Content-Len
 
 func EnableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
+		origins := config.CORSOrigins()
 		if isPreflight(req) {
 			origin := req.Header.Get("Origin")
 			method := req.Header.Get("Access-Control-Request-Method")

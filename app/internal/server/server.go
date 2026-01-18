@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
-	"os"
+	"server/internal/config"
 	"server/internal/http/middleware"
 	"server/internal/http/routes"
 )
@@ -33,7 +33,7 @@ func Initialize(db *sql.DB) {
 		middleware.AppendLogger,
 	)
 
-	port := os.Getenv("PORT")
+	port := config.Port()
 	api = &ApiServer{
 		port: port,
 		http: &http.Server{

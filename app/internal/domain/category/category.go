@@ -10,6 +10,7 @@ import (
 type Category struct {
 	Id        uuid.UUID
 	Name      string
+	Slug      string
 	ImageUrl  string
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
