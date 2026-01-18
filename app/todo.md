@@ -137,6 +137,37 @@
 - [ ] Reading list / bookmarks for users
 - [ ] Infinite scroll option for blog list
 
+---
+
+# Feature Roadmap
+
+> Detailed implementation plans are in `IMPLEMENTATION_PLAN.md`
+
+## Milestone 1: Search & Discovery
+- [ ] Full-text search for posts (`GET /blog/search?q=`)
+- [ ] RSS feed (`GET /feed.xml`)
+- [ ] XML sitemap (`GET /sitemap.xml`)
+
+## Milestone 2: Content Organization
+- [ ] Tags system (many-to-many with posts)
+- [ ] Related posts (by tags/category)
+
+## Milestone 3: Admin Enhancements
+- [ ] Post scheduling (scheduled_at + background worker)
+- [ ] View counter (with IP deduplication)
+- [ ] Bulk actions (publish/archive/delete multiple)
+
+## Milestone 4: Security Hardening
+- [ ] Token revocation (blacklist on logout/password change)
+- [ ] Password complexity validation (12+ chars, mixed case, numbers, symbols)
+- [ ] Audit logging (login, logout, password changes)
+
+## Milestone 5: SEO & Social
+- [ ] Open Graph meta tags
+- [ ] Schema.org Article markup (JSON-LD)
+
+---
+
 ## Notes
 
 - `local.env` is for development/testing only - production uses secure secrets management

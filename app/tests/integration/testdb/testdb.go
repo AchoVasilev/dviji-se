@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -75,7 +75,7 @@ func SetupTestDB(t *testing.T) *TestDB {
 		}
 
 		// Connect to database
-		db, err = sql.Open("postgres", connStr)
+		db, err = sql.Open("pgx", connStr)
 		if err != nil {
 			initErr = fmt.Errorf("failed to connect to database: %w", err)
 			return

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	pgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -52,12 +52,12 @@ func RunMigrations(db *sql.DB) {
 }
 
 func applyMigrations(db *sql.DB, path string) {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	driver, err := pgx.WithInstance(db, &pgx.Config{})
 	if err != nil {
 		log.Fatalf("Could not execute migrations: %v", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(path, "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(path, "pgx5", driver)
 	if err != nil {
 		log.Fatalf("Could not instanciate migrations. Path=%s Error=%v", path, err)
 	}

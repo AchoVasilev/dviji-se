@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -50,14 +48,23 @@ func TestCompressionMiddleware_PlainText(t *testing.T) {
 	client := getClient()
 
 	resp, err := client.Get(server.URL + "/test")
-	require.NoError(t, err, "client GET failed with unexpected error")
+	if err != nil {
+		t.Fatalf("client GET failed with unexpected error: %v", err)
+	}
 	defer resp.Body.Close()
 
 	contents, err := io.ReadAll(resp.Body)
-	require.NoError(t, err, "unexpected error while reading response body")
+	if err != nil {
+		t.Fatalf("unexpected error while reading response body: %v", err)
+	}
 
-	require.Equal(t, expect, string(contents), "unexpected response content")
-	require.Empty(t, resp.Header.Get(contentEncodingHeader), "unexpected header: Content-Encoding")
+	if string(contents) != expect {
+		t.Errorf("unexpected response content: got %q, want %q", string(contents), expect)
+	}
+
+	if resp.Header.Get(contentEncodingHeader) != "" {
+		t.Errorf("unexpected header Content-Encoding: got %q, want empty", resp.Header.Get(contentEncodingHeader))
+	}
 }
 
 func TestCompressionMiddleware_Gzip(t *testing.T) {
@@ -70,20 +77,30 @@ func TestCompressionMiddleware_Gzip(t *testing.T) {
 	req.Header.Set(acceptEncodingHeader, gzipEncoding)
 
 	resp, err := client.Do(req)
-	require.NoError(t, err, "client GET failed with unexpected error")
+	if err != nil {
+		t.Fatalf("client GET failed with unexpected error: %v", err)
+	}
 	defer resp.Body.Close()
 
-	require.Equal(t, gzipEncoding, resp.Header.Get(contentEncodingHeader), "invalid Content-Encoding for gzip response")
+	if resp.Header.Get(contentEncodingHeader) != gzipEncoding {
+		t.Errorf("invalid Content-Encoding for gzip response: got %q, want %q", resp.Header.Get(contentEncodingHeader), gzipEncoding)
+	}
 
 	var buf bytes.Buffer
 	reader, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		t.Fatalf("failed to create gzip reader: %v", err)
+	}
 	defer reader.Close()
-	require.NoError(t, err, "failed to create gzip reader")
 
 	_, err = buf.ReadFrom(reader)
-	require.NoError(t, err, "unexpected error while reading gzip response body")
+	if err != nil {
+		t.Fatalf("unexpected error while reading gzip response body: %v", err)
+	}
 
-	require.Equal(t, expect, buf.String(), "unexpected gzip response content")
+	if buf.String() != expect {
+		t.Errorf("unexpected gzip response content: got %q, want %q", buf.String(), expect)
+	}
 }
 
 func TestCompressionMiddleware_Deflate(t *testing.T) {
@@ -95,17 +112,25 @@ func TestCompressionMiddleware_Deflate(t *testing.T) {
 
 	client := getClient()
 	resp, err := client.Do(req)
-	require.NoError(t, err, "client GET failed with unexpected error")
+	if err != nil {
+		t.Fatalf("client GET failed with unexpected error: %v", err)
+	}
 	defer resp.Body.Close()
 
-	require.Equal(t, deflateEncoding, resp.Header.Get(contentEncodingHeader), "invalid Content-Encoding for deflate response")
+	if resp.Header.Get(contentEncodingHeader) != deflateEncoding {
+		t.Errorf("invalid Content-Encoding for deflate response: got %q, want %q", resp.Header.Get(contentEncodingHeader), deflateEncoding)
+	}
 
 	var buf bytes.Buffer
 	reader := flate.NewReader(resp.Body)
 	defer reader.Close()
 
 	_, err = buf.ReadFrom(reader)
-	require.NoError(t, err, "unexpected error while reading deflate response body")
+	if err != nil {
+		t.Fatalf("unexpected error while reading deflate response body: %v", err)
+	}
 
-	require.Equal(t, expect, buf.String(), "unexpected deflate response content")
+	if buf.String() != expect {
+		t.Errorf("unexpected deflate response content: got %q, want %q", buf.String(), expect)
+	}
 }
