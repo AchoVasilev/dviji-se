@@ -166,6 +166,29 @@
 - [ ] Open Graph meta tags
 - [ ] Schema.org Article markup (JSON-LD)
 
+## Milestone 6: Monetization & Ads
+- [ ] Ad consent system (popup → minimized widget, ads only if consented)
+- [ ] Third-party ad networks (Google AdSense)
+- [ ] Affiliate links tracking (`/go/{slug}`)
+- [ ] Sponsored posts (sponsor badge, sponsor fields)
+- [ ] Self-hosted ads (full ad management system)
+
+## Milestone 7: GDPR & Privacy Compliance
+- [ ] Cookie consent banner (necessary/analytics/advertising categories)
+- [ ] Privacy policy page (`/privacy`)
+- [ ] User data export (`/account/export` - right to access)
+- [ ] Account deletion (`/account/delete` - right to be forgotten)
+- [ ] Consent logging (track all user consents)
+- [ ] Integration: cookie consent → ad consent flow
+
+## Milestone 8: Social Login (OAuth2)
+- [ ] OAuth2 infrastructure (provider interface, manager)
+- [ ] Google login
+- [ ] Facebook login
+- [ ] Apple login (optional)
+- [ ] GitHub login (optional)
+- [ ] Account linking/unlinking from settings
+
 ---
 
 ## Notes
