@@ -23,6 +23,7 @@ type postRepository interface {
 	FindAll(ctx context.Context, limit, offset int) ([]posts.PostWithAuthor, int, error)
 	FindByStatus(ctx context.Context, status posts.PostStatus, limit, offset int) ([]posts.PostWithAuthor, int, error)
 	FindRecent(ctx context.Context, limit int) ([]posts.PostWithAuthor, error)
+	Search(ctx context.Context, query string, limit, offset int) ([]posts.PostWithAuthor, int, error)
 	ExistsBySlug(ctx context.Context, slug string, excludeId *uuid.UUID) (bool, error)
 }
 
@@ -167,6 +168,11 @@ func (s *PostService) GetByStatus(ctx context.Context, status posts.PostStatus, 
 
 func (s *PostService) GetRecent(ctx context.Context, limit int) ([]posts.PostWithAuthor, error) {
 	return s.postRepository.FindRecent(ctx, limit)
+}
+
+func (s *PostService) SearchPublished(ctx context.Context, query string, page, pageSize int) ([]posts.PostWithAuthor, int, error) {
+	offset := (page - 1) * pageSize
+	return s.postRepository.Search(ctx, query, pageSize, offset)
 }
 
 func (s *PostService) GenerateSlug(title string) string {

@@ -145,8 +145,9 @@
 
 ## Milestone 1: Search & Discovery
 - [ ] Full-text search for posts (`GET /blog/search?q=`)
-- [ ] RSS feed (`GET /feed.xml`)
-- [ ] XML sitemap (`GET /sitemap.xml`)
+- [x] RSS feed (`GET /feed.xml`)
+- [x] XML sitemap (`GET /sitemap.xml`)
+- [x] robots.txt (`GET /robots.txt`)
 
 ## Milestone 2: Content Organization
 - [ ] Tags system (many-to-many with posts)

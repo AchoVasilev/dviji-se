@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"server/internal/application/categories"
+	"server/internal/config"
 	"server/util"
 	"server/util/ctxutils"
 	"server/web/templates"
@@ -30,6 +31,7 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 		"Тренировки, хранителни режими и рецепти за здравословен начин на живот.",
 		"/",
 		ctxutils.GetCSRF(req.Context()),
+		config.AllowRegistration(),
 	).Render(req.Context(), writer))
 }
 
@@ -41,6 +43,7 @@ func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *h
 		"Страницата, която търсите, не съществува.",
 		"/not-found",
 		ctxutils.GetCSRF(req.Context()),
+		config.AllowRegistration(),
 	).Render(req.Context(), writer))
 }
 
@@ -53,5 +56,6 @@ func (handler *DefaultHandler) HandleError(writer http.ResponseWriter, req *http
 		"Възникна неочаквана грешка.",
 		"/error",
 		ctxutils.GetCSRF(req.Context()),
+		config.AllowRegistration(),
 	).Render(req.Context(), writer))
 }

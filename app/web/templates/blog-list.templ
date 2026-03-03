@@ -2,132 +2,120 @@ package templates
 
 import (
 	"fmt"
+	"server/internal/config"
 	"server/internal/http/handlers/models"
 	"server/util/ctxutils"
 )
 
 templ BlogList(posts []models.PostListItem, categories []models.CategoryResponseResource, page int, totalPages int, total int, currentCategory string) {
-	@Layout(blogListContent(posts, categories, page, totalPages, total, currentCategory), "Блог", "Статии за фитнес, хранене и здравословен начин на живот", "/blog", ctxutils.GetCSRF(ctx))
+	@Layout(blogListContent(posts, categories, page, totalPages, total, currentCategory), "Блог", "Статии за фитнес, хранене и здравословен начин на живот", "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
 }
 
 templ blogListContent(posts []models.PostListItem, categories []models.CategoryResponseResource, page int, totalPages int, total int, currentCategory string) {
-	<section class="py-12 bg-gray-50">
-		<div class="container mx-auto px-4">
-			<div class="text-center mb-12">
-				<h1 class="text-4xl font-bold text-gray-900 mb-4">Блог</h1>
-				<p class="text-lg text-gray-600">Статии за фитнес, хранене и здравословен начин на живот</p>
-			</div>
-			<div class="flex flex-col lg:flex-row gap-8">
-				<!-- Main Content -->
-				<div class="lg:w-3/4">
-					if len(posts) == 0 {
-						<div class="bg-white rounded-lg shadow p-12 text-center">
-							<svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-							</svg>
-							<h3 class="text-xl font-semibold text-gray-900 mb-2">Няма публикации</h3>
-							<p class="text-gray-600">В момента няма публикувани статии в тази категория.</p>
-						</div>
-					} else {
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-							for _, post := range posts {
-								@blogCard(post)
-							}
-						</div>
-						// Pagination
-						if totalPages > 1 {
-							<div class="mt-8 flex justify-center">
-								<nav class="flex gap-2">
-									if page > 1 {
-										<a href={ templ.SafeURL(fmt.Sprintf("/blog%s?page=%d", categoryPath(currentCategory), page-1)) } class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">
-											Предишна
-										</a>
-									}
-									for i := 1; i <= totalPages; i++ {
-										if i == page {
-											<span class="px-4 py-2 bg-red-600 text-white rounded-lg shadow">{ fmt.Sprintf("%d", i) }</span>
-										} else {
-											<a href={ templ.SafeURL(fmt.Sprintf("/blog%s?page=%d", categoryPath(currentCategory), i)) } class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">
-												{ fmt.Sprintf("%d", i) }
-											</a>
-										}
-									}
-									if page < totalPages {
-										<a href={ templ.SafeURL(fmt.Sprintf("/blog%s?page=%d", categoryPath(currentCategory), page+1)) } class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">
-											Следваща
-										</a>
-									}
-								</nav>
-							</div>
-						}
-					}
-				</div>
-				<!-- Sidebar -->
-				<div class="lg:w-1/4">
-					<div class="bg-white rounded-lg shadow p-6 sticky top-4">
-						<h3 class="text-lg font-semibold text-gray-900 mb-4">Категории</h3>
-						<ul class="space-y-2">
-							<li>
-								<a
-									href="/blog"
-									class={ "block px-3 py-2 rounded-lg transition-colors", templ.KV("bg-red-600 text-white", currentCategory == ""), templ.KV("text-gray-700 hover:bg-gray-100", currentCategory != "") }
-								>
-									Всички
-								</a>
-							</li>
-							for _, cat := range categories {
-								<li>
-									<a
-										href={ templ.SafeURL(fmt.Sprintf("/blog/category/%s", cat.Slug)) }
-										class={ "block px-3 py-2 rounded-lg transition-colors", templ.KV("bg-red-600 text-white", currentCategory == cat.Slug), templ.KV("text-gray-700 hover:bg-gray-100", currentCategory != cat.Slug) }
-									>
-										{ cat.Name }
-									</a>
-								</li>
-							}
-						</ul>
-					</div>
-				</div>
-			</div>
+	<section class="max-w-7xl mx-auto px-4 py-12">
+		<!-- Header -->
+		<header class="mb-8">
+			<h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter italic mb-2">Блог</h1>
+			<p class="text-slate-500 dark:text-slate-400 text-lg">Статии за фитнес, хранене и здравословен начин на живот</p>
+		</header>
+		<!-- Category Chips (mobile scrollable, desktop wrapping) -->
+		<div class="flex gap-3 mb-10 overflow-x-auto hide-scrollbar pb-2">
+			<a
+				href="/blog"
+				class={ "flex h-10 shrink-0 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors",
+					templ.KV("bg-primary text-white shadow-lg shadow-red-900/20", currentCategory == ""),
+					templ.KV("bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-primary hover:text-white hover:border-transparent", currentCategory != "") }
+			>
+				Всички
+			</a>
+			for _, cat := range categories {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/blog/category/%s", cat.Slug)) }
+					class={ "flex h-10 shrink-0 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors",
+						templ.KV("bg-primary text-white shadow-lg shadow-red-900/20", currentCategory == cat.Slug),
+						templ.KV("bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-primary hover:text-white hover:border-transparent", currentCategory != cat.Slug) }
+				>
+					{ cat.Name }
+				</a>
+			}
 		</div>
+		<!-- Articles -->
+		if len(posts) == 0 {
+			<div class="bg-white dark:bg-card-dark rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+				<span class="icon icon-article text-6xl text-slate-300 dark:text-slate-600 mb-4"></span>
+				<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Няма публикации</h3>
+				<p class="text-slate-500 dark:text-slate-400">В момента няма публикувани статии в тази категория.</p>
+			</div>
+		} else {
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+				for _, post := range posts {
+					@blogCard(post)
+				}
+			</div>
+			// Pagination
+			if totalPages > 1 {
+				<div class="mt-12 flex justify-center">
+					<nav class="flex gap-2">
+						if page > 1 {
+							<a href={ templ.SafeURL(fmt.Sprintf("/blog%s?page=%d", categoryPath(currentCategory), page-1)) } class="px-4 py-2 bg-white dark:bg-card-dark rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-colors font-medium text-sm">
+								Предишна
+							</a>
+						}
+						for i := 1; i <= totalPages; i++ {
+							if i == page {
+								<span class="px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm">{ fmt.Sprintf("%d", i) }</span>
+							} else {
+								<a href={ templ.SafeURL(fmt.Sprintf("/blog%s?page=%d", categoryPath(currentCategory), i)) } class="px-4 py-2 bg-white dark:bg-card-dark rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-colors font-medium text-sm">
+									{ fmt.Sprintf("%d", i) }
+								</a>
+							}
+						}
+						if page < totalPages {
+							<a href={ templ.SafeURL(fmt.Sprintf("/blog%s?page=%d", categoryPath(currentCategory), page+1)) } class="px-4 py-2 bg-white dark:bg-card-dark rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-colors font-medium text-sm">
+								Следваща
+							</a>
+						}
+					</nav>
+				</div>
+			}
+		}
 	</section>
 }
 
 templ blogCard(post models.PostListItem) {
-	<article class="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-		<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) }>
+	<article class="flex flex-col bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 transition-transform hover:-translate-y-1">
+		<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="relative h-60 block">
 			if post.CoverImageUrl != "" {
-				<img src={ post.CoverImageUrl } alt={ post.Title } class="w-full h-48 object-cover"/>
+				<img src={ post.CoverImageUrl } alt={ post.Title } class="w-full h-full object-cover" />
 			} else {
-				<div class="w-full h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-					<svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-					</svg>
+				<div class="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+					<span class="icon icon-article text-5xl text-slate-300 dark:text-slate-600"></span>
 				</div>
 			}
+			<span class="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{ post.CategoryName }</span>
 		</a>
-		<div class="p-6">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">{ post.CategoryName }</span>
-				<span class="text-xs text-gray-500">{ fmt.Sprintf("%d мин четене", post.ReadingTimeMinutes) }</span>
+		<div class="p-6 flex-grow flex flex-col">
+			<div class="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium uppercase tracking-wider">
+				{ fmt.Sprintf("%d мин четене", post.ReadingTimeMinutes) } &bull; { post.AuthorFirstName } { post.AuthorLastName }
 			</div>
-			<h2 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
-				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="hover:text-red-600 transition-colors">
+			<h3 class="text-xl font-bold mb-3 leading-tight line-clamp-2">
+				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="hover:text-primary transition-colors">
 					{ post.Title }
 				</a>
-			</h2>
+			</h3>
 			if post.Excerpt != "" {
-				<p class="text-gray-600 text-sm line-clamp-3 mb-4">{ post.Excerpt }</p>
+				<p class="text-slate-600 dark:text-slate-400 text-sm mb-6 line-clamp-3">{ post.Excerpt }</p>
 			}
-			<div class="flex items-center justify-between">
-				<span class="text-sm text-gray-500">
-					{ post.AuthorFirstName } { post.AuthorLastName }
-				</span>
-				if post.PublishedAt != nil {
-					<span class="text-sm text-gray-500">
-						{ post.PublishedAt.Format("02.01.2006") }
-					</span>
-				}
+			<div class="mt-auto flex items-center justify-between">
+				<div class="flex items-center gap-2">
+					<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+						{ string([]rune(post.AuthorFirstName)[0]) }{ string([]rune(post.AuthorLastName)[0]) }
+					</div>
+					<span class="text-xs font-semibold">{ post.AuthorFirstName } { post.AuthorLastName }</span>
+				</div>
+				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-colors text-xs font-bold px-4 py-2 rounded-lg">
+					Прочети
+				</a>
 			</div>
 		</div>
 	</article>
@@ -141,14 +129,100 @@ func categoryPath(slug string) string {
 }
 
 templ RecentPosts(posts []models.PostListItem) {
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 		for _, post := range posts {
 			@blogCard(post)
 		}
 	</div>
 	if len(posts) == 0 {
 		<div class="text-center py-12">
-			<p class="text-gray-500">Няма публикации все още.</p>
+			<p class="text-slate-500 dark:text-slate-400">Няма публикации все още.</p>
 		</div>
 	}
+}
+
+templ SearchSuggestions(posts []models.PostListItem, query string) {
+if len(posts) == 0 {
+<div class="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
+Няма резултати за "{ query }"
+</div>
+} else {
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+for _, post := range posts {
+<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+if post.CoverImageUrl != "" {
+<img src={ post.CoverImageUrl } alt={ post.Title } class="w-10 h-10 rounded-lg object-cover shrink-0"/>
+} else {
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+<span class="icon icon-article text-slate-400"></span>
+</div>
+}
+<div class="min-w-0">
+<p class="text-sm font-semibold truncate">{ post.Title }</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">{ post.CategoryName }</p>
+</div>
+</a>
+}
+</div>
+<a href={ templ.SafeURL(fmt.Sprintf("/blog/search?q=%s", query)) } class="block p-3 text-center text-sm font-bold text-primary hover:bg-slate-50 dark:hover:bg-white/5 transition-colors border-t border-slate-100 dark:border-slate-800">
+Виж всички резултати
+</a>
+}
+}
+
+templ BlogSearchResults(posts []models.PostListItem, query string, page int, totalPages int, total int) {
+@Layout(blogSearchContent(posts, query, page, totalPages, total), fmt.Sprintf("Търсене: %s", query), fmt.Sprintf("Резултати от търсене за %s", query), "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
+}
+
+templ blogSearchContent(posts []models.PostListItem, query string, page int, totalPages int, total int) {
+<section class="max-w-7xl mx-auto px-4 py-12">
+<header class="mb-8">
+<h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter italic mb-2">Търсене</h1>
+<p class="text-slate-500 dark:text-slate-400 text-lg">
+if total > 0 {
+{ fmt.Sprintf("%d резултата за \"%s\"", total, query) }
+} else {
+Няма резултати за "{ query }"
+}
+</p>
+</header>
+if len(posts) == 0 {
+<div class="bg-white dark:bg-card-dark rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+<span class="icon icon-search text-6xl text-slate-300 dark:text-slate-600 mb-4"></span>
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Няма намерени публикации</h3>
+<p class="text-slate-500 dark:text-slate-400">Опитайте с различни ключови думи.</p>
+</div>
+} else {
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+for _, post := range posts {
+@blogCard(post)
+}
+</div>
+if totalPages > 1 {
+<div class="mt-12 flex justify-center">
+<nav class="flex gap-2">
+if page > 1 {
+<a href={ templ.SafeURL(fmt.Sprintf("/blog/search?q=%s&page=%d", query, page-1)) } class="px-4 py-2 bg-white dark:bg-card-dark rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-colors font-medium text-sm">
+Предишна
+</a>
+}
+for i := 1; i <= totalPages; i++ {
+if i == page {
+<span class="px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm">{ fmt.Sprintf("%d", i) }</span>
+} else {
+<a href={ templ.SafeURL(fmt.Sprintf("/blog/search?q=%s&page=%d", query, i)) } class="px-4 py-2 bg-white dark:bg-card-dark rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-colors font-medium text-sm">
+{ fmt.Sprintf("%d", i) }
+</a>
+}
+}
+if page < totalPages {
+<a href={ templ.SafeURL(fmt.Sprintf("/blog/search?q=%s&page=%d", query, page+1)) } class="px-4 py-2 bg-white dark:bg-card-dark rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary transition-colors font-medium text-sm">
+Следваща
+</a>
+}
+</nav>
+</div>
+}
+}
+</section>
 }

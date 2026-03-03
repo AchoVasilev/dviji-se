@@ -1,43 +1,26 @@
 package templates
 
 templ Error(requestId string) {
-	<div class="h-screen w-full flex flex-col justify-center items-center bg-[#1A2238]">
+	<div class="h-screen w-full flex flex-col justify-center items-center bg-bg-dark">
 		<h1 class="text-9xl font-extrabold text-white tracking-widest">500</h1>
-		<p class="bg-[#FF6A3D] px-2 text-sm rounded rotate-12 absolute">
-			Проблем с обработване на заявката. Обърнете се към администратор. Заявка № { requestId }
-		</p>
-		<button class="mt-5">
-			<a
-				class="relative inline-block text-sm font-medium text-[#FF6A3D] group active:text-orange-500 focus:outline-none focus:ring"
-			>
-				<span
-					class="absolute inset-0 transition-transform translate-x-0.5 translate-y-0.5 bg-[#FF6A3D] group-hover:translate-y-0 group-hover:translate-x-0"
-				></span>
-				<span class="relative block px-8 py-3 bg-[#1A2238] border border-current">
-					<a href="/">Начало</a>
-				</span>
-			</a>
-		</button>
+		<div class="bg-primary px-4 py-1 text-sm text-white font-bold rounded-full mt-4 mb-8 uppercase tracking-wider">
+			Проблем с обработване на заявката
+		</div>
+		<p class="text-slate-400 text-sm mb-8">Обърнете се към администратор. Заявка № { requestId }</p>
+		<a href="/" class="bg-primary hover:bg-red-700 text-white px-8 py-3 rounded-lg font-bold transition-all uppercase tracking-wider text-sm">
+			Начало
+		</a>
 	</div>
 }
 
 templ NotFound() {
-	<div class="h-screen w-full flex flex-col justify-center items-center bg-[#1A2238]">
+	<div class="h-screen w-full flex flex-col justify-center items-center bg-bg-dark">
 		<h1 class="text-9xl font-extrabold text-white tracking-widest">404</h1>
-		<p class="bg-[#FF6A3D] px-2 text-sm rounded rotate-12 absolute">
+		<div class="bg-primary px-4 py-1 text-sm text-white font-bold rounded-full mt-4 mb-8 uppercase tracking-wider">
 			Страницата не е намерена
-		</p>
-		<button class="mt-5">
-			<a
-				class="relative inline-block text-sm font-medium text-[#FF6A3D] group active:text-orange-500 focus:outline-none focus:ring"
-			>
-				<span
-					class="absolute inset-0 transition-transform translate-x-0.5 translate-y-0.5 bg-[#FF6A3D] group-hover:translate-y-0 group-hover:translate-x-0"
-				></span>
-				<span class="relative block px-8 py-3 bg-[#1A2238] border border-current">
-					<a href="/">Начало</a>
-				</span>
-			</a>
-		</button>
+		</div>
+		<a href="/" class="bg-primary hover:bg-red-700 text-white px-8 py-3 rounded-lg font-bold transition-all uppercase tracking-wider text-sm">
+			Начало
+		</a>
 	</div>
 }

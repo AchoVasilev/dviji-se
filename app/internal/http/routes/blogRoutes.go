@@ -23,6 +23,10 @@ func BlogRoutes(mux *http.ServeMux, db *sql.DB) {
 	// Blog list page
 	mux.HandleFunc("GET /blog", handler.GetBlogList)
 
+	// Search
+	mux.HandleFunc("GET /blog/search/suggestions", handler.SearchSuggestions)
+	mux.HandleFunc("GET /blog/search", handler.SearchBlogPosts)
+
 	// Recent posts (HTMX endpoint for home page)
 	mux.HandleFunc("GET /blog/recent", handler.GetRecentPosts)
 

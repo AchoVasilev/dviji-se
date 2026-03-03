@@ -87,6 +87,7 @@ CREATE TABLE categories
   id UUID NOT NULL,
   name VARCHAR(100) NOT NULL,
   slug VARCHAR(100) NOT NULL,
+  icon VARCHAR(50) NOT NULL DEFAULT 'category',
   image_url VARCHAR NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
   updated_at TIMESTAMPTZ,

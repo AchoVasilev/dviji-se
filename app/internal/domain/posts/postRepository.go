@@ -277,6 +277,43 @@ func (r *PostRepository) FindRecent(ctx context.Context, limit int) ([]PostWithA
 	return r.scanPostsWithAuthor(rows)
 }
 
+func (r *PostRepository) Search(ctx context.Context, query string, limit, offset int) ([]PostWithAuthor, int, error) {
+	searchPattern := "%" + query + "%"
+
+	countQuery := `
+		SELECT COUNT(*) FROM posts p
+		WHERE p.status = 'published' AND p.is_deleted = FALSE
+			AND (p.title ILIKE $1 OR p.excerpt ILIKE $1 OR p.content ILIKE $1)`
+	var total int
+	if err := r.Db.QueryRowContext(ctx, countQuery, searchPattern).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	selectQuery := `
+		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			u.first_name, u.last_name, c.name, c.slug
+		FROM posts p
+		JOIN users u ON p.creator_user_id = u.id
+		JOIN categories c ON p.category_id = c.id
+		WHERE p.status = 'published' AND p.is_deleted = FALSE
+			AND (p.title ILIKE $1 OR p.excerpt ILIKE $1 OR p.content ILIKE $1)
+		ORDER BY p.published_at DESC
+		LIMIT $2 OFFSET $3`
+
+	rows, err := r.Db.QueryContext(ctx, selectQuery, searchPattern, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	posts, err := r.scanPostsWithAuthor(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+	return posts, total, nil
+}
+
 func (r *PostRepository) ExistsBySlug(ctx context.Context, slug string, excludeId *uuid.UUID) (bool, error) {
 	var query string
 	var args []interface{}

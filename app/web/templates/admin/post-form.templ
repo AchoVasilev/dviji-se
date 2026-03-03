@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"server/internal/config"
 	"server/internal/domain/posts"
 	"server/internal/http/handlers/models"
 	"server/util/ctxutils"
@@ -10,31 +11,29 @@ import (
 
 templ PostForm(post *posts.Post, categories []models.CategoryResponseResource) {
 	if post == nil {
-		@templates.Layout(postFormContent(post, categories), "Нова публикация", "Създаване на нова публикация", "/admin/posts", ctxutils.GetCSRF(ctx))
+		@templates.Layout(postFormContent(post, categories), "Нова публикация", "Създаване на нова публикация", "/admin/posts", ctxutils.GetCSRF(ctx), config.AllowRegistration())
 	} else {
-		@templates.Layout(postFormContent(post, categories), "Редактиране: " + post.Title, "Редактиране на публикация", "/admin/posts", ctxutils.GetCSRF(ctx))
+		@templates.Layout(postFormContent(post, categories), "Редактиране: "+post.Title, "Редактиране на публикация", "/admin/posts", ctxutils.GetCSRF(ctx), config.AllowRegistration())
 	}
 }
 
 templ postFormContent(post *posts.Post, categories []models.CategoryResponseResource) {
-	<div class="min-h-screen bg-gray-100">
-		<div class="bg-blue-n text-white py-6 px-8">
-			<div class="flex items-center gap-4">
-				<a href="/admin/posts" class="text-blue-200 hover:text-white">
-					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-					</svg>
+	<div class="min-h-screen">
+		<div class="bg-bg-dark text-white py-8 px-8">
+			<div class="max-w-7xl mx-auto flex items-center gap-4">
+				<a href="/admin/posts" class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+					<span class="icon icon-arrow_back"></span>
 				</a>
 				<div>
 					if post == nil {
-						<h1 class="text-3xl font-bold">Нова публикация</h1>
+						<h1 class="text-3xl font-extrabold tracking-tight uppercase">Нова публикация</h1>
 					} else {
-						<h1 class="text-3xl font-bold">Редактиране на публикация</h1>
+						<h1 class="text-3xl font-extrabold tracking-tight uppercase">Редактиране на публикация</h1>
 					}
 				</div>
 			</div>
 		</div>
-		<div class="p-8">
+		<div class="max-w-7xl mx-auto p-6 md:p-8">
 			<form
 				id="post-form"
 				if post == nil {
@@ -51,21 +50,21 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 				<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 					<!-- Main Content -->
 					<div class="lg:col-span-2 space-y-6">
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Заглавие</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Заглавие</label>
 							<input
 								type="text"
 								name="title"
 								if post != nil {
 									value={ post.Title }
 								}
-								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								class="input-field"
 								placeholder="Въведете заглавие..."
 								required
 							/>
 						</div>
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Съдържание</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Съдържание</label>
 							<textarea
 								id="content-editor"
 								name="content"
@@ -77,11 +76,11 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 								}
 							</textarea>
 						</div>
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Кратко описание (Excerpt)</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Кратко описание (Excerpt)</label>
 							<textarea
 								name="excerpt"
-								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								class="input-field"
 								rows="3"
 								maxlength="500"
 								placeholder="Кратко описание на публикацията..."
@@ -94,11 +93,11 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 					</div>
 					<!-- Sidebar -->
 					<div class="space-y-6">
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Статус</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Статус</label>
 							<select
 								name="status"
-								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								class="input-field"
 							>
 								<option value="created" selected?={ post == nil || post.Status == "created" }>Създадено</option>
 								<option value="draft" selected?={ post != nil && post.Status == "draft" }>Чернова</option>
@@ -106,11 +105,11 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 								<option value="archived" selected?={ post != nil && post.Status == "archived" }>Архивирано</option>
 							</select>
 						</div>
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Категория</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Категория</label>
 							<select
 								name="categoryId"
-								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								class="input-field"
 								required
 							>
 								<option value="">Изберете категория...</option>
@@ -119,8 +118,8 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 								}
 							</select>
 						</div>
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Корица (URL)</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Корица (URL)</label>
 							<input
 								type="url"
 								name="coverImageUrl"
@@ -128,32 +127,32 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 								if post != nil {
 									value={ post.CoverImageUrl }
 								}
-								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								class="input-field"
 								placeholder="https://..."
 							/>
 							<div class="mt-3">
-								<label class="block text-sm text-gray-600 mb-2">Или качете изображение:</label>
+								<label class="block text-sm text-slate-500 dark:text-slate-400 mb-2">Или качете изображение:</label>
 								<input
 									type="file"
 									id="cover-upload"
 									accept="image/*"
-									class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+									class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 file:cursor-pointer file:transition-colors"
 								/>
 							</div>
 							if post != nil && post.CoverImageUrl != "" {
 								<div class="mt-3">
-									<img src={ post.CoverImageUrl } alt="Cover preview" class="w-full h-32 object-cover rounded-lg"/>
+									<img src={ post.CoverImageUrl } alt="Cover preview" class="w-full h-32 object-cover rounded-xl"/>
 								</div>
 							}
 							<div id="cover-preview" class="mt-3 hidden">
-								<img src="" alt="Cover preview" class="w-full h-32 object-cover rounded-lg"/>
+								<img src="" alt="Cover preview" class="w-full h-32 object-cover rounded-xl"/>
 							</div>
 						</div>
-						<div class="bg-white rounded-lg shadow p-6">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Мета описание (SEO)</label>
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">Мета описание (SEO)</label>
 							<textarea
 								name="metaDescription"
-								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								class="input-field"
 								rows="2"
 								maxlength="160"
 								placeholder="Описание за търсачки (до 160 символа)..."
@@ -166,7 +165,7 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 						<div class="flex gap-4">
 							<button
 								type="submit"
-								class="flex-1 btn-red py-3 text-center"
+								class="flex-1 btn-primary py-3 text-center"
 							>
 								if post == nil {
 									Създай
@@ -174,7 +173,7 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 									Запази
 								}
 							</button>
-							<a href="/admin/posts" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg text-center">
+							<a href="/admin/posts" class="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3 rounded-full text-center font-bold text-sm uppercase tracking-wider transition-colors">
 								Отказ
 							</a>
 						</div>
@@ -184,8 +183,128 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 		</div>
 	</div>
 	<!-- TinyMCE Integration -->
-	<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+	<script src={ config.TinyMCEURL() } referrerpolicy="origin"></script>
 	<script>
+		const postTemplates = [
+			{
+				title: 'Сред природата / Хайкинг',
+				description: 'Маршрут с фази, цитат, карта, странична лента със статистики и екипировка',
+				content: '<div style="display:grid;grid-template-columns:2fr 1fr;gap:3rem;">' +
+					'<div>' +
+					'<p style="font-size:1.25rem;line-height:1.8;color:#94a3b8;"><span style="float:left;font-size:4rem;font-weight:bold;color:#dc2626;line-height:1;margin-right:0.75rem;">T</span>actical hiking isn\'t just about reaching the summit; it\'s about the load you carry and the efficiency with which you move. When we talk about endurance in the context of mountain training, we are measuring the intersection of oxygen efficiency, muscular stamina, and psychological resilience.</p>' +
+					'<figure style="margin:2.5rem 0;border-radius:0.75rem;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);"><img src="https://placehold.co/800x400" alt="Описание на снимката" style="width:100%;height:auto;object-fit:cover;" />' +
+					'<figcaption style="background:#1e293b;padding:1rem;font-size:0.75rem;font-style:italic;color:#94a3b8;text-align:center;">Описание на изображението тук.</figcaption></figure>' +
+					'<h2>Фаза 1: Изкачването</h2>' +
+					'<p>По време на този 12 км маршрут, основното предизвикателство е продължителният наклон от 15%. За тактическия атлет това изисква техника на "стъпка за почивка" — моментно заключване на долния крак, за да се прехвърли тежестта върху скелетната структура, вместо да се изтощават квадрицепсите.</p>' +
+					'<blockquote style="border-left:4px solid #dc2626;background:rgba(220,38,38,0.05);padding:2rem;border-radius:0 0.75rem 0.75rem 0;margin:2rem 0;"><p style="font-size:1.25rem;font-style:italic;font-weight:500;">"Планината не се интересува от твоите резултати във фитнеса. Тя иска само да можеш да направиш още една крачка, когато дробовете ти горят."</p></blockquote>' +
+					'<h2>Фаза 2: Хранене и хидратация</h2>' +
+					'<p>Поддържането на стабилен гликемичен индекс е критично. При маршрути надвишаващи 4 часа, препоръчваме 60г въглехидрати/час, допълнени с 400мг натрий на литър вода за поддържане на електролитния баланс.</p>' +
+					'<h2>Фаза 3: Спускането</h2>' +
+					'<p>Съвети за безопасно спускане — техника на стъпване, контрол на темпото, предпазни мерки за коленете...</p>' +
+					'</div>' +
+					'<aside>' +
+					'<div style="background:#1e293b80;border:1px solid #1e293b;border-radius:1rem;padding:2rem;margin-bottom:2rem;">' +
+					'<h4 style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#94a3b8;margin-bottom:2rem;">Обобщение</h4>' +
+					'<div style="margin-bottom:1.5rem;"><p style="font-size:0.75rem;font-weight:600;color:#94a3b8;margin-bottom:0.25rem;">Вертикално изкачване</p><p style="font-size:1.875rem;font-weight:900;color:#dc2626;">1,200 м</p></div>' +
+					'<div style="margin-bottom:1.5rem;"><p style="font-size:0.75rem;font-weight:600;color:#94a3b8;margin-bottom:0.25rem;">Разстояние</p><p style="font-size:1.875rem;font-weight:900;color:#dc2626;">12 км</p></div>' +
+					'<div style="margin-bottom:1.5rem;"><p style="font-size:0.75rem;font-weight:600;color:#94a3b8;margin-bottom:0.25rem;">Време в движение</p><p style="font-size:1.875rem;font-weight:900;color:#dc2626;">4.5 ч</p></div>' +
+					'</div>' +
+					'<div style="padding:1rem;">' +
+					'<h4 style="font-size:0.875rem;font-weight:bold;margin-bottom:1.5rem;">Необходима екипировка</h4>' +
+					'<div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;"><div style="width:4rem;height:4rem;border-radius:0.5rem;background:#1e293b;flex-shrink:0;"></div><div><p style="font-size:0.875rem;font-weight:bold;">Планински обувки</p><p style="font-size:0.75rem;color:#94a3b8;">Стабилност и захват</p></div></div>' +
+					'<div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;"><div style="width:4rem;height:4rem;border-radius:0.5rem;background:#1e293b;flex-shrink:0;"></div><div><p style="font-size:0.875rem;font-weight:bold;">Раница 40Л</p><p style="font-size:0.75rem;color:#94a3b8;">Разпределение на тежестта</p></div></div>' +
+					'</div>' +
+					'</aside>' +
+					'</div>'
+			},
+			{
+				title: 'Рецепта / Хранене',
+				description: 'Хранителни стойности, съставки с чеклист, стъпки за приготвяне, съвет',
+				content: '<p style="font-size:1.25rem;line-height:1.8;color:#94a3b8;">Кратко описание на рецептата — оптимизирана за устойчиво освобождаване на енергия и мускулно възстановяване по време на тренировки.</p>' +
+					'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2rem 0;">' +
+					'<div style="background:#1e293b80;border:1px solid #1e293b;border-radius:0.75rem;padding:1.25rem;"><p style="font-size:0.7rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.15em;color:#94a3b8;">Калории</p><p style="font-size:1.5rem;font-weight:bold;">650 <span style="font-size:0.875rem;font-weight:normal;color:#94a3b8;">kcal</span></p></div>' +
+					'<div style="background:#1e293b80;border:1px solid #1e293b;border-radius:0.75rem;padding:1.25rem;"><p style="font-size:0.7rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.15em;color:#94a3b8;">Протеин</p><p style="font-size:1.5rem;font-weight:bold;color:#dc2626;">45 <span style="font-size:0.875rem;font-weight:normal;color:#94a3b8;">г</span></p></div>' +
+					'<div style="background:#1e293b80;border:1px solid #1e293b;border-radius:0.75rem;padding:1.25rem;"><p style="font-size:0.7rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.15em;color:#94a3b8;">Въглехидрати</p><p style="font-size:1.5rem;font-weight:bold;">60 <span style="font-size:0.875rem;font-weight:normal;color:#94a3b8;">г</span></p></div>' +
+					'<div style="background:#1e293b80;border:1px solid #1e293b;border-radius:0.75rem;padding:1.25rem;"><p style="font-size:0.7rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.15em;color:#94a3b8;">Мазнини</p><p style="font-size:1.5rem;font-weight:bold;">22 <span style="font-size:0.875rem;font-weight:normal;color:#94a3b8;">г</span></p></div>' +
+					'</div>' +
+					'<div style="display:grid;grid-template-columns:1fr 2fr;gap:3rem;margin-top:2rem;">' +
+					'<div>' +
+					'<h3>Съставки</h3>' +
+					'<ul>' +
+					'<li>200г пилешко филе, грилирано</li>' +
+					'<li>1 чаша варена киноа или кафяв ориз</li>' +
+					'<li>1/2 сладък картоф, печен на кубчета</li>' +
+					'<li>1/2 авокадо, нарязано</li>' +
+					'<li>2 чаши бебе спанак или кейл</li>' +
+					'<li>1 с.л. тиквени семки</li>' +
+					'<li>Дресинг: лимонов сок, зехтин, морска сол</li>' +
+					'</ul>' +
+					'<div style="margin-top:2.5rem;padding:1.5rem;border-radius:0.75rem;border:2px solid #dc2626;background:rgba(220,38,38,0.05);">' +
+					'<h4 style="color:#dc2626;font-weight:bold;margin-bottom:0.5rem;">Съвет за meal prep</h4>' +
+					'<p style="font-size:0.875rem;color:#94a3b8;">Пригответе месото и киноата предварително в неделя. Съхранявайте дресинга отделно. Издържа до 4 дни в хладилник.</p>' +
+					'</div>' +
+					'</div>' +
+					'<div>' +
+					'<h3>Начин на приготвяне</h3>' +
+					'<ol>' +
+					'<li><strong>Подгответе основата</strong> — Изплакнете киноата и сварете. За повече вкус използвайте бульон вместо вода. Разрохкайте с вилица.</li>' +
+					'<li><strong>Изпечете сладкия картоф</strong> — Загрейте фурната на 200°C. Нарежете на кубчета, намажете със зехтин и печете 20–25 мин.</li>' +
+					'<li><strong>Грилирайте пилешкото</strong> — Подправете с червен пипер, чесън на прах и черен пипер. Грилирайте по 6–7 мин от всяка страна.</li>' +
+					'<li><strong>Сглобете купата</strong> — Поставете спанак, наредете киноа, картофи и месо. Добавете авокадо и поръсете с тиквени семки.</li>' +
+					'<li><strong>Овкусете</strong> — Поръсете с лимонов сок и зехтин. Добавете допълнително морска сол при нужда.</li>' +
+					'</ol>' +
+					'</div>' +
+					'</div>'
+			},
+			{
+				title: 'Тренировъчна програма',
+				description: 'Принципи, упражнения, таблица, странична лента с ниво и оборудване',
+				content: '<div style="display:grid;grid-template-columns:1fr 320px;gap:3rem;">' +
+					'<div>' +
+					'<p style="font-size:1.125rem;line-height:1.8;color:#94a3b8;">За да се отличите в ракинг, имате нужда от повече от издръжливост. Тактическата сила осигурява структурната здравина за носене на тежки товари на дълги разстояния при минимален риск от контузия.</p>' +
+					'<h2>Основни принципи</h2>' +
+					'<p>Ефективната подготовка не е свързана с изолирани движения. Става дума за комбинирани упражнения, които имитират натоварванията по маршрута. Приоритет са: мъртва тяга, преса над глава и носене с тежест.</p>' +
+					'<blockquote style="border-left:4px solid #dc2626;background:rgba(220,38,38,0.05);padding:1.5rem;border-radius:0 0.75rem 0.75rem 0;margin:2rem 0;"><p style="font-style:italic;">"Раницата ти е толкова тежка, колкото умът ти позволява, но гръбнакът ти е толкова силен, колкото тренировките ти диктуват."</p></blockquote>' +
+					'<h3>Дневен протокол с упражнения</h3>' +
+					'<ul>' +
+					'<li><strong>Махове с кетълбел:</strong> 3 серии по 20 повторения. Фокус върху експлозивно движение от ханша и стабилен корем в горна позиция.</li>' +
+					'<li><strong>Гоблет клек:</strong> 4 серии по 12 повторения. Дръжте гърдите високо и лактите между коленете за дълбочина.</li>' +
+					'<li><strong>Фермерско ходене:</strong> 4 серии по 40 метра. Използвайте максималното тегло, при което поддържате перфектна стойка.</li>' +
+					'</ul>' +
+					'<h3>Тренировъчна таблица</h3>' +
+					'<table><thead><tr><th>Упражнение</th><th>Серии</th><th>Повторения</th><th>Почивка</th></tr></thead>' +
+					'<tbody>' +
+					'<tr><td>Клек с щанга</td><td>5</td><td>5</td><td>120 сек</td></tr>' +
+					'<tr><td>Набирания с тежест</td><td>3</td><td>Макс</td><td>90 сек</td></tr>' +
+					'<tr><td>Хвърляне и натиск с чувал</td><td>4</td><td>8</td><td>60 сек</td></tr>' +
+					'<tr><td>Планк с 10кг плоча</td><td>3</td><td>60 сек</td><td>45 сек</td></tr>' +
+					'</tbody></table>' +
+					'</div>' +
+					'<aside>' +
+					'<div style="border:1px solid #1e293b;background:rgba(30,41,59,0.3);border-radius:0.75rem;padding:1.5rem;margin-bottom:1.5rem;">' +
+					'<h4 style="font-weight:bold;margin-bottom:1rem;">Ниво на трудност</h4>' +
+					'<div style="display:flex;align-items:center;gap:0.5rem;"><div style="height:0.5rem;width:100%;border-radius:9999px;background:#1e293b;"><div style="height:0.5rem;width:75%;border-radius:9999px;background:#dc2626;"></div></div><span style="font-size:0.875rem;font-weight:500;color:#cbd5e1;">Напреднал</span></div>' +
+					'<p style="margin-top:1rem;font-size:0.75rem;color:#64748b;">Програмата е за хора с поне 6 месеца опит в силови тренировки.</p>' +
+					'</div>' +
+					'<div style="border:1px solid #1e293b;background:rgba(30,41,59,0.3);border-radius:0.75rem;padding:1.5rem;margin-bottom:1.5rem;">' +
+					'<h4 style="font-weight:bold;margin-bottom:1rem;">Необходимо оборудване</h4>' +
+					'<ul style="list-style:none;padding:0;margin:0;">' +
+					'<li style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#cbd5e1;margin-bottom:0.75rem;"><span style="height:6px;width:6px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>Раница с тежест (10–20 кг)</li>' +
+					'<li style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#cbd5e1;margin-bottom:0.75rem;"><span style="height:6px;width:6px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>Олимпийска щанга и дискове</li>' +
+					'<li style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#cbd5e1;margin-bottom:0.75rem;"><span style="height:6px;width:6px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>Кетълбели (среден/тежък)</li>' +
+					'<li style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#cbd5e1;margin-bottom:0.75rem;"><span style="height:6px;width:6px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>Тренировъчен чувал с пясък</li>' +
+					'<li style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#cbd5e1;"><span style="height:6px;width:6px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>Лост за набирания</li>' +
+					'</ul>' +
+					'</div>' +
+					'<div style="border-radius:0.75rem;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);padding:1.5rem;text-align:center;">' +
+					'<h4 style="font-weight:bold;margin-bottom:0.5rem;">Искате пълния PDF?</h4>' +
+					'<p style="font-size:0.875rem;color:#94a3b8;margin-bottom:1rem;">Свалете безплатно 12-седмичното ръководство.</p>' +
+					'</div>' +
+					'</aside>' +
+					'</div>'
+			}
+		];
+
 		tinymce.init({
 			selector: '#content-editor',
 			height: 500,
@@ -194,8 +313,8 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 				'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
 				'insertdatetime', 'media', 'table', 'help', 'wordcount'
 			],
-			toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link | code | help',
-			content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
+			toolbar: 'posttemplate | undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link | table | code | help',
+			content_style: 'body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
 			images_upload_url: '/admin/upload',
 			images_upload_handler: function (blobInfo, progress) {
 				return new Promise((resolve, reject) => {
@@ -223,10 +342,32 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 				});
 			},
 			setup: function(editor) {
+				editor.ui.registry.addMenuButton('posttemplate', {
+					text: 'Шаблон',
+					fetch: function(callback) {
+						var items = postTemplates.map(function(t) {
+							return {
+								type: 'menuitem',
+								text: t.title,
+								onAction: function() {
+									editor.setContent(t.content);
+								}
+							};
+						});
+						callback(items);
+					}
+				});
 				editor.on('change', function() {
 					editor.save();
 				});
 			}
+		});
+
+		// Sync TinyMCE content before HTMX sends the request
+		document.body.addEventListener('htmx:configRequest', function(evt) {
+			tinyMCE.triggerSave();
+			var richContent = document.querySelector('#content-editor');
+			evt.detail.parameters['content'] = richContent.value;
 		});
 
 		// Cover image upload

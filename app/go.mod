@@ -3,7 +3,7 @@ module server
 go 1.25.6
 
 require (
-	github.com/a-h/templ v0.3.977
+	github.com/a-h/templ v0.3.1001
 	github.com/cloudinary/cloudinary-go/v2 v2.14.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/golang-jwt/jwt/v5 v5.3.0

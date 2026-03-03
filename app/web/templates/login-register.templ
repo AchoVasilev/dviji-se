@@ -1,46 +1,82 @@
 package templates
 
 templ LoginRegister(content templ.Component) {
-<section class="bg-gray-50 dark:bg-gray-900">
-	<div class="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:h-screen">
-		<a href="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-			<img class="w-12 h-12 mr-2" src="static/img/logo-reversed.png" alt="logo" />
-			Движи се
-		</a>
-		<section
-			class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-			<div class="p-6 space-y-4 md:space-y-6 sm:p-8" id="template-container">
+<div class="flex min-h-screen flex-col lg:flex-row">
+	<!-- Left Section: Visual (desktop only) -->
+	<div class="relative hidden lg:flex lg:w-1/2 xl:w-3/5 overflow-hidden">
+		<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/static/img/running-man.png');"></div>
+		<div class="absolute inset-0 bg-gradient-to-t from-bg-dark via-bg-dark/40 to-transparent"></div>
+		<div class="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
+		<div class="absolute inset-0 tactical-grid pointer-events-none opacity-20"></div>
+		<div class="relative z-10 flex flex-col justify-between p-12 w-full">
+			<a href="/" class="flex items-center gap-3">
+				<img src="/static/img/logo_128x128.png" alt="Движи се" class="w-10 h-10"/>
+				<h2 class="text-2xl font-bold tracking-tight text-white uppercase">Движи се</h2>
+			</a>
+			<div class="max-w-xl">
+				<h1 class="text-6xl xl:text-7xl font-bold leading-none tracking-tighter text-white mb-6 uppercase">
+					Изковай своята <br/><span class="text-primary">издръжливост.</span>
+				</h1>
+				<p class="text-lg text-slate-300 font-light max-w-md">
+					Тренировки, хранителни планове и ръководства за всеки, който иска повече от себе си.
+				</p>
+			</div>
+			<div class="flex gap-8 text-sm font-medium tracking-widest uppercase text-slate-400">
+				<span class="flex items-center gap-2"><span class="w-8 h-[1px] bg-primary"></span> Тренировки</span>
+				<span class="flex items-center gap-2"><span class="w-8 h-[1px] bg-primary"></span> Хранене</span>
+				<span class="flex items-center gap-2"><span class="w-8 h-[1px] bg-primary"></span> Екопътеки</span>
+			</div>
+		</div>
+	</div>
+	<!-- Right Section: Auth Form -->
+	<div class="flex flex-1 flex-col justify-center px-6 py-12 lg:px-24 bg-white dark:bg-card-dark relative">
+		<!-- Mobile Logo -->
+		<div class="lg:hidden flex items-center gap-3 mb-12">
+			<a href="/" class="flex items-center gap-3">
+				<img src="/static/img/logo_128x128.png" alt="Движи се" class="w-8 h-8"/>
+				<h2 class="text-xl font-extrabold tracking-tight uppercase">Движи се</h2>
+			</a>
+		</div>
+		<div class="mx-auto w-full max-w-md">
+			<div id="template-container">
 				@content
 			</div>
-			<div class="flex items-center mb-3 ml-2 mr-2">
-				<hr class="h-0 border-b border-solid border-gray-500 grow" />
-				<p class="mx-4 text-white">или</p>
-				<hr class="h-0 border-b border-solid border-gray-500 grow" />
+			<!-- Divider -->
+			<div class="relative my-8">
+				<div aria-hidden="true" class="absolute inset-0 flex items-center">
+					<div class="w-full border-t border-slate-300 dark:border-slate-700"></div>
+				</div>
+				<div class="relative flex justify-center text-sm leading-6">
+					<span class="bg-white dark:bg-card-dark px-4 text-slate-500 font-medium">или</span>
+				</div>
 			</div>
-			<section class="flex items-center justify-center pb-4">
-				<a href="#"
-					class="flex items-center justify-center py-2 px-5 text-sm font-medium transition duration-300 rounded-2xl text-white bg-gray-700 hover:bg-gray-500 focus:ring-4 focus:ring-gray-400">
-					<img class="h-5 mr-2" src="static/img/google.svg" alt="Използвай Google" />
-					Google
-				</a>
-			</section>
-		</section>
+			<!-- Social login -->
+			<button class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-3 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+				<img class="h-5" src="/static/img/google.svg" alt="Google" />
+				<span>Продължи с Google</span>
+			</button>
+		</div>
+		<!-- Footer -->
+		<div class="mt-auto pt-10 text-center text-[10px] text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+			&copy; 2026 Движи се. Всички права запазени.
+		</div>
 	</div>
-</section>
+</div>
 <script defer type="text/javascript" src="/static/scripts/validation.js"></script>
 }
 
 templ Login() {
 <title>Движи се - Вход</title>
-<section class="flex flex-wrap items-center justify-center pb-2 border-b border-solid border-gray-500 lg:flex-row">
-	<h2 class="nav-item-on">Вход</h2>
-	<a class="nav-item-off text-white cursor-pointer" href="/register" hx-get="/register"
-		hx-target="#template-container" hx-swap="innerHTML" hx-push-url="true">Регистрация</a>
-</section>
-<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-	Влезте с акаунта си
-</h1>
-<form class="space-y-4 md:space-y-6" action="POST" hx-post="/login" id="login-form" hx-validate="true" hx-ext="json-enc"
+<div class="mb-10">
+	<div class="flex gap-4 mb-6 border-b border-slate-200 dark:border-slate-700">
+		<span class="pb-3 text-sm font-bold uppercase tracking-wider text-primary border-b-2 border-primary">Вход</span>
+		<a class="pb-3 text-sm font-medium uppercase tracking-wider text-slate-400 hover:text-primary transition-colors cursor-pointer" href="/register" hx-get="/register"
+			hx-target="#template-container" hx-swap="innerHTML" hx-push-url="true">Регистрация</a>
+	</div>
+	<h2 class="text-2xl font-extrabold tracking-tight uppercase">Влезте с акаунта си</h2>
+	<p class="mt-2 text-sm text-slate-500">Достъпете вашите тренировки и показатели.</p>
+</div>
+<form class="space-y-6" action="POST" hx-post="/login" id="login-form" hx-validate="true" hx-ext="json-enc"
 	hx-swap="none">
 	<div>
 		<label for="email" class="input-field-label" id="email-label">Имейл</label>
@@ -51,7 +87,12 @@ templ Login() {
 		<p class="hidden" id="error-email"></p>
 	</div>
 	<div>
-		<label for="password" class="input-field-label" id="password-label">Парола</label>
+		<div class="flex items-center justify-between">
+			<label for="password" class="input-field-label" id="password-label">Парола</label>
+			<a href="/forgot-password" class="text-sm font-semibold text-primary hover:text-primary/80">
+				Забравена парола?
+			</a>
+		</div>
 		<input type="password" name="password" id="password" placeholder="••••••••" minlength="8" class="input-field"
 			required oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 8 символа')"
 			onblur="addErrorToElement('password', 'Паролата трябва да е поне 8 символа')"
@@ -59,41 +100,35 @@ templ Login() {
 		<p class="hidden" id="error-password"></p>
 	</div>
 	<div class="flex items-center justify-between">
-		<div class="flex items-start">
-			<div class="flex items-center h-5">
-				<input id="remember" name="rememberMe" aria-describedby="remember" type="checkbox"
-					class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" />
-			</div>
-			<div class="ml-3 text-sm">
-				<label for="remember" class="text-gray-500 dark:text-gray-300">Запомни ме</label>
-			</div>
+		<div class="flex items-center gap-2">
+			<input id="remember" name="rememberMe" type="checkbox"
+				class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary" />
+			<label for="remember" class="text-sm text-slate-500">Запомни ме</label>
 		</div>
-		<a href="/forgot-password" class="text-sm font-medium text-blue-300 hover:underline dark:text-blue-400">
-			Забравена парола?
-		</a>
 	</div>
 	<button type="submit"
-		class="w-full cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+		class="flex w-full justify-center rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-700 transition-all uppercase tracking-widest">
 		Вход
 	</button>
-	<p class="text-sm font-light text-gray-500 dark:text-gray-400">
+	<p class="text-center text-sm text-slate-500">
 		Все още нямате профил?
-		<a href="/register" class="font-medium text-blue-300 hover:underline dark:text-blue-400">Регистрация</a>
+		<a href="/register" class="font-bold text-primary hover:text-primary/80 uppercase tracking-wider ml-1">Регистрация</a>
 	</p>
 </form>
 }
 
 templ Register() {
 <title>Движи се - Регистрация</title>
-<section class="flex flex-wrap items-center justify-center pb-2 border-b border-solid border-gray-500 lg:flex-row">
-	<a class="text-white nav-item-off cursor-pointer" href="/login" hx-get="/login"
-		hx-target="#template-container" hx-swap="innerHTML" hx-push-url="true">Вход</a>
-	<h2 class="nav-item-on">Регистрация</h2>
-</section>
-<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-	Регистрирайте се
-</h1>
-<form class="space-y-4 md:space-y-6" action="POST" hx-post="/register" id="register-form" hx-validate="true"
+<div class="mb-10">
+	<div class="flex gap-4 mb-6 border-b border-slate-200 dark:border-slate-700">
+		<a class="pb-3 text-sm font-medium uppercase tracking-wider text-slate-400 hover:text-primary transition-colors cursor-pointer" href="/login" hx-get="/login"
+			hx-target="#template-container" hx-swap="innerHTML" hx-push-url="true">Вход</a>
+		<span class="pb-3 text-sm font-bold uppercase tracking-wider text-primary border-b-2 border-primary">Регистрация</span>
+	</div>
+	<h2 class="text-2xl font-extrabold tracking-tight uppercase">Регистрирайте се</h2>
+	<p class="mt-2 text-sm text-slate-500">Създайте акаунт и започнете днес.</p>
+</div>
+<form class="space-y-6" action="POST" hx-post="/register" id="register-form" hx-validate="true"
 	hx-ext="json-enc" hx-swap="none">
 	<div>
 		<label for="email" class="input-field-label" id="email-label">Имейл</label>
@@ -112,33 +147,28 @@ templ Register() {
 		<p class="hidden" id="error-password"></p>
 	</div>
 	<div>
-		<label for="repeat-password" class="input-field-label" id="repeat-password-label">
-			Повтори
-			парола
-		</label>
-		<input type="password" name="repeatPassword" id="repeat-password" placeholder="" class="input-field" required
+		<label for="repeat-password" class="input-field-label" id="repeat-password-label">Повтори парола</label>
+		<input type="password" name="repeatPassword" id="repeat-password" placeholder="••••••••" class="input-field" required
 			onblur="checkRepeatPassword('repeat-password', 'Паролите не съвпадат')"
 			oninput="checkRepeatPassword('repeat-password')" />
 		<p class="hidden" id="error-repeat-password"></p>
 	</div>
-	<div class="flex items-start mb-5">
-		<div class="flex items-center h-5">
-			<input id="terms" type="checkbox" value=""
-				class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-				required oninvalid="this.setCustomValidity('Моля, съгласете се с правилата и условията')"
-				onchange="this.setCustomValidity('')" />
-		</div>
-		<label for="terms" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-			Приемам <a href="#" class="text-blue-300 hover:underline dark:text-blue-400">правилата и условията</a>
+	<div class="flex items-center gap-2">
+		<input id="terms" type="checkbox" value=""
+			class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary"
+			required oninvalid="this.setCustomValidity('Моля, съгласете се с правилата и условията')"
+			onchange="this.setCustomValidity('')" />
+		<label for="terms" class="text-sm text-slate-500">
+			Приемам <a href="#" class="text-primary hover:underline">правилата и условията</a>
 		</label>
 	</div>
 	<button type="submit"
-		class="w-full cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-		Региистрация
+		class="flex w-full justify-center rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-700 transition-all uppercase tracking-widest">
+		Регистрация
 	</button>
-	<p class="text-sm font-light text-gray-500 dark:text-gray-400">
+	<p class="text-center text-sm text-slate-500">
 		Имате профил?
-		<a href="/login" class="font-medium text-blue-300 hover:underline dark:text-blue-400">Вход</a>
+		<a href="/login" class="font-bold text-primary hover:text-primary/80 uppercase tracking-wider ml-1">Вход</a>
 	</p>
 </form>
 }

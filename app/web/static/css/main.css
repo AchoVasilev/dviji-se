@@ -1,77 +1,132 @@
 @import "tailwindcss";
 @config "../../../tailwind.config.js";
+@custom-variant dark (&:where(.dark, .dark *));
 
-.btn-red {
-	@apply border select-none font-semibold text-center transition-all ease-in focus:shadow-none text-sm py-2 px-6 bg-red-900 shadow-sm text-white border-red-800 hover:bg-red-800 duration-150 rounded-full hover:shadow-none;
+/* ── Buttons ── */
+.btn-primary {
+	@apply bg-primary hover:bg-red-700 text-white font-bold px-8 py-3 rounded-full transition-all transform hover:scale-105 shadow-lg uppercase tracking-wider text-sm;
 }
 
+.btn-secondary {
+	@apply bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-colors text-xs font-bold px-4 py-2 rounded-lg;
+}
+
+.btn-accent {
+	@apply bg-accent hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg transition-all uppercase tracking-wider text-sm;
+}
+
+/* ── Navigation ── */
 .nav-item-on {
-	@apply text-gray-800 dark:text-gray-200 border-b-2 border-blue-500 mx-1.5 sm:mx-6;
+	@apply text-primary font-medium text-sm uppercase tracking-wider;
 }
 
 .nav-item-off {
-	@apply border-b-2 border-transparent hover:text-gray-800 dark:hover:text-gray-200 hover:border-blue-500 mx-1.5 sm:mx-6;
+	@apply text-slate-700 dark:text-slate-300 hover:text-primary transition-colors font-medium text-sm uppercase tracking-wider;
 }
 
-
-.section-bg-blue {
-	@apply py-7 px-7;
-	background-image: linear-gradient(200deg, #0052be 60%, #14047c 100%);
-	background-size: cover;
-}
-
-.section-bg-dark {
-	@apply py-7 px-7;
-	background-image: linear-gradient(200deg, #24262a 60%, #070514 100%);
-	background-size: cover;
-
-}
-
-.section-bg-dark-inverted {
-	@apply py-7 px-7;
-	background-image: linear-gradient(-29deg, #24262a 60%, #070514 100%);
-	background-size: cover;
-}
-
-.bg-blue-n {
-	background-color: #0052be;
-}
-
-#menu-toggle:checked+#menu {
-	display: block;
-}
-
-@media (width <=64rem) {
-	.login {
-		display: none;
-	}
-
-	.heading {
-		font-size: 2.8rem;
-	}
-}
-
+/* ── Forms ── */
 .input-field {
-	@apply bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+	@apply block w-full rounded-lg border-0 bg-slate-50 dark:bg-white/5 py-3 px-4 text-slate-900 dark:text-white shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-white/10 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-sm;
 }
 
 .input-field-label {
-	@apply block mb-2 text-sm font-medium text-gray-900 dark:text-white;
+	@apply block text-sm font-medium text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-2;
 }
 
 .input-error {
-	@apply bg-red-50 border border-red-500 text-red-900 placeholder-red-700 text-sm rounded-lg focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 block w-full p-2.5 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500;
+	@apply block w-full rounded-lg border-0 bg-red-50 dark:bg-red-900/20 py-3 px-4 text-red-900 dark:text-red-400 shadow-sm ring-1 ring-inset ring-red-500 placeholder:text-red-400 focus:ring-2 focus:ring-inset focus:ring-red-500 text-sm;
 }
 
 .error {
-	@apply text-red-500 dark:text-red-500;
+	@apply text-red-500 text-sm mt-1;
 	display: block;
 }
 
+/* ── Icons (uses SVG files from /static/icons/) ── */
+.icon {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	vertical-align: -0.125em;
+	background-color: currentColor;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+}
+
+.icon-add { -webkit-mask-image: url(/static/icons/add.svg); mask-image: url(/static/icons/add.svg); }
+.icon-arrow_back { -webkit-mask-image: url(/static/icons/arrow_back.svg); mask-image: url(/static/icons/arrow_back.svg); }
+.icon-article { -webkit-mask-image: url(/static/icons/article.svg); mask-image: url(/static/icons/article.svg); }
+.icon-backpack { -webkit-mask-image: url(/static/icons/backpack.svg); mask-image: url(/static/icons/backpack.svg); }
+.icon-bolt { -webkit-mask-image: url(/static/icons/bolt.svg); mask-image: url(/static/icons/bolt.svg); }
+.icon-bookmark { -webkit-mask-image: url(/static/icons/bookmark.svg); mask-image: url(/static/icons/bookmark.svg); }
+.icon-category { -webkit-mask-image: url(/static/icons/category.svg); mask-image: url(/static/icons/category.svg); }
+.icon-check_circle { -webkit-mask-image: url(/static/icons/check_circle.svg); mask-image: url(/static/icons/check_circle.svg); }
+.icon-delete { -webkit-mask-image: url(/static/icons/delete.svg); mask-image: url(/static/icons/delete.svg); }
+.icon-description { -webkit-mask-image: url(/static/icons/description.svg); mask-image: url(/static/icons/description.svg); }
+.icon-directions_run { -webkit-mask-image: url(/static/icons/directions_run.svg); mask-image: url(/static/icons/directions_run.svg); }
+.icon-edit { -webkit-mask-image: url(/static/icons/edit.svg); mask-image: url(/static/icons/edit.svg); }
+.icon-edit_note { -webkit-mask-image: url(/static/icons/edit_note.svg); mask-image: url(/static/icons/edit_note.svg); }
+.icon-explore { -webkit-mask-image: url(/static/icons/explore.svg); mask-image: url(/static/icons/explore.svg); }
+.icon-fitness_center { -webkit-mask-image: url(/static/icons/fitness_center.svg); mask-image: url(/static/icons/fitness_center.svg); }
+.icon-home { -webkit-mask-image: url(/static/icons/home.svg); mask-image: url(/static/icons/home.svg); }
+.icon-image { -webkit-mask-image: url(/static/icons/image.svg); mask-image: url(/static/icons/image.svg); }
+.icon-list { -webkit-mask-image: url(/static/icons/list.svg); mask-image: url(/static/icons/list.svg); }
+.icon-mail { -webkit-mask-image: url(/static/icons/mail.svg); mask-image: url(/static/icons/mail.svg); }
+.icon-menu { -webkit-mask-image: url(/static/icons/menu.svg); mask-image: url(/static/icons/menu.svg); }
+.icon-open_in_new { -webkit-mask-image: url(/static/icons/open_in_new.svg); mask-image: url(/static/icons/open_in_new.svg); }
+.icon-person { -webkit-mask-image: url(/static/icons/person.svg); mask-image: url(/static/icons/person.svg); }
+.icon-restaurant { -webkit-mask-image: url(/static/icons/restaurant.svg); mask-image: url(/static/icons/restaurant.svg); }
+.icon-search { -webkit-mask-image: url(/static/icons/search.svg); mask-image: url(/static/icons/search.svg); }
+.icon-terrain { -webkit-mask-image: url(/static/icons/terrain.svg); mask-image: url(/static/icons/terrain.svg); }
+.icon-trending_flat { -webkit-mask-image: url(/static/icons/trending_flat.svg); mask-image: url(/static/icons/trending_flat.svg); }
+.icon-visibility { -webkit-mask-image: url(/static/icons/visibility.svg); mask-image: url(/static/icons/visibility.svg); }
+.icon-warning { -webkit-mask-image: url(/static/icons/warning.svg); mask-image: url(/static/icons/warning.svg); }
+.icon-waves { -webkit-mask-image: url(/static/icons/waves.svg); mask-image: url(/static/icons/waves.svg); }
+
+/* ── Utility ── */
 .d-none {
 	@apply hidden;
 }
 
 .d-block {
 	display: block;
+}
+
+.hero-gradient {
+	background: linear-gradient(to bottom, rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.9));
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+.hide-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+/* ── Tactical grid pattern ── */
+.tactical-grid {
+	background-image: radial-gradient(rgba(220, 38, 38, 0.1) 1px, transparent 1px);
+	background-size: 30px 30px;
+}
+
+/* ── Mobile menu toggle ── */
+#menu-toggle:checked + #menu {
+	display: block;
+}
+
+/* ── Search bar toggle ── */
+#search-toggle:checked ~ #search-bar {
+	display: block;
+}
+
+@media (width <= 64rem) {
+	.login {
+		display: none;
+	}
 }

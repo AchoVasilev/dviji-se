@@ -17,6 +17,7 @@ type CategoryResponseResource struct {
 	Id        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Slug      string    `json:"slug"`
+	Icon      string    `json:"icon"`
 	ImageUrl  string    `json:"imageUrl"`
 	CreatedAt time.Time `json:"createdAt"`
 }
@@ -26,6 +27,7 @@ func (dto *CategoryResponseResource) CreateCategoryResponseFrom(cat *category.Ca
 		Id:        cat.Id,
 		Name:      cat.Name,
 		Slug:      cat.Slug,
+		Icon:      cat.Icon,
 		ImageUrl:  cat.ImageUrl,
 		CreatedAt: cat.CreatedAt,
 	}

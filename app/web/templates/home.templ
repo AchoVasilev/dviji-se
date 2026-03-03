@@ -1,30 +1,63 @@
 package templates
 
 templ Home() {
-	<section class="section-bg-blue pb-15">
-		<section class="flex justify-center items-center lg:flex-row flex-wrap ml-30 mr-30 sm:ml-5 sm:mr-5">
-			<section class="flex-1 flex justify-end">
-				<img src="/static/img/running-man.png" alt="Бягащ човек - активен начин на живот"/>
-			</section>
-			<section class="flex-1 flex flex-col">
-				<section class="mb-6">
-					<h1 class="text-white mb-6 tracking-wider text-6xl heading">Спортът - начин на мислене и живот</h1>
-					<p class="text-lg/6 text-white tracking-wider">
-						Правете напредък с нашите съвети и тренировки. Тук ще намерите информация за хранителни режими, рецепти,
-						тренировки, а също така и екопътеки.
-					</p>
-				</section>
-				<section class="mt-6 flex flex-row">
-					<a class="btn-red mr-2" href="#">LEARN MORE</a>
-					<a class="btn-red ml-2" href="#">DISCOVER</a>
-				</section>
-			</section>
-		</section>
+	<!-- Hero Section -->
+	<section class="relative h-[500px] md:h-[600px] overflow-hidden bg-slate-900">
+		<div class="absolute inset-0 hero-gradient"></div>
+		<div class="relative max-w-7xl mx-auto px-4 h-full flex items-center">
+			<div class="hidden md:block">
+				<img src="/static/img/running-man.png" alt="Активен начин на живот" class="h-[500px] md:h-[580px] object-contain drop-shadow-2xl"/>
+			</div>
+			<div class="flex-1">
+				<h1 class="text-5xl md:text-7xl font-extrabold text-white max-w-3xl leading-tight mb-6">
+					Спортът - начин на 
+					<br/>
+					<span class="text-primary italic">мислене и живот</span>
+				</h1>
+				<p class="text-lg md:text-xl text-slate-300 max-w-xl mb-8 leading-relaxed">
+					Правете напредък с нашите съвети и тренировки. Информация за хранителни режими, рецепти, тренировки и екопътеки.
+				</p>
+				<a class="bg-primary hover:bg-red-700 text-white px-8 py-4 rounded-full font-bold inline-flex items-center gap-2 transition-all transform hover:scale-105 shadow-xl" href="/blog">
+					Разгледай <span class="icon icon-trending_flat"></span>
+				</a>
+			</div>
+		</div>
 	</section>
-	//philosophy section
-	<section class="section-bg-dark flex justify-center">
-		<section class="flex items-center gap-6 lg:flex-row flex-wrap w-full max-w-7xl pt-20 pb-20">
-			<section class="flex flex-row justify-center items-center gap-4">
+	<!-- Category Cards -->
+	<section class="max-w-7xl mx-auto px-4 mt-6 md:-mt-12 relative z-10">
+		<div
+			class="grid grid-cols-2 md:grid-cols-3 gap-4"
+			hx-get="/categories"
+			hx-trigger="revealed"
+			hx-swap="innerHTML"
+		>
+			<!-- Skeleton loaders -->
+			<div class="bg-white dark:bg-card-dark p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 animate-pulse">
+				<div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl mb-4"></div>
+				<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-2"></div>
+				<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+			</div>
+			<div class="bg-white dark:bg-card-dark p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 animate-pulse">
+				<div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl mb-4"></div>
+				<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-2"></div>
+				<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+			</div>
+			<div class="bg-white dark:bg-card-dark p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 animate-pulse hidden md:block">
+				<div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl mb-4"></div>
+				<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-2"></div>
+				<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+			</div>
+			<div class="bg-white dark:bg-card-dark p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 animate-pulse hidden md:block">
+				<div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl mb-4"></div>
+				<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-2"></div>
+				<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+			</div>
+		</div>
+	</section>
+	<!-- Philosophy Section -->
+	<section class="max-w-7xl mx-auto px-4 py-20">
+		<div class="flex flex-col lg:flex-row items-center gap-12">
+			<div class="hidden lg:flex flex-row justify-center items-center gap-4 lg:w-1/2">
 				<div class="flex flex-col items-center">
 					<img
 						src="/static/img/running-resized.webp"
@@ -42,168 +75,108 @@ templ Home() {
 						class="w-40 h-62 rounded-xl shadow-lg object-cover"
 					/>
 				</div>
-			</section>
-			<div class="flex-1 text-left md:ml-8">
-				<p class="text-sm text-gray-400 mb-2">Нашата философия</p>
-				<h1 class="text-3xl font-bold text-white">Знанието е сила</h1>
-				<p class="mt-4 text-gray-300 text-lg">
+			</div>
+			<div class="lg:w-1/2">
+				<p class="text-xs text-primary font-bold uppercase tracking-widest mb-2">Нашата философия</p>
+				<h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2 uppercase tracking-tighter italic">Знанието е сила</h2>
+				<div class="h-1 w-20 bg-primary mb-6"></div>
+				<p class="text-slate-600 dark:text-slate-400 text-lg leading-relaxed mb-4">
 					Проучванията показват, спортуването може да ви накара да се чувстване по-щастливи, също така и да намалите
-					рисковете от хронични заболявания, да подобрите дейността на мозъка, както и качеството си на сън. Спортуването
-					е здравословно за мускулната и костната система, като спомага за изграждане на мускулатурата и плътността на
-					костите.
+					рисковете от хронични заболявания, да подобрите дейността на мозъка, както и качеството си на сън.
 				</p>
-				<p class="mt-4 text-gray-300 text-lg">
+				<p class="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
 					Спортуването може да подобри и сексуалния живот. Честото спортуване подобрява сърдечната дейност,
-					кръвообращението, тонизира мускулатурата и може да подобри и мобилността и гъвкавостта ви, като всичко това може
-					да доведе до по-добър сексуален живот.
+					кръвообращението, тонизира мускулатурата и може да подобри и мобилността и гъвкавостта ви.
 				</p>
 			</div>
-		</section>
+		</div>
 	</section>
-	//blog section
-	<section class="section-bg-dark-inverted flex justify-center">
-		<section class="mt-16 mb-6 w-full max-w-4xl">
-			<h2 class="text-3xl font-bold text-center text-white">Нашите блог категории</h2>
-			<ul
-				role="list"
-				class="mt-3 flex lg:flex-row flex-wrap items-center justify-center gap-4"
-				hx-get="/categories"
-				hx-trigger="revealed"
-				hx-swap="outerHTML"
-			>
-				<li class="m-2">
-					<div role="status" class="max-w-md p-10 border border-gray-200 rounded-sm shadow-sm animate-pulse">
-						<div class="flex items-center justify-center h-48 mb-4 bg-gray-300 rounded-sm">
-							<svg
-								class="w-10 h-10 text-gray-200 dark:text-gray-600"
-								aria-hidden="true"
-								xmlns="http://www.w3.org/2000/svg"
-								fill="currentColor"
-								viewBox="0 0 16 20"
-							>
-								<path
-									d="M14.066 0H7v5a2 2 0 0 1-2 2H0v11a1.97 1.97 0 0 0 1.934 2h12.132A1.97 1.97 0 0 0 16 18V2a1.97 1.97 0 0 0-1.934-2ZM10.5 6a1.5 1.5 0 1 1 0 2.999A1.5 1.5 0 0 1 10.5 6Zm2.221 10.515a1 1 0 0 1-.858.485h-8a1 1 0 0 1-.9-1.43L5.6 10.039a.978.978 0 0 1 .936-.57 1 1 0 0 1 .9.632l1.181 2.981.541-1a.945.945 0 0 1 .883-.522 1 1 0 0 1 .879.529l1.832 3.438a1 1 0 0 1-.031.988Z"
-								></path>
-								<path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
-							</svg>
-						</div>
-						<div class="h-2.5 bg-gray-200 rounded-full w-48 mb-4"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full"></div>
-					</div>
-				</li>
-				<li class="m-2">
-					<div role="status" class="max-w-md p-10 border border-gray-200 rounded-sm shadow-sm animate-pulse">
-						<div class="flex items-center justify-center h-48 mb-4 bg-gray-300 rounded-sm">
-							<svg
-								class="w-10 h-10 text-gray-200 dark:text-gray-600"
-								aria-hidden="true"
-								xmlns="http://www.w3.org/2000/svg"
-								fill="currentColor"
-								viewBox="0 0 16 20"
-							>
-								<path
-									d="M14.066 0H7v5a2 2 0 0 1-2 2H0v11a1.97 1.97 0 0 0 1.934 2h12.132A1.97 1.97 0 0 0 16 18V2a1.97 1.97 0 0 0-1.934-2ZM10.5 6a1.5 1.5 0 1 1 0 2.999A1.5 1.5 0 0 1 10.5 6Zm2.221 10.515a1 1 0 0 1-.858.485h-8a1 1 0 0 1-.9-1.43L5.6 10.039a.978.978 0 0 1 .936-.57 1 1 0 0 1 .9.632l1.181 2.981.541-1a.945.945 0 0 1 .883-.522 1 1 0 0 1 .879.529l1.832 3.438a1 1 0 0 1-.031.988Z"
-								></path>
-								<path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
-							</svg>
-						</div>
-						<div class="h-2.5 bg-gray-200 rounded-full w-48 mb-4"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full"></div>
-					</div>
-				</li>
-				<li class="m-2">
-					<div role="status" class="max-w-md p-10 border border-gray-200 rounded-sm shadow-sm animate-pulse">
-						<div class="flex items-center justify-center h-48 mb-4 bg-gray-300 rounded-sm">
-							<svg
-								class="w-10 h-10 text-gray-200 dark:text-gray-600"
-								aria-hidden="true"
-								xmlns="http://www.w3.org/2000/svg"
-								fill="currentColor"
-								viewBox="0 0 16 20"
-							>
-								<path
-									d="M14.066 0H7v5a2 2 0 0 1-2 2H0v11a1.97 1.97 0 0 0 1.934 2h12.132A1.97 1.97 0 0 0 16 18V2a1.97 1.97 0 0 0-1.934-2ZM10.5 6a1.5 1.5 0 1 1 0 2.999A1.5 1.5 0 0 1 10.5 6Zm2.221 10.515a1 1 0 0 1-.858.485h-8a1 1 0 0 1-.9-1.43L5.6 10.039a.978.978 0 0 1 .936-.57 1 1 0 0 1 .9.632l1.181 2.981.541-1a.945.945 0 0 1 .883-.522 1 1 0 0 1 .879.529l1.832 3.438a1 1 0 0 1-.031.988Z"
-								></path>
-								<path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
-							</svg>
-						</div>
-						<div class="h-2.5 bg-gray-200 rounded-full w-48 mb-4"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full"></div>
-					</div>
-				</li>
-				<li class="m-2">
-					<div role="status" class="max-w-md p-10 border border-gray-200 rounded-sm shadow-sm animate-pulse">
-						<div class="flex items-center justify-center h-48 mb-4 bg-gray-300 rounded-sm">
-							<svg
-								class="w-10 h-10 text-gray-200 dark:text-gray-600"
-								aria-hidden="true"
-								xmlns="http://www.w3.org/2000/svg"
-								fill="currentColor"
-								viewBox="0 0 16 20"
-							>
-								<path
-									d="M14.066 0H7v5a2 2 0 0 1-2 2H0v11a1.97 1.97 0 0 0 1.934 2h12.132A1.97 1.97 0 0 0 16 18V2a1.97 1.97 0 0 0-1.934-2ZM10.5 6a1.5 1.5 0 1 1 0 2.999A1.5 1.5 0 0 1 10.5 6Zm2.221 10.515a1 1 0 0 1-.858.485h-8a1 1 0 0 1-.9-1.43L5.6 10.039a.978.978 0 0 1 .936-.57 1 1 0 0 1 .9.632l1.181 2.981.541-1a.945.945 0 0 1 .883-.522 1 1 0 0 1 .879.529l1.832 3.438a1 1 0 0 1-.031.988Z"
-								></path>
-								<path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
-							</svg>
-						</div>
-						<div class="h-2.5 bg-gray-200 rounded-full w-48 mb-4"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full mb-2.5"></div>
-						<div class="h-2 bg-gray-200 rounded-full"></div>
-					</div>
-				</li>
-			</ul>
-		</section>
-	</section>
-	//recent posts section
-	<section class="section-bg-dark flex justify-center">
-		<section class="mt-16 mb-16 w-full max-w-6xl px-4">
-			<div class="flex justify-between items-center mb-8">
-				<h2 class="text-3xl font-bold text-white">Последни публикации</h2>
-				<a href="/blog" class="text-red-500 hover:text-red-400 font-medium">Виж всички &rarr;</a>
+	<!-- Latest Articles -->
+	<section class="max-w-7xl mx-auto px-4 pb-20">
+		<div class="flex justify-between items-end mb-12">
+			<div>
+				<h2 class="text-3xl font-black uppercase tracking-tighter italic mb-2">Последни публикации</h2>
+				<div class="h-1 w-20 bg-primary"></div>
 			</div>
-			<div
-				hx-get="/blog/recent?limit=6"
-				hx-trigger="revealed"
-				hx-swap="innerHTML"
-			>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					<div class="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
-						<div class="h-48 bg-gray-700"></div>
-						<div class="p-6">
-							<div class="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
-							<div class="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
-							<div class="h-4 bg-gray-700 rounded w-full mb-4"></div>
-							<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+			<a class="text-primary font-bold hover:underline flex items-center gap-1" href="/blog">
+				Виж всички <span class="icon icon-open_in_new text-sm"></span>
+			</a>
+		</div>
+		<div
+			hx-get="/blog/recent?limit=6"
+			hx-trigger="revealed"
+			hx-swap="innerHTML"
+		>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+				<div class="bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 animate-pulse">
+					<div class="h-60 bg-slate-200 dark:bg-slate-700"></div>
+					<div class="p-6">
+						<div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-3"></div>
+						<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+						<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full mb-6"></div>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+								<div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+							</div>
+							<div class="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg w-20"></div>
 						</div>
 					</div>
-					<div class="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
-						<div class="h-48 bg-gray-700"></div>
-						<div class="p-6">
-							<div class="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
-							<div class="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
-							<div class="h-4 bg-gray-700 rounded w-full mb-4"></div>
-							<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+				</div>
+				<div class="bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 animate-pulse hidden md:block">
+					<div class="h-60 bg-slate-200 dark:bg-slate-700"></div>
+					<div class="p-6">
+						<div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-3"></div>
+						<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+						<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full mb-6"></div>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+								<div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+							</div>
+							<div class="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg w-20"></div>
 						</div>
 					</div>
-					<div class="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
-						<div class="h-48 bg-gray-700"></div>
-						<div class="p-6">
-							<div class="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
-							<div class="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
-							<div class="h-4 bg-gray-700 rounded w-full mb-4"></div>
-							<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+				</div>
+				<div class="bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 animate-pulse hidden lg:block">
+					<div class="h-60 bg-slate-200 dark:bg-slate-700"></div>
+					<div class="p-6">
+						<div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-3"></div>
+						<div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+						<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full mb-6"></div>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+								<div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+							</div>
+							<div class="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg w-20"></div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</section>
+		</div>
+	</section>
+	<!-- Newsletter Section -->
+	<section class="max-w-7xl mx-auto px-4 pb-20">
+		<div class="bg-slate-900 dark:bg-card-dark rounded-[2rem] p-8 md:p-16 relative overflow-hidden text-center">
+			<div class="absolute top-0 right-0 w-64 h-64 bg-primary opacity-10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+			<div class="absolute bottom-0 left-0 w-48 h-48 bg-accent opacity-10 rounded-full -ml-20 -mb-20 blur-3xl"></div>
+			<div class="relative z-10 max-w-2xl mx-auto">
+				<div class="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-2xl mb-6">
+					<span class="icon icon-mail text-primary text-3xl"></span>
+				</div>
+				<h2 class="text-3xl md:text-4xl font-extrabold text-white uppercase italic tracking-tighter mb-4">Бъди дисциплиниран</h2>
+				<p class="text-slate-400 text-lg mb-10">
+					Получавай тренировъчни планове, хранителни ръководства и ревюта на екипировка всяка седмица. Без излишни неща, само резултати.
+				</p>
+				<form class="flex flex-col sm:flex-row gap-4">
+					<input class="flex-grow px-6 py-4 rounded-xl bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" placeholder="Въведете вашия имейл" type="email"/>
+					<button class="bg-primary hover:bg-red-700 text-white px-10 py-4 rounded-xl font-bold uppercase tracking-wider transition-all transform hover:scale-105 active:scale-95 shadow-lg cursor-pointer" type="submit">
+						Абонирай се
+					</button>
+				</form>
+				<p class="mt-6 text-xs text-slate-500">Присъединете се към 15,000+ спортисти. Отписване по всяко време.</p>
+			</div>
+		</div>
 	</section>
 }

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"server/internal/application/categories"
 	appPosts "server/internal/application/posts"
@@ -144,6 +145,59 @@ func (h *BlogHandler) GetBlogByCategory(w http.ResponseWriter, r *http.Request) 
 	totalPages := (total + pageSize - 1) / pageSize
 
 	util.Must(templates.BlogList(postItems, categoryResources, page, totalPages, total, categorySlug).Render(r.Context(), w))
+}
+
+func (h *BlogHandler) SearchSuggestions(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), cancelTime)
+	defer cancel()
+
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q == "" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	domainPosts, _, err := h.postService.SearchPublished(ctx, q, 1, 5)
+	if err != nil {
+		slog.Error("Error searching posts", "error", err, "query", q)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	postItems := models.PostListFromDomain(domainPosts)
+	util.Must(templates.SearchSuggestions(postItems, q).Render(r.Context(), w))
+}
+
+func (h *BlogHandler) SearchBlogPosts(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), cancelTime)
+	defer cancel()
+
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	page := 1
+	pageSize := 12
+
+	if p := r.URL.Query().Get("page"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	var postItems []models.PostListItem
+	var total, totalPages int
+
+	if q != "" {
+		domainPosts, t, err := h.postService.SearchPublished(ctx, q, page, pageSize)
+		if err != nil {
+			slog.Error("Error searching posts", "error", err, "query", q)
+			httputils.SendInternalServerResponse(w, r)
+			return
+		}
+		total = t
+		totalPages = (total + pageSize - 1) / pageSize
+		postItems = models.PostListFromDomain(domainPosts)
+	}
+
+	util.Must(templates.BlogSearchResults(postItems, q, page, totalPages, total).Render(r.Context(), w))
 }
 
 func (h *BlogHandler) GetRecentPosts(w http.ResponseWriter, r *http.Request) {

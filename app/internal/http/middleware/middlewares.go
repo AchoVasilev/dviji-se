@@ -119,27 +119,29 @@ func ContentSecurityPolicy(next http.Handler) http.Handler {
 		var cspHeader string
 		if strings.HasPrefix(r.URL.Path, "/admin") {
 			// More permissive CSP for admin routes (TinyMCE needs inline styles)
-			cspHeader = fmt.Sprintf(`
+			cspHeader = `
 			  default-src 'self';
-			  script-src 'self' 'nonce-%s' https://unpkg.com https://cdn.tiny.cloud;
-			  style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud;
+			  script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.tiny.cloud;
+			  style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud https://fonts.googleapis.com;
+			  font-src 'self' https://fonts.gstatic.com;
 			  img-src 'self' https: data: blob:;
 			  connect-src 'self' https://cdn.tiny.cloud;
 			  frame-ancestors 'none';
 			  form-action 'self';
-			  object-src 'none';`, nonces.Htmx)
+			  object-src 'none';`
 		} else {
 			// Strict CSP for public routes
 			// HtmxCssHash is for HTMX's injected .htmx-indicator style
 			cspHeader = fmt.Sprintf(`
 			  default-src 'self';
 			  script-src 'self' 'nonce-%s' https://unpkg.com;
-			  style-src 'self' '%s';
+			  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+			  font-src 'self' https://fonts.gstatic.com;
 			  img-src 'self' https: data:;
 			  connect-src 'self';
 			  frame-ancestors 'none';
 			  form-action 'self';
-			  object-src 'none';`, nonces.Htmx, nonces.HtmxCssHash)
+			  object-src 'none';`, nonces.Htmx)
 		}
 
 		w.Header().Set("Content-Security-Policy", cspHeader)

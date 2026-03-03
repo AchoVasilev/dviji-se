@@ -11,6 +11,7 @@ type Category struct {
 	Id        uuid.UUID
 	Name      string
 	Slug      string
+	Icon      string
 	ImageUrl  string
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime

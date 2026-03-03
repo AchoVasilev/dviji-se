@@ -19,13 +19,13 @@ type cfg struct {
 	environment string
 
 	// Database
-	dbHost        string
-	dbPort        string
-	dbUser        string
-	dbPassword    string
-	dbName        string
-	dbSSLMode     string
-	dbMaxConns    int
+	dbHost     string
+	dbPort     string
+	dbUser     string
+	dbPassword string
+	dbName     string
+	dbSSLMode  string
+	dbMaxConns int
 
 	// JWT
 	jwtAccessKey  string
@@ -50,7 +50,8 @@ type cfg struct {
 	cloudinaryFolder    string
 
 	// App
-	baseURL string
+	baseURL    string
+	tinymceURL string
 }
 
 func load() {
@@ -76,7 +77,7 @@ func load() {
 			// Security
 			xsrfKey:           getEnvRequired("XSRF"),
 			corsOrigins:       getEnvSlice("CORS_ORIGINS", ",", []string{"http://localhost:3000"}),
-			allowRegistration: getEnvBool("ALLOW_REGISTRATION", false),
+			allowRegistration: getEnvBool("ALLOW_REGISTRATION", true),
 
 			// SMTP
 			smtpHost:     getEnv("SMTP_HOST", ""),
@@ -92,7 +93,8 @@ func load() {
 			cloudinaryFolder:    getEnv("CLOUDINARY_FOLDER", "uploads"),
 
 			// App
-			baseURL: getEnv("APP_BASE_URL", "http://localhost:8080"),
+			baseURL:    getEnv("APP_BASE_URL", "http://localhost:8080"),
+			tinymceURL: getEnv("TINYMCE_URL", ""),
 		}
 	})
 }
@@ -129,9 +131,9 @@ func JWTRefreshKey() string { return get().jwtRefreshKey }
 
 // --- Security ---
 
-func XSRFKey() string           { return get().xsrfKey }
-func CORSOrigins() []string     { return get().corsOrigins }
-func AllowRegistration() bool   { return get().allowRegistration }
+func XSRFKey() string         { return get().xsrfKey }
+func CORSOrigins() []string   { return get().corsOrigins }
+func AllowRegistration() bool { return get().allowRegistration }
 
 // --- SMTP ---
 
@@ -154,7 +156,8 @@ func CloudinaryConfigured() bool {
 
 // --- App ---
 
-func BaseURL() string { return get().baseURL }
+func BaseURL() string    { return get().baseURL }
+func TinyMCEURL() string { return get().tinymceURL }
 
 // --- Helpers ---
 
