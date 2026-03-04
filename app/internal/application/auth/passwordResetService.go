@@ -11,15 +11,15 @@ import (
 )
 
 var (
-	ErrInvalidToken  = errors.New("invalid or expired token")
-	ErrUserNotFound  = errors.New("user not found")
-	ErrPasswordWeak  = errors.New("password too weak")
+	ErrInvalidToken = errors.New("invalid or expired token")
+	ErrUserNotFound = errors.New("user not found")
+	ErrPasswordWeak = errors.New("password too weak")
 )
 
 type PasswordResetService struct {
-	userRepo      *user.UserRepository
-	tokenRepo     *user.PasswordResetTokenRepository
-	emailService  *email.EmailService
+	userRepo     *user.UserRepository
+	tokenRepo    *user.PasswordResetTokenRepository
+	emailService *email.EmailService
 }
 
 func NewPasswordResetService(

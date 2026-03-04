@@ -122,8 +122,8 @@ func ContentSecurityPolicy(next http.Handler) http.Handler {
 			cspHeader = `
 			  default-src 'self';
 			  script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.tiny.cloud;
-			  style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud https://fonts.googleapis.com;
-			  font-src 'self' https://fonts.gstatic.com;
+			  style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud;
+			  font-src 'self';
 			  img-src 'self' https: data: blob:;
 			  connect-src 'self' https://cdn.tiny.cloud;
 			  frame-ancestors 'none';
@@ -135,10 +135,10 @@ func ContentSecurityPolicy(next http.Handler) http.Handler {
 			cspHeader = fmt.Sprintf(`
 			  default-src 'self';
 			  script-src 'self' 'nonce-%s' https://unpkg.com;
-			  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-			  font-src 'self' https://fonts.gstatic.com;
+			  style-src 'self' 'unsafe-inline';
+			  font-src 'self';
 			  img-src 'self' https: data:;
-			  connect-src 'self';
+			  connect-src 'self' https://res.cloudinary.com;
 			  frame-ancestors 'none';
 			  form-action 'self';
 			  object-src 'none';`, nonces.Htmx)
@@ -228,13 +228,15 @@ func CacheStaticAssets(next http.Handler, staticDir string) http.Handler {
 		ext := strings.ToLower(filepath.Ext(r.URL.Path))
 		switch ext {
 		case ".css", ".js":
-			w.Header().Set("Cache-Control", "public, max-age=86400") // 1 day
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable") // 1 year
+		case ".woff2", ".woff":
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable") // 1 year
 		case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg":
-			w.Header().Set("Cache-Control", "public, max-age=31556952, immutable") // 1 year
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable") // 1 year
 		case ".html":
 			w.Header().Set("Cache-Control", "no-cache") // Always request fresh
 		default:
-			w.Header().Set("Cache-Control", "public, max-age=3600") // Default 1 hour
+			w.Header().Set("Cache-Control", "public, max-age=86400") // 1 day
 		}
 
 		w.Header().Set("ETag", etag)

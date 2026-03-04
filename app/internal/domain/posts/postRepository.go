@@ -18,31 +18,33 @@ func NewPostRepository(db *sql.DB) *PostRepository {
 func (r *PostRepository) Create(ctx context.Context, post Post) (*Post, error) {
 	query := `
 		INSERT INTO posts (id, title, slug, content, excerpt, cover_image_url, status, published_at,
-			meta_description, reading_time_minutes, category_id, creator_user_id, created_at)
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, metadata)
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id, title, slug, content, excerpt, cover_image_url, status, published_at,
-			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, updated_at, updated_by, is_deleted`
+			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, updated_at, updated_by, is_deleted, metadata`
 
 	var createdPost Post
 	var excerpt, coverImageUrl, metaDescription, updatedBy sql.NullString
+	var metadata []byte
 
 	err := r.Db.QueryRowContext(ctx, query,
 		post.Id, post.Title, post.Slug, post.Content, toNullString(post.Excerpt),
 		toNullString(post.CoverImageUrl), post.Status, post.PublishedAt,
 		toNullString(post.MetaDescription), post.ReadingTimeMinutes, post.CategoryId,
-		post.CreatorUserId, post.CreatedAt,
+		post.CreatorUserId, post.CreatedAt, post.Metadata,
 	).Scan(
 		&createdPost.Id, &createdPost.Title, &createdPost.Slug, &createdPost.Content,
 		&excerpt, &coverImageUrl, &createdPost.Status, &createdPost.PublishedAt,
 		&metaDescription, &createdPost.ReadingTimeMinutes, &createdPost.CategoryId,
 		&createdPost.CreatorUserId, &createdPost.CreatedAt, &createdPost.UpdatedAt,
-		&updatedBy, &createdPost.IsDeleted,
+		&updatedBy, &createdPost.IsDeleted, &metadata,
 	)
 
 	createdPost.Excerpt = excerpt.String
 	createdPost.CoverImageUrl = coverImageUrl.String
 	createdPost.MetaDescription = metaDescription.String
 	createdPost.UpdatedBy = updatedBy.String
+	createdPost.Metadata = metadata
 
 	return &createdPost, err
 }
@@ -51,31 +53,33 @@ func (r *PostRepository) Update(ctx context.Context, post Post) (*Post, error) {
 	query := `
 		UPDATE posts SET title = $1, slug = $2, content = $3, excerpt = $4, cover_image_url = $5,
 			status = $6, published_at = $7, meta_description = $8, reading_time_minutes = $9,
-			category_id = $10, updated_at = NOW(), updated_by = $11
-		WHERE id = $12 AND is_deleted = FALSE
+			category_id = $10, updated_at = NOW(), updated_by = $11, metadata = $12
+		WHERE id = $13 AND is_deleted = FALSE
 		RETURNING id, title, slug, content, excerpt, cover_image_url, status, published_at,
-			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, updated_at, updated_by, is_deleted`
+			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, updated_at, updated_by, is_deleted, metadata`
 
 	var updatedPost Post
 	var excerpt, coverImageUrl, metaDescription, updatedBy sql.NullString
+	var metadata []byte
 
 	err := r.Db.QueryRowContext(ctx, query,
 		post.Title, post.Slug, post.Content, toNullString(post.Excerpt),
 		toNullString(post.CoverImageUrl), post.Status, post.PublishedAt,
 		toNullString(post.MetaDescription), post.ReadingTimeMinutes, post.CategoryId,
-		post.UpdatedBy, post.Id,
+		post.UpdatedBy, post.Metadata, post.Id,
 	).Scan(
 		&updatedPost.Id, &updatedPost.Title, &updatedPost.Slug, &updatedPost.Content,
 		&excerpt, &coverImageUrl, &updatedPost.Status, &updatedPost.PublishedAt,
 		&metaDescription, &updatedPost.ReadingTimeMinutes, &updatedPost.CategoryId,
 		&updatedPost.CreatorUserId, &updatedPost.CreatedAt, &updatedPost.UpdatedAt,
-		&updatedBy, &updatedPost.IsDeleted,
+		&updatedBy, &updatedPost.IsDeleted, &metadata,
 	)
 
 	updatedPost.Excerpt = excerpt.String
 	updatedPost.CoverImageUrl = coverImageUrl.String
 	updatedPost.MetaDescription = metaDescription.String
 	updatedPost.UpdatedBy = updatedBy.String
+	updatedPost.Metadata = metadata
 
 	return &updatedPost, err
 }
@@ -89,24 +93,26 @@ func (r *PostRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy str
 func (r *PostRepository) FindById(ctx context.Context, id uuid.UUID) (*Post, error) {
 	query := `
 		SELECT id, title, slug, content, excerpt, cover_image_url, status, published_at,
-			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, updated_at, updated_by, is_deleted
+			meta_description, reading_time_minutes, category_id, creator_user_id, created_at, updated_at, updated_by, is_deleted, metadata
 		FROM posts WHERE id = $1 AND is_deleted = FALSE`
 
 	var post Post
 	var excerpt, coverImageUrl, metaDescription, updatedBy sql.NullString
+	var metadata []byte
 
 	err := r.Db.QueryRowContext(ctx, query, id).Scan(
 		&post.Id, &post.Title, &post.Slug, &post.Content,
 		&excerpt, &coverImageUrl, &post.Status, &post.PublishedAt,
 		&metaDescription, &post.ReadingTimeMinutes, &post.CategoryId,
 		&post.CreatorUserId, &post.CreatedAt, &post.UpdatedAt,
-		&updatedBy, &post.IsDeleted,
+		&updatedBy, &post.IsDeleted, &metadata,
 	)
 
 	post.Excerpt = excerpt.String
 	post.CoverImageUrl = coverImageUrl.String
 	post.MetaDescription = metaDescription.String
 	post.UpdatedBy = updatedBy.String
+	post.Metadata = metadata
 
 	if err != nil {
 		return nil, err
@@ -117,7 +123,7 @@ func (r *PostRepository) FindById(ctx context.Context, id uuid.UUID) (*Post, err
 func (r *PostRepository) FindBySlug(ctx context.Context, slug string) (*PostWithAuthor, error) {
 	query := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -126,13 +132,14 @@ func (r *PostRepository) FindBySlug(ctx context.Context, slug string) (*PostWith
 
 	var post PostWithAuthor
 	var excerpt, coverImageUrl, metaDescription, updatedBy, firstName, lastName sql.NullString
+	var metadata []byte
 
 	err := r.Db.QueryRowContext(ctx, query, slug).Scan(
 		&post.Id, &post.Title, &post.Slug, &post.Content,
 		&excerpt, &coverImageUrl, &post.Status, &post.PublishedAt,
 		&metaDescription, &post.ReadingTimeMinutes, &post.CategoryId,
 		&post.CreatorUserId, &post.CreatedAt, &post.UpdatedAt,
-		&updatedBy, &post.IsDeleted,
+		&updatedBy, &post.IsDeleted, &metadata,
 		&firstName, &lastName, &post.CategoryName, &post.CategorySlug,
 	)
 
@@ -140,6 +147,7 @@ func (r *PostRepository) FindBySlug(ctx context.Context, slug string) (*PostWith
 	post.CoverImageUrl = coverImageUrl.String
 	post.MetaDescription = metaDescription.String
 	post.UpdatedBy = updatedBy.String
+	post.Metadata = metadata
 	post.AuthorFirstName = firstName.String
 	post.AuthorLastName = lastName.String
 
@@ -158,7 +166,7 @@ func (r *PostRepository) FindPublished(ctx context.Context, limit, offset int) (
 
 	query := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -182,7 +190,7 @@ func (r *PostRepository) FindByCategory(ctx context.Context, categorySlug string
 
 	query := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -213,7 +221,7 @@ func (r *PostRepository) FindAll(ctx context.Context, limit, offset int) ([]Post
 
 	query := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -234,7 +242,7 @@ func (r *PostRepository) FindByStatus(ctx context.Context, status PostStatus, li
 
 	query := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -259,7 +267,7 @@ func (r *PostRepository) FindByStatus(ctx context.Context, status PostStatus, li
 func (r *PostRepository) FindRecent(ctx context.Context, limit int) ([]PostWithAuthor, error) {
 	query := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -291,7 +299,7 @@ func (r *PostRepository) Search(ctx context.Context, query string, limit, offset
 
 	selectQuery := `
 		SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.cover_image_url, p.status, p.published_at,
-			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted,
+			p.meta_description, p.reading_time_minutes, p.category_id, p.creator_user_id, p.created_at, p.updated_at, p.updated_by, p.is_deleted, p.metadata,
 			u.first_name, u.last_name, c.name, c.slug
 		FROM posts p
 		JOIN users u ON p.creator_user_id = u.id
@@ -350,13 +358,14 @@ func (r *PostRepository) scanPostsWithAuthor(rows *sql.Rows) ([]PostWithAuthor, 
 	for rows.Next() {
 		var post PostWithAuthor
 		var excerpt, coverImageUrl, metaDescription, updatedBy, firstName, lastName sql.NullString
+		var metadata []byte
 
 		err := rows.Scan(
 			&post.Id, &post.Title, &post.Slug, &post.Content,
 			&excerpt, &coverImageUrl, &post.Status, &post.PublishedAt,
 			&metaDescription, &post.ReadingTimeMinutes, &post.CategoryId,
 			&post.CreatorUserId, &post.CreatedAt, &post.UpdatedAt,
-			&updatedBy, &post.IsDeleted,
+			&updatedBy, &post.IsDeleted, &metadata,
 			&firstName, &lastName, &post.CategoryName, &post.CategorySlug,
 		)
 		if err != nil {
@@ -367,6 +376,7 @@ func (r *PostRepository) scanPostsWithAuthor(rows *sql.Rows) ([]PostWithAuthor, 
 		post.CoverImageUrl = coverImageUrl.String
 		post.MetaDescription = metaDescription.String
 		post.UpdatedBy = updatedBy.String
+		post.Metadata = metadata
 		post.AuthorFirstName = firstName.String
 		post.AuthorLastName = lastName.String
 

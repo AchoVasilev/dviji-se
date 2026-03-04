@@ -6,7 +6,7 @@ templ Home() {
 		<div class="absolute inset-0 hero-gradient"></div>
 		<div class="relative max-w-7xl mx-auto px-4 h-full flex items-center">
 			<div class="hidden md:block">
-				<img src="/static/img/running-man.png" alt="Активен начин на живот" class="h-[500px] md:h-[580px] object-contain drop-shadow-2xl"/>
+				<img src="/static/img/running-man.png" alt="Активен начин на живот" class="h-[500px] md:h-[580px] object-contain drop-shadow-2xl" decoding="async" fetchpriority="high"/>
 			</div>
 			<div class="flex-1">
 				<h1 class="text-5xl md:text-7xl font-extrabold text-white max-w-3xl leading-tight mb-6">
@@ -63,16 +63,20 @@ templ Home() {
 						src="/static/img/running-resized.webp"
 						alt="Бягане на открито"
 						class="w-40 h-62 rounded-xl shadow-lg object-cover"
+						loading="lazy"
+						decoding="async"
 					/>
 				</div>
 				<div class="relative w-64 h-96 rounded-xl overflow-hidden shadow-lg">
-					<img src="/static/img/nutrition-resized.webp" alt="Здравословно хранене" class="w-full h-full object-cover"/>
+					<img src="/static/img/nutrition-resized.webp" alt="Здравословно хранене" class="w-full h-full object-cover" loading="lazy" decoding="async"/>
 				</div>
 				<div class="flex flex-col items-center">
 					<img
 						src="/static/img/strength-training-resized.webp"
 						alt="Силови тренировки"
 						class="w-40 h-62 rounded-xl shadow-lg object-cover"
+						loading="lazy"
+						decoding="async"
 					/>
 				</div>
 			</div>

@@ -428,12 +428,13 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 			t.Fatal("No cookies returned from login")
 		}
 
-		// Create post
-		postPayload := map[string]string{
+		// Create post with metadata
+		postPayload := map[string]interface{}{
 			"title":      "Admin Created Post",
 			"content":    "This post was created by an admin.",
 			"categoryId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
 			"status":     "published",
+			"metadata":   map[string]string{"gpxFileUrl": "https://example.com/route.gpx"},
 		}
 		body, _ = json.Marshal(postPayload)
 		req, _ = http.NewRequest(http.MethodPost, server.URL+"/admin/posts", bytes.NewBuffer(body))
@@ -453,7 +454,7 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 			t.Errorf("Status = %d, want %d. Body: %s", resp.StatusCode, http.StatusCreated, string(bodyBytes))
 		}
 
-		// Verify post was created
+		// Verify post was created with metadata
 		var postCount int
 		err = tdb.DB.QueryRow("SELECT COUNT(*) FROM posts WHERE title = 'Admin Created Post'").Scan(&postCount)
 		if err != nil {
@@ -461,6 +462,19 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 		}
 		if postCount != 1 {
 			t.Errorf("Post count = %d, want 1", postCount)
+		}
+
+		var metadataBytes []byte
+		err = tdb.DB.QueryRow("SELECT metadata FROM posts WHERE title = 'Admin Created Post'").Scan(&metadataBytes)
+		if err != nil {
+			t.Fatalf("Failed to get post metadata: %v", err)
+		}
+		var meta map[string]interface{}
+		if err := json.Unmarshal(metadataBytes, &meta); err != nil {
+			t.Fatalf("Failed to unmarshal metadata: %v", err)
+		}
+		if meta["gpxFileUrl"] != "https://example.com/route.gpx" {
+			t.Errorf("Metadata gpxFileUrl = %v, want https://example.com/route.gpx", meta["gpxFileUrl"])
 		}
 	})
 }
@@ -501,8 +515,190 @@ func TestAdminAPI_GetDashboard(t *testing.T) {
 		}
 
 		location := resp.Header.Get("Location")
-		if location != "/login" {
-			t.Errorf("Location = %q, want /login", location)
+		if location != "/admin/login" {
+			t.Errorf("Location = %q, want /admin/login", location)
+		}
+	})
+}
+
+func TestBlogAPI_SearchPosts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	cleanup := setupAuthTestEnv(t)
+	defer cleanup()
+
+	tdb := testdb.SetupTestDB(t)
+	tdb.CleanupTables(t)
+	tdb.EnsureCategories(t)
+
+	handler := routes.RegisterRoutes(tdb.DB)
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	// Create test data
+	userId := createTestUser(t, tdb)
+	categoryId := "dddddddd-dddd-dddd-dddd-dddddddddddd"
+
+	tdb.SeedTestPost(t, "Mountain Hiking Adventure", "mountain-hiking-adventure", "A trail through the beautiful mountains", categoryId, userId, "published")
+	tdb.SeedTestPost(t, "Best Protein Recipes", "best-protein-recipes", "Healthy protein-rich recipes for athletes", categoryId, userId, "published")
+	tdb.SeedTestPost(t, "Draft Hiking Tips", "draft-hiking-tips", "Unpublished hiking content", categoryId, userId, "draft")
+
+	t.Run("search finds matching published posts", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search?q=Hiking")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		if !strings.Contains(bodyStr, "Mountain Hiking Adventure") {
+			t.Error("Response should contain matching published post")
+		}
+
+		if strings.Contains(bodyStr, "Draft Hiking Tips") {
+			t.Error("Response should not contain draft post")
+		}
+	})
+
+	t.Run("search returns no results for non-matching query", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search?q=nonexistentterm12345")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		if !strings.Contains(bodyStr, "Няма намерени публикации") {
+			t.Error("Response should show no results message")
+		}
+	})
+
+	t.Run("search with empty query returns page", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search?q=")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+	})
+
+	t.Run("search matches content not just title", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search?q=protein")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		if !strings.Contains(bodyStr, "Best Protein Recipes") {
+			t.Error("Response should contain post matching by content")
+		}
+	})
+}
+
+func TestBlogAPI_SearchSuggestions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	cleanup := setupAuthTestEnv(t)
+	defer cleanup()
+
+	tdb := testdb.SetupTestDB(t)
+	tdb.CleanupTables(t)
+	tdb.EnsureCategories(t)
+
+	handler := routes.RegisterRoutes(tdb.DB)
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	// Create test data
+	userId := createTestUser(t, tdb)
+	categoryId := "dddddddd-dddd-dddd-dddd-dddddddddddd"
+
+	tdb.SeedTestPost(t, "Yoga for Beginners", "yoga-for-beginners", "Start your yoga journey", categoryId, userId, "published")
+	tdb.SeedTestPost(t, "Advanced Yoga Poses", "advanced-yoga-poses", "Take your practice further", categoryId, userId, "published")
+
+	t.Run("returns suggestions for matching query", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search/suggestions?q=Yoga")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		if !strings.Contains(bodyStr, "Yoga for Beginners") {
+			t.Error("Suggestions should contain matching post")
+		}
+
+		if !strings.Contains(bodyStr, "Advanced Yoga Poses") {
+			t.Error("Suggestions should contain second matching post")
+		}
+	})
+
+	t.Run("returns empty for no matches", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search/suggestions?q=zzzznotfound")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		if !strings.Contains(bodyStr, "Няма резултати") {
+			t.Error("Suggestions should show no results message")
+		}
+	})
+
+	t.Run("returns empty body for empty query", func(t *testing.T) {
+		resp, err := http.Get(server.URL + "/blog/search/suggestions?q=")
+		if err != nil {
+			t.Fatalf("Request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		if len(body) != 0 {
+			t.Errorf("Empty query should return empty body, got %d bytes", len(body))
 		}
 	})
 }

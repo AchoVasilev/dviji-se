@@ -115,6 +115,7 @@ CREATE TABLE posts
   updated_at TIMESTAMPTZ,
   updated_by VARCHAR,
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  metadata JSONB DEFAULT '{}',
 
   CONSTRAINT pk_post_id PRIMARY KEY(id),
   CONSTRAINT fk_category_id FOREIGN KEY(category_id) REFERENCES categories(id),

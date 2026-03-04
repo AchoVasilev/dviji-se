@@ -13,6 +13,7 @@ import (
 	"server/util/ctxutils"
 	"server/util/httputils"
 	"server/web/templates"
+	"strings"
 )
 
 type AuthHandler struct {
@@ -137,6 +138,20 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 	}
 
 	httputils.SetAuthCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, input.RememberMe, writer)
+
+	redirect := "/"
+	if strings.HasPrefix(req.URL.Path, "/admin") {
+		redirect = "/admin"
+	}
+	writer.Header().Set("HX-Redirect", redirect)
+	writer.WriteHeader(http.StatusOK)
+}
+
+func (handler *AuthHandler) HandleLogout(writer http.ResponseWriter, req *http.Request) {
+	httputils.ClearCookie(httputils.AuthCookieName, writer)
+	httputils.ClearCookie(httputils.RefreshCookieName, writer)
+	httputils.ClearCookie(httputils.XSRFCookieName, writer)
+
 	writer.Header().Set("HX-Redirect", "/")
 	writer.WriteHeader(http.StatusOK)
 }
@@ -157,6 +172,17 @@ func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Reque
 		templates.LoginRegister(templates.Login()),
 		"Вход",
 		"Влезте в профила си и продължете към здравословен начин на живот.",
+		ctxutils.GetCSRF(ctx),
+	).Render(ctx, writer))
+}
+
+func (handler *AuthHandler) GetAdminLogin(writer http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	util.Must(templates.SimpleLayout(
+		templates.LoginRegister(templates.AdminLogin()),
+		"Вход",
+		"Администраторски вход.",
 		ctxutils.GetCSRF(ctx),
 	).Render(ctx, writer))
 }

@@ -2,6 +2,15 @@
 @config "../../../tailwind.config.js";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ── Self-hosted Inter font ── */
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 400 900;
+	font-display: swap;
+	src: url(/static/fonts/inter.woff2) format('woff2');
+}
+
 /* ── Buttons ── */
 .btn-primary {
 	@apply bg-primary hover:bg-red-700 text-white font-bold px-8 py-3 rounded-full transition-all transform hover:scale-105 shadow-lg uppercase tracking-wider text-sm;
@@ -66,6 +75,7 @@
 .icon-category { -webkit-mask-image: url(/static/icons/category.svg); mask-image: url(/static/icons/category.svg); }
 .icon-check_circle { -webkit-mask-image: url(/static/icons/check_circle.svg); mask-image: url(/static/icons/check_circle.svg); }
 .icon-delete { -webkit-mask-image: url(/static/icons/delete.svg); mask-image: url(/static/icons/delete.svg); }
+.icon-download { -webkit-mask-image: url(/static/icons/download.svg); mask-image: url(/static/icons/download.svg); }
 .icon-description { -webkit-mask-image: url(/static/icons/description.svg); mask-image: url(/static/icons/description.svg); }
 .icon-directions_run { -webkit-mask-image: url(/static/icons/directions_run.svg); mask-image: url(/static/icons/directions_run.svg); }
 .icon-edit { -webkit-mask-image: url(/static/icons/edit.svg); mask-image: url(/static/icons/edit.svg); }
@@ -113,6 +123,14 @@
 .tactical-grid {
 	background-image: radial-gradient(rgba(220, 38, 38, 0.1) 1px, transparent 1px);
 	background-size: 30px 30px;
+}
+
+/* ── Article body grids — stack on mobile ── */
+@media (max-width: 768px) {
+	.prose div[style*="grid-template-columns"] {
+		display: flex !important;
+		flex-direction: column !important;
+	}
 }
 
 /* ── Mobile menu toggle ── */

@@ -3,6 +3,8 @@ package posts
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"server/internal/domain/posts"
 	"strings"
 	"sync"
@@ -184,6 +186,28 @@ func (r *mockPostRepository) ExistsBySlug(ctx context.Context, slug string, excl
 	return exists && !p.IsDeleted, nil
 }
 
+func (r *mockPostRepository) Search(ctx context.Context, query string, limit, offset int) ([]posts.PostWithAuthor, int, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []posts.PostWithAuthor
+	for _, p := range r.posts {
+		if !p.IsDeleted && p.Status == posts.PostStatusPublished &&
+			(strings.Contains(strings.ToLower(p.Title), strings.ToLower(query)) ||
+				strings.Contains(strings.ToLower(p.Content), strings.ToLower(query))) {
+			result = append(result, posts.PostWithAuthor{Post: p})
+		}
+	}
+	total := len(result)
+	if offset >= len(result) {
+		return []posts.PostWithAuthor{}, total, nil
+	}
+	end := offset + limit
+	if end > len(result) {
+		end = len(result)
+	}
+	return result[offset:end], total, nil
+}
+
 func (r *mockPostRepository) addPost(p posts.Post) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -328,7 +352,7 @@ func TestCreate(t *testing.T) {
 
 		input := CreatePostInput{
 			Title:      "Published Post",
-			Content:   "Content",
+			Content:    "Content",
 			CategoryId: categoryId,
 			Status:     posts.PostStatusPublished,
 		}
@@ -348,6 +372,62 @@ func TestCreate(t *testing.T) {
 
 		if post.PublishedAt.Time.After(time.Now().Add(time.Second)) {
 			t.Error("Create() PublishedAt should be approximately now")
+		}
+	})
+
+	t.Run("create post with metadata", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		metadata := json.RawMessage(`{"gpxFileUrl":"https://example.com/route.gpx"}`)
+
+		input := CreatePostInput{
+			Title:      "Hiking Post",
+			Content:    "A trail through the mountains.",
+			CategoryId: categoryId,
+			Status:     posts.PostStatusPublished,
+			Metadata:   metadata,
+		}
+
+		post, err := service.Create(ctx, input, creatorId)
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+
+		if post.Metadata == nil {
+			t.Fatal("Create() Metadata should not be nil")
+		}
+
+		var m map[string]interface{}
+		if err := json.Unmarshal(post.Metadata, &m); err != nil {
+			t.Fatalf("Create() Metadata unmarshal error = %v", err)
+		}
+
+		if m["gpxFileUrl"] != "https://example.com/route.gpx" {
+			t.Errorf("Create() Metadata gpxFileUrl = %v, want https://example.com/route.gpx", m["gpxFileUrl"])
+		}
+	})
+
+	t.Run("create post without metadata", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		input := CreatePostInput{
+			Title:      "Simple Post",
+			Content:    "No metadata here.",
+			CategoryId: categoryId,
+		}
+
+		post, err := service.Create(ctx, input, creatorId)
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+
+		if post.Metadata != nil && string(post.Metadata) != "null" {
+			var m map[string]interface{}
+			if err := json.Unmarshal(post.Metadata, &m); err == nil && len(m) > 0 {
+				t.Error("Create() Metadata should be empty when not provided")
+			}
 		}
 	})
 
@@ -487,6 +567,47 @@ func TestUpdate(t *testing.T) {
 
 		if post.PublishedAt.Time.Sub(originalPublishedAt) > time.Second {
 			t.Error("Update() should keep original PublishedAt for already published posts")
+		}
+	})
+
+	t.Run("update post metadata", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		existingPost := posts.Post{
+			Id:            uuid.New(),
+			Title:         "Hiking Post",
+			Slug:          "hiking-post",
+			Content:       "Content",
+			CategoryId:    categoryId,
+			CreatorUserId: creatorId,
+			Status:        posts.PostStatusCreated,
+			Metadata:      json.RawMessage(`{}`),
+		}
+		repo.addPost(existingPost)
+
+		metadata := json.RawMessage(`{"gpxFileUrl":"https://example.com/new-route.gpx"}`)
+
+		input := UpdatePostInput{
+			Title:      "Hiking Post",
+			Content:    "Updated content",
+			CategoryId: categoryId,
+			Status:     posts.PostStatusCreated,
+			Metadata:   metadata,
+		}
+
+		post, err := service.Update(ctx, existingPost.Id, input, creatorId.String())
+		if err != nil {
+			t.Fatalf("Update() error = %v", err)
+		}
+
+		var m map[string]interface{}
+		if err := json.Unmarshal(post.Metadata, &m); err != nil {
+			t.Fatalf("Update() Metadata unmarshal error = %v", err)
+		}
+
+		if m["gpxFileUrl"] != "https://example.com/new-route.gpx" {
+			t.Errorf("Update() Metadata gpxFileUrl = %v, want https://example.com/new-route.gpx", m["gpxFileUrl"])
 		}
 	})
 
@@ -652,6 +773,228 @@ func TestGetAll_Pagination(t *testing.T) {
 	if len(result2) != 5 {
 		t.Errorf("GetAll() page 2 returned %d posts, want 5", len(result2))
 	}
+}
+
+func TestSearchPublished(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("finds posts by title", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "Hiking in the Mountains",
+			Slug:    "hiking-in-the-mountains",
+			Content: "Some content",
+			Status:  posts.PostStatusPublished,
+		})
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "Best Recipes for Summer",
+			Slug:    "best-recipes-for-summer",
+			Content: "Recipe content",
+			Status:  posts.PostStatusPublished,
+		})
+
+		result, total, err := service.SearchPublished(ctx, "Hiking", 1, 10)
+		if err != nil {
+			t.Fatalf("SearchPublished() error = %v", err)
+		}
+
+		if total != 1 {
+			t.Errorf("SearchPublished() total = %d, want 1", total)
+		}
+
+		if len(result) != 1 {
+			t.Fatalf("SearchPublished() returned %d posts, want 1", len(result))
+		}
+
+		if result[0].Title != "Hiking in the Mountains" {
+			t.Errorf("SearchPublished() Title = %v, want 'Hiking in the Mountains'", result[0].Title)
+		}
+	})
+
+	t.Run("finds posts by content", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "My Post",
+			Slug:    "my-post",
+			Content: "This post contains protein shake recipes",
+			Status:  posts.PostStatusPublished,
+		})
+
+		result, total, err := service.SearchPublished(ctx, "protein", 1, 10)
+		if err != nil {
+			t.Fatalf("SearchPublished() error = %v", err)
+		}
+
+		if total != 1 {
+			t.Errorf("SearchPublished() total = %d, want 1", total)
+		}
+
+		if len(result) != 1 {
+			t.Errorf("SearchPublished() returned %d posts, want 1", len(result))
+		}
+	})
+
+	t.Run("case insensitive search", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "YOGA for Beginners",
+			Slug:    "yoga-for-beginners",
+			Content: "Content about yoga",
+			Status:  posts.PostStatusPublished,
+		})
+
+		result, total, err := service.SearchPublished(ctx, "yoga", 1, 10)
+		if err != nil {
+			t.Fatalf("SearchPublished() error = %v", err)
+		}
+
+		if total != 1 {
+			t.Errorf("SearchPublished() total = %d, want 1", total)
+		}
+
+		if len(result) != 1 {
+			t.Errorf("SearchPublished() returned %d posts, want 1", len(result))
+		}
+	})
+
+	t.Run("excludes draft posts", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "Draft Fitness Guide",
+			Slug:    "draft-fitness-guide",
+			Content: "Fitness content",
+			Status:  posts.PostStatusDraft,
+		})
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "Published Fitness Guide",
+			Slug:    "published-fitness-guide",
+			Content: "Fitness content",
+			Status:  posts.PostStatusPublished,
+		})
+
+		result, total, err := service.SearchPublished(ctx, "Fitness", 1, 10)
+		if err != nil {
+			t.Fatalf("SearchPublished() error = %v", err)
+		}
+
+		if total != 1 {
+			t.Errorf("SearchPublished() total = %d, want 1 (should exclude draft)", total)
+		}
+
+		if len(result) != 1 {
+			t.Fatalf("SearchPublished() returned %d posts, want 1", len(result))
+		}
+
+		if result[0].Title != "Published Fitness Guide" {
+			t.Errorf("SearchPublished() returned wrong post: %v", result[0].Title)
+		}
+	})
+
+	t.Run("excludes deleted posts", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		repo.addPost(posts.Post{
+			Id:        uuid.New(),
+			Title:     "Deleted Running Tips",
+			Slug:      "deleted-running-tips",
+			Content:   "Running content",
+			Status:    posts.PostStatusPublished,
+			IsDeleted: true,
+		})
+
+		result, total, err := service.SearchPublished(ctx, "Running", 1, 10)
+		if err != nil {
+			t.Fatalf("SearchPublished() error = %v", err)
+		}
+
+		if total != 0 {
+			t.Errorf("SearchPublished() total = %d, want 0 (should exclude deleted)", total)
+		}
+
+		if len(result) != 0 {
+			t.Errorf("SearchPublished() returned %d posts, want 0", len(result))
+		}
+	})
+
+	t.Run("returns empty for no matches", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		repo.addPost(posts.Post{
+			Id:      uuid.New(),
+			Title:   "Hiking Guide",
+			Slug:    "hiking-guide",
+			Content: "Mountain content",
+			Status:  posts.PostStatusPublished,
+		})
+
+		result, total, err := service.SearchPublished(ctx, "nonexistentterm", 1, 10)
+		if err != nil {
+			t.Fatalf("SearchPublished() error = %v", err)
+		}
+
+		if total != 0 {
+			t.Errorf("SearchPublished() total = %d, want 0", total)
+		}
+
+		if len(result) != 0 {
+			t.Errorf("SearchPublished() returned %d posts, want 0", len(result))
+		}
+	})
+
+	t.Run("pagination works correctly", func(t *testing.T) {
+		repo := newMockPostRepository()
+		service := NewPostService(repo)
+
+		for i := 0; i < 5; i++ {
+			repo.addPost(posts.Post{
+				Id:      uuid.New(),
+				Title:   fmt.Sprintf("Workout Plan %d", i),
+				Slug:    fmt.Sprintf("workout-plan-%d", i),
+				Content: "Workout content",
+				Status:  posts.PostStatusPublished,
+			})
+		}
+
+		// Page 1, 2 per page
+		result, total, err := service.SearchPublished(ctx, "Workout", 1, 2)
+		if err != nil {
+			t.Fatalf("SearchPublished() page 1 error = %v", err)
+		}
+
+		if total != 5 {
+			t.Errorf("SearchPublished() total = %d, want 5", total)
+		}
+
+		if len(result) != 2 {
+			t.Errorf("SearchPublished() page 1 returned %d posts, want 2", len(result))
+		}
+
+		// Page 3, 2 per page (should get 1)
+		result2, _, err := service.SearchPublished(ctx, "Workout", 3, 2)
+		if err != nil {
+			t.Fatalf("SearchPublished() page 3 error = %v", err)
+		}
+
+		if len(result2) != 1 {
+			t.Errorf("SearchPublished() page 3 returned %d posts, want 1", len(result2))
+		}
+	})
 }
 
 func TestTransliterate(t *testing.T) {

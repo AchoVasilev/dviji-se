@@ -3,6 +3,7 @@ package posts
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"regexp"
 	"server/internal/domain/posts"
 	"strings"
@@ -35,6 +36,7 @@ type CreatePostInput struct {
 	CategoryId      uuid.UUID
 	MetaDescription string
 	Status          posts.PostStatus
+	Metadata        json.RawMessage
 }
 
 type UpdatePostInput struct {
@@ -45,6 +47,7 @@ type UpdatePostInput struct {
 	CategoryId      uuid.UUID
 	MetaDescription string
 	Status          posts.PostStatus
+	Metadata        json.RawMessage
 }
 
 type PostService struct {
@@ -84,6 +87,7 @@ func (s *PostService) Create(ctx context.Context, input CreatePostInput, creator
 		CategoryId:         input.CategoryId,
 		CreatorUserId:      creatorId,
 		CreatedAt:          time.Now().UTC(),
+		Metadata:           input.Metadata,
 	}
 
 	if status == posts.PostStatusPublished {
@@ -125,6 +129,7 @@ func (s *PostService) Update(ctx context.Context, id uuid.UUID, input UpdatePost
 		ReadingTimeMinutes: s.CalculateReadingTime(input.Content),
 		CategoryId:         input.CategoryId,
 		UpdatedBy:          updatedBy,
+		Metadata:           input.Metadata,
 	}
 
 	if input.Status == posts.PostStatusPublished && !existing.PublishedAt.Valid {

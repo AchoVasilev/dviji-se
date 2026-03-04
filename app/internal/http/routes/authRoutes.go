@@ -26,20 +26,23 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 	authLimiter := middleware.AuthRateLimiter()
 	passwordResetLimiter := middleware.PasswordResetRateLimiter()
 
-	// Page routes (no rate limiting needed)
-	mux.HandleFunc("GET /login", authHandler.GetLogin)
-	mux.HandleFunc("GET /forgot-password", authHandler.GetForgotPassword)
-	mux.HandleFunc("GET /reset-password", authHandler.GetResetPassword)
+	// Admin login (always available)
+	mux.HandleFunc("GET /admin/login", authHandler.GetAdminLogin)
+	mux.Handle("POST /admin/login", authLimiter.Middleware(http.HandlerFunc(authHandler.HandleLogin)))
 
-	// Registration routes (only when enabled)
+	// Logout (always available)
+	mux.HandleFunc("POST /logout", authHandler.HandleLogout)
+
+	// Public auth routes (only when registration is enabled)
 	if config.AllowRegistration() {
+		mux.HandleFunc("GET /login", authHandler.GetLogin)
+		mux.Handle("POST /login", authLimiter.Middleware(http.HandlerFunc(authHandler.HandleLogin)))
 		mux.HandleFunc("GET /register", authHandler.GetRegister)
 		mux.Handle("POST /register", authLimiter.Middleware(http.HandlerFunc(authHandler.HandleRegister)))
+		mux.HandleFunc("GET /forgot-password", authHandler.GetForgotPassword)
+		mux.Handle("POST /forgot-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleForgotPassword)))
+		mux.HandleFunc("GET /reset-password", authHandler.GetResetPassword)
+		mux.Handle("POST /reset-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleResetPassword)))
+		mux.Handle("POST /refresh-token", authLimiter.Middleware(http.HandlerFunc(authHandler.RefreshToken)))
 	}
-
-	// API routes with rate limiting
-	mux.Handle("POST /login", authLimiter.Middleware(http.HandlerFunc(authHandler.HandleLogin)))
-	mux.Handle("POST /refresh-token", authLimiter.Middleware(http.HandlerFunc(authHandler.RefreshToken)))
-	mux.Handle("POST /forgot-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleForgotPassword)))
-	mux.Handle("POST /reset-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleResetPassword)))
 }

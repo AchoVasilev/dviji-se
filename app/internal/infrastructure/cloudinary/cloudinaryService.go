@@ -62,6 +62,27 @@ func (s *CloudinaryService) Upload(ctx context.Context, file multipart.File, fil
 	}, nil
 }
 
+func (s *CloudinaryService) UploadRaw(ctx context.Context, file multipart.File, filename string) (*UploadResult, error) {
+	ext := filepath.Ext(filename)
+	name := strings.TrimSuffix(filename, ext)
+
+	uploadParams := uploader.UploadParams{
+		Folder:       s.folder + "/files",
+		PublicID:     name,
+		ResourceType: "raw",
+	}
+
+	result, err := s.client.Upload.Upload(ctx, file, uploadParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	return &UploadResult{
+		URL:      result.SecureURL,
+		PublicID: result.PublicID,
+	}, nil
+}
+
 func (s *CloudinaryService) Delete(ctx context.Context, publicId string) error {
 	_, err := s.client.Upload.Destroy(ctx, uploader.DestroyParams{
 		PublicID: publicId,

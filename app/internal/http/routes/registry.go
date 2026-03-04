@@ -18,6 +18,7 @@ func RegisterRoutes(db *sql.DB) *http.ServeMux {
 	}
 
 	staticDir := filepath.Join(rootDir, "web/static")
+	middleware.InitAssetHashes(staticDir)
 	fileServer := http.FileServer(http.Dir(staticDir))
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", middleware.CacheStaticAssets(fileServer, staticDir)))

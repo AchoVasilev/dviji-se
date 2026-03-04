@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"server/internal/application/categories"
 	appPosts "server/internal/application/posts"
@@ -189,6 +191,7 @@ func (h *AdminHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		CategoryId:      categoryId,
 		MetaDescription: input.MetaDescription,
 		Status:          status,
+		Metadata:        input.Metadata,
 	}
 
 	post, err := h.postService.Create(ctx, createInput, creatorId)
@@ -238,6 +241,7 @@ func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		CategoryId:      categoryId,
 		MetaDescription: input.MetaDescription,
 		Status:          posts.PostStatus(input.Status),
+		Metadata:        input.Metadata,
 	}
 
 	post, err := h.postService.Update(ctx, id, updateInput, user.Username)
@@ -309,6 +313,46 @@ func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputils.SendSuccessResponse(w, "Image uploaded successfully", map[string]string{
+		"location": result.URL,
+	}, http.StatusOK)
+}
+
+func (h *AdminHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), cancelTime)
+	defer cancel()
+
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max
+	if err != nil {
+		httputils.SendBadRequestResponse(w, "Failed to parse form")
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		httputils.SendBadRequestResponse(w, "No file uploaded")
+		return
+	}
+	defer file.Close()
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	if ext != ".gpx" {
+		httputils.SendBadRequestResponse(w, "Only .gpx files are allowed")
+		return
+	}
+
+	if h.cloudinaryService == nil {
+		httputils.SendErrorResponse(w, "File upload not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	result, err := h.cloudinaryService.UploadRaw(ctx, file, header.Filename)
+	if err != nil {
+		slog.Error("Error uploading file", "error", err)
+		httputils.SendInternalServerResponse(w, r)
+		return
+	}
+
+	httputils.SendSuccessResponse(w, "File uploaded successfully", map[string]string{
 		"location": result.URL,
 	}, http.StatusOK)
 }

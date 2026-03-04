@@ -4,7 +4,6 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"io"
-	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -46,7 +45,6 @@ func initCompressionResponseWriter(writer http.ResponseWriter, req *http.Request
 	for encoding := range encodings {
 		switch strings.TrimSpace(encoding) {
 		case gzipEncoding:
-			slog.Info("Using gzip compression")
 			writer.Header().Set(contentEncodingHeader, gzipEncoding)
 			return &compressedResponseWriter{
 				ResponseWriter: writer,
@@ -54,7 +52,6 @@ func initCompressionResponseWriter(writer http.ResponseWriter, req *http.Request
 			}
 
 		case deflateEncoding:
-			slog.Info("Using deflate encoding")
 			writer.Header().Set(contentEncodingHeader, deflateEncoding)
 			flateWriter, _ := flate.NewWriter(writer, flate.BestCompression)
 			return &compressedResponseWriter{
@@ -64,7 +61,6 @@ func initCompressionResponseWriter(writer http.ResponseWriter, req *http.Request
 		}
 	}
 
-	slog.Info("No compression used")
 	return &compressedResponseWriter{
 		ResponseWriter: writer,
 		writer:         writer,

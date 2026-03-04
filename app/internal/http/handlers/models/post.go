@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"server/internal/domain/posts"
 	"time"
 
@@ -8,43 +9,46 @@ import (
 )
 
 type CreatePostResource struct {
-	Title           string `json:"title" validate:"required,max=100"`
-	Content         string `json:"content" validate:"required"`
-	Excerpt         string `json:"excerpt" validate:"max=500"`
-	CoverImageUrl   string `json:"coverImageUrl" validate:"max=500"`
-	CategoryId      string `json:"categoryId" validate:"required,uuid"`
-	MetaDescription string `json:"metaDescription" validate:"max=160"`
-	Status          string `json:"status" validate:"omitempty,oneof=created draft published archived"`
+	Title           string          `json:"title" validate:"required,max=100"`
+	Content         string          `json:"content" validate:"required"`
+	Excerpt         string          `json:"excerpt" validate:"max=500"`
+	CoverImageUrl   string          `json:"coverImageUrl" validate:"max=500"`
+	CategoryId      string          `json:"categoryId" validate:"required,uuid"`
+	MetaDescription string          `json:"metaDescription" validate:"max=160"`
+	Status          string          `json:"status" validate:"omitempty,oneof=created draft published archived"`
+	Metadata        json.RawMessage `json:"metadata" validate:"omitempty"`
 }
 
 type UpdatePostResource struct {
-	Title           string `json:"title" validate:"required,max=100"`
-	Content         string `json:"content" validate:"required"`
-	Excerpt         string `json:"excerpt" validate:"max=500"`
-	CoverImageUrl   string `json:"coverImageUrl" validate:"max=500"`
-	CategoryId      string `json:"categoryId" validate:"required,uuid"`
-	MetaDescription string `json:"metaDescription" validate:"max=160"`
-	Status          string `json:"status" validate:"required,oneof=created draft published archived"`
+	Title           string          `json:"title" validate:"required,max=100"`
+	Content         string          `json:"content" validate:"required"`
+	Excerpt         string          `json:"excerpt" validate:"max=500"`
+	CoverImageUrl   string          `json:"coverImageUrl" validate:"max=500"`
+	CategoryId      string          `json:"categoryId" validate:"required,uuid"`
+	MetaDescription string          `json:"metaDescription" validate:"max=160"`
+	Status          string          `json:"status" validate:"required,oneof=created draft published archived"`
+	Metadata        json.RawMessage `json:"metadata" validate:"omitempty"`
 }
 
 type PostResponseResource struct {
-	Id                 uuid.UUID  `json:"id"`
-	Title              string     `json:"title"`
-	Slug               string     `json:"slug"`
-	Content            string     `json:"content"`
-	Excerpt            string     `json:"excerpt"`
-	CoverImageUrl      string     `json:"coverImageUrl"`
-	Status             string     `json:"status"`
-	PublishedAt        *time.Time `json:"publishedAt"`
-	MetaDescription    string     `json:"metaDescription"`
-	ReadingTimeMinutes int        `json:"readingTimeMinutes"`
-	CategoryId         uuid.UUID  `json:"categoryId"`
-	CategoryName       string     `json:"categoryName"`
-	CategorySlug       string     `json:"categorySlug"`
-	AuthorFirstName    string     `json:"authorFirstName"`
-	AuthorLastName     string     `json:"authorLastName"`
-	CreatedAt          time.Time  `json:"createdAt"`
-	UpdatedAt          *time.Time `json:"updatedAt"`
+	Id                 uuid.UUID       `json:"id"`
+	Title              string          `json:"title"`
+	Slug               string          `json:"slug"`
+	Content            string          `json:"content"`
+	Excerpt            string          `json:"excerpt"`
+	CoverImageUrl      string          `json:"coverImageUrl"`
+	Status             string          `json:"status"`
+	PublishedAt        *time.Time      `json:"publishedAt"`
+	MetaDescription    string          `json:"metaDescription"`
+	ReadingTimeMinutes int             `json:"readingTimeMinutes"`
+	CategoryId         uuid.UUID       `json:"categoryId"`
+	CategoryName       string          `json:"categoryName"`
+	CategorySlug       string          `json:"categorySlug"`
+	Metadata           json.RawMessage `json:"metadata"`
+	AuthorFirstName    string          `json:"authorFirstName"`
+	AuthorLastName     string          `json:"authorLastName"`
+	CreatedAt          time.Time       `json:"createdAt"`
+	UpdatedAt          *time.Time      `json:"updatedAt"`
 }
 
 type PostListItem struct {
@@ -100,6 +104,7 @@ func PostResponseFromDomain(p *posts.PostWithAuthor) PostResponseResource {
 		AuthorLastName:     p.AuthorLastName,
 		CreatedAt:          p.CreatedAt,
 		UpdatedAt:          updatedAt,
+		Metadata:           p.Metadata,
 	}
 }
 

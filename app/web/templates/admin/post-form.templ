@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"encoding/json"
 	"fmt"
 	"server/internal/config"
 	"server/internal/domain/posts"
@@ -8,6 +9,20 @@ import (
 	"server/util/ctxutils"
 	"server/web/templates"
 )
+
+func getGpxFileUrl(metadata json.RawMessage) string {
+	if len(metadata) == 0 {
+		return ""
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal(metadata, &m); err != nil {
+		return ""
+	}
+	if url, ok := m["gpxFileUrl"].(string); ok {
+		return url
+	}
+	return ""
+}
 
 templ PostForm(post *posts.Post, categories []models.CategoryResponseResource) {
 	if post == nil {
@@ -148,6 +163,29 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 								<img src="" alt="Cover preview" class="w-full h-32 object-cover rounded-xl"/>
 							</div>
 						</div>
+						<!-- GPX File Upload -->
+						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+							<label class="input-field-label">GPX маршрут</label>
+							<input
+								type="file"
+								id="gpx-upload"
+								accept=".gpx"
+								class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 file:cursor-pointer file:transition-colors"
+							/>
+							<p class="text-xs text-slate-400 mt-2">Качете .gpx файл за визуализация на картата</p>
+							if post != nil && getGpxFileUrl(post.Metadata) != "" {
+								<div id="gpx-current" class="mt-3 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+									<span class="icon icon-check_circle"></span>
+									<a href={ templ.SafeURL(getGpxFileUrl(post.Metadata)) } target="_blank" class="hover:underline">GPX файл качен</a>
+								</div>
+							}
+							<div id="gpx-status" class="mt-3 hidden"></div>
+						</div>
+						<input type="hidden" name="metadata" id="metadata-input"
+							if post != nil && len(post.Metadata) > 0 {
+								value={ string(post.Metadata) }
+							}
+						/>
 						<div class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
 							<label class="input-field-label">Мета описание (SEO)</label>
 							<textarea
@@ -315,13 +353,13 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 			],
 			toolbar: 'posttemplate | undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link | table | code | help',
 			content_style: 'body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }',
-			images_upload_url: '/admin/upload',
+			images_upload_url: '/api/admin/upload',
 			images_upload_handler: function (blobInfo, progress) {
 				return new Promise((resolve, reject) => {
 					const formData = new FormData();
 					formData.append('file', blobInfo.blob(), blobInfo.filename());
 
-					fetch('/admin/upload', {
+					fetch('/api/admin/upload', {
 						method: 'POST',
 						headers: {
 							'X-CSRF-Token': document.querySelector('html').getAttribute('hx-headers') ? JSON.parse(document.querySelector('html').getAttribute('hx-headers'))['X-CSRF-TOKEN'] : ''
@@ -363,11 +401,23 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 			}
 		});
 
-		// Sync TinyMCE content before HTMX sends the request
+		// Sync TinyMCE content and metadata before HTMX sends the request
 		document.body.addEventListener('htmx:configRequest', function(evt) {
 			tinyMCE.triggerSave();
 			var richContent = document.querySelector('#content-editor');
 			evt.detail.parameters['content'] = richContent.value;
+
+			// Parse metadata as JSON object instead of string
+			var metadataStr = document.getElementById('metadata-input').value;
+			if (metadataStr) {
+				try {
+					evt.detail.parameters['metadata'] = JSON.parse(metadataStr);
+				} catch(e) {
+					evt.detail.parameters['metadata'] = {};
+				}
+			} else {
+				evt.detail.parameters['metadata'] = {};
+			}
 		});
 
 		// Cover image upload
@@ -377,7 +427,7 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 				const formData = new FormData();
 				formData.append('file', file);
 
-				fetch('/admin/upload', {
+				fetch('/api/admin/upload', {
 					method: 'POST',
 					headers: {
 						'X-CSRF-Token': document.querySelector('html').getAttribute('hx-headers') ? JSON.parse(document.querySelector('html').getAttribute('hx-headers'))['X-CSRF-TOKEN'] : ''
@@ -397,6 +447,52 @@ templ postFormContent(post *posts.Post, categories []models.CategoryResponseReso
 					console.error('Upload error:', error);
 				});
 			}
+		});
+
+		// GPX file upload
+		document.getElementById('gpx-upload').addEventListener('change', function(e) {
+			const file = e.target.files[0];
+			if (!file) return;
+
+			const status = document.getElementById('gpx-status');
+			status.classList.remove('hidden');
+			status.innerHTML = '<span class="text-sm text-slate-500">Качване...</span>';
+
+			const formData = new FormData();
+			formData.append('file', file);
+
+			fetch('/api/admin/upload-file', {
+				method: 'POST',
+				headers: {
+					'X-CSRF-Token': document.querySelector('html').getAttribute('hx-headers') ? JSON.parse(document.querySelector('html').getAttribute('hx-headers'))['X-CSRF-TOKEN'] : ''
+				},
+				body: formData
+			})
+			.then(response => response.json())
+			.then(result => {
+				if (result.success && result.data && result.data.location) {
+					// Update metadata hidden input
+					var currentMeta = {};
+					try {
+						var metaStr = document.getElementById('metadata-input').value;
+						if (metaStr) currentMeta = JSON.parse(metaStr);
+					} catch(e) {}
+					currentMeta.gpxFileUrl = result.data.location;
+					document.getElementById('metadata-input').value = JSON.stringify(currentMeta);
+
+					status.innerHTML = '<span class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400"><span class="icon icon-check_circle"></span> GPX файл качен успешно</span>';
+
+					// Hide old "current" indicator if present
+					var current = document.getElementById('gpx-current');
+					if (current) current.classList.add('hidden');
+				} else {
+					status.innerHTML = '<span class="text-sm text-red-500">Грешка при качване</span>';
+				}
+			})
+			.catch(error => {
+				console.error('GPX upload error:', error);
+				status.innerHTML = '<span class="text-sm text-red-500">Грешка при качване</span>';
+			});
 		});
 
 		// Form submission handler

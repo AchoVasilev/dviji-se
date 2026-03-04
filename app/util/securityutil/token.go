@@ -13,8 +13,8 @@ import (
 
 // Token durations
 const (
-	AccessTokenDuration     = 15 * time.Minute
-	RefreshTokenDuration    = 24 * time.Hour
+	AccessTokenDuration       = 15 * time.Minute
+	RefreshTokenDuration      = 24 * time.Hour
 	RememberMeAccessDuration  = 7 * 24 * time.Hour  // 7 days
 	RememberMeRefreshDuration = 30 * 24 * time.Hour // 30 days
 )

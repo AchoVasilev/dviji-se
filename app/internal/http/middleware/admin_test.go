@@ -62,8 +62,8 @@ func TestRequireAuth_NotAuthenticated(t *testing.T) {
 	}
 
 	location := w.Header().Get("Location")
-	if location != "/login" {
-		t.Errorf("Redirect location = %q, want /login", location)
+	if location != "/admin/login" {
+		t.Errorf("Redirect location = %q, want /admin/login", location)
 	}
 }
 

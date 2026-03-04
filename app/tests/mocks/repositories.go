@@ -20,14 +20,14 @@ var (
 
 // MockUserRepository is an in-memory mock of the user repository
 type MockUserRepository struct {
-	mu          sync.RWMutex
-	users       map[uuid.UUID]user.User
+	mu           sync.RWMutex
+	users        map[uuid.UUID]user.User
 	usersByEmail map[string]uuid.UUID
 }
 
 func NewMockUserRepository() *MockUserRepository {
 	return &MockUserRepository{
-		users:       make(map[uuid.UUID]user.User),
+		users:        make(map[uuid.UUID]user.User),
 		usersByEmail: make(map[string]uuid.UUID),
 	}
 }
@@ -277,9 +277,9 @@ func (r *MockCategoryRepository) AddCategory(c category.Category) {
 
 // MockPostRepository is an in-memory mock
 type MockPostRepository struct {
-	mu      sync.RWMutex
-	posts   map[uuid.UUID]posts.Post
-	bySlug  map[string]uuid.UUID
+	mu     sync.RWMutex
+	posts  map[uuid.UUID]posts.Post
+	bySlug map[string]uuid.UUID
 }
 
 func NewMockPostRepository() *MockPostRepository {

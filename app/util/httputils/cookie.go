@@ -28,6 +28,19 @@ func SetHttpOnlyCookie(name CookieName, value string, expirationTime time.Time, 
 	http.SetCookie(writer, cookie)
 }
 
+// ClearCookie expires a cookie by setting MaxAge to -1
+func ClearCookie(name CookieName, writer http.ResponseWriter) {
+	http.SetCookie(writer, &http.Cookie{
+		Name:     string(name),
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+	})
+}
+
 // SetAuthCookie sets an auth cookie - persistent if rememberMe is true, session cookie otherwise
 func SetAuthCookie(name CookieName, value string, expirationTime time.Time, rememberMe bool, writer http.ResponseWriter) {
 	cookie := &http.Cookie{

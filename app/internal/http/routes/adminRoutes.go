@@ -42,5 +42,8 @@ func AdminRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.Handle("DELETE /admin/posts/{id}", adminAuth(handler.DeletePost))
 
 	// Image upload
-	mux.Handle("POST /admin/upload", adminAuth(handler.UploadImage))
+	mux.Handle("POST /api/admin/upload", adminAuth(handler.UploadImage))
+
+	// File upload (GPX etc.)
+	mux.Handle("POST /api/admin/upload-file", adminAuth(handler.UploadFile))
 }

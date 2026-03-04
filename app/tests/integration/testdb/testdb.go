@@ -343,8 +343,8 @@ func (tdb *TestDB) SeedTestPost(t *testing.T, title, slug, content, categoryId, 
 
 	_, err := tdb.DB.Exec(`
 		INSERT INTO posts (id, title, slug, content, excerpt, cover_image_url, status, published_at,
-			meta_description, reading_time_minutes, category_id, creator_user_id, is_deleted)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
+			meta_description, reading_time_minutes, category_id, creator_user_id, is_deleted, metadata)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false, '{}')
 	`, id, title, slug, content, "Test excerpt", "https://example.com/cover.jpg",
 		status, publishedAt, "Test meta description", 5, categoryId, creatorId)
 	if err != nil {

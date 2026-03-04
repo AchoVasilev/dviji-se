@@ -29,7 +29,9 @@ func ConnectDatabase() *sql.DB {
 	}
 
 	db.SetMaxOpenConns(config.DBMaxConns())
+	db.SetMaxIdleConns(config.DBMaxConns() / 2)
 	db.SetConnMaxLifetime(1 * time.Minute)
+	db.SetConnMaxIdleTime(5 * time.Minute)
 
 	err = db.Ping()
 	if err != nil {
@@ -84,4 +86,3 @@ func getMigrationsPath() string {
 
 	return fmt.Sprintf("file://%s", migrationsPath)
 }
-

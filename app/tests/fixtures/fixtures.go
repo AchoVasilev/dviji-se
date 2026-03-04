@@ -15,10 +15,10 @@ var _ = sql.NullString{}
 
 // User fixtures
 var (
-	TestUserID       = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-	TestAdminID      = uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
-	TestUserRoleID   = uuid.MustParse("11111111-1111-1111-1111-111111111111")
-	TestAdminRoleID  = uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	TestUserID      = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+	TestAdminID     = uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+	TestUserRoleID  = uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	TestAdminRoleID = uuid.MustParse("22222222-2222-2222-2222-222222222222")
 )
 
 func TestUser() user.User {

@@ -9,7 +9,7 @@ func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, err := ctxutils.GetUser(r.Context())
 		if err != nil || user == nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
 

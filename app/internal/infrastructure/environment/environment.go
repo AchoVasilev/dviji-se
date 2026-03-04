@@ -20,6 +20,6 @@ func LoadEnvironmentVariables() {
 	err := godotenv.Load(envFile)
 
 	if err != nil {
-		panic(err)
+		slog.Warn(fmt.Sprintf("Could not load %s: %v (using existing environment variables)", envFile, err))
 	}
 }

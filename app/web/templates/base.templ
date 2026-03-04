@@ -1,6 +1,9 @@
 package templates
 
-import "server/util/jsonutils"
+import (
+	"server/internal/http/middleware"
+	"server/util/jsonutils"
+)
 
 templ head(title string, description string) {
 	<head>
@@ -23,10 +26,8 @@ templ head(title string, description string) {
 	  }'
 		/>
 		<link rel="icon" type="image/png" href="/static/img/logo-icon.png"/>
-		<link rel="preconnect" href="https://fonts.googleapis.com"/>
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-		<link rel="stylesheet" href="/static/css/styles.css"/>
+		<link rel="preload" href="/static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin/>
+		<link rel="stylesheet" href={ middleware.AssetURL("/static/css/styles.css") }/>
 	</head>
 }
 
@@ -50,10 +51,10 @@ templ header(activeLink string, allowLogin bool) {
 						<a class={ templ.KV("nav-item-on", activeLink=="/blog"), templ.KV("nav-item-off", activeLink!="/blog") } href="/blog">
 							Блог
 						</a>
-						<a class={ templ.KV("nav-item-on", activeLink=="/workouts"), templ.KV("nav-item-off", activeLink!="/workouts") } href="/workouts">
+						<a class={ templ.KV("nav-item-on", activeLink=="/blog/category/trenirovachni-programi"), templ.KV("nav-item-off", activeLink!="/blog/category/trenirovachni-programi") } href="/blog/category/trenirovachni-programi">
 							Тренировки
 						</a>
-						<a class={ templ.KV("nav-item-on", activeLink=="/nutrition"), templ.KV("nav-item-off", activeLink!="/nutrition") } href="/nutrition">
+						<a class={ templ.KV("nav-item-on", activeLink=="/blog/category/hranitelni-rezhimi"), templ.KV("nav-item-off", activeLink!="/blog/category/hranitelni-rezhimi") } href="/blog/category/hranitelni-rezhimi">
 							Хранене
 						</a>
 						<a class={ templ.KV("nav-item-on", activeLink=="/about"), templ.KV("nav-item-off", activeLink!="/about") } href="/about">
@@ -173,7 +174,7 @@ templ Layout(contents templ.Component, title string, description string, activeL
 				@contents
 			</main>
 			@footer()
-			<script type="text/javascript" src="/static/scripts/htmx.min.js"></script>
+			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/htmx.min.js") }></script>
 			<script defer src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 		</body>
 	</html>
@@ -188,7 +189,7 @@ templ SimpleLayout(contents templ.Component, title string, description string, c
 			<main>
 				@contents
 			</main>
-			<script defer type="text/javascript" src="/static/scripts/htmx.min.js"></script>
+			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/htmx.min.js") }></script>
 			<script defer src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 		</body>
 	</html>

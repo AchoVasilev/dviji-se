@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"net/http"
@@ -47,4 +48,9 @@ func Run() error {
 	slog.Info("Starting server on port: " + api.port)
 
 	return api.http.ListenAndServe()
+}
+
+func Shutdown(ctx context.Context) error {
+	slog.Info("Shutting down server...")
+	return api.http.Shutdown(ctx)
 }

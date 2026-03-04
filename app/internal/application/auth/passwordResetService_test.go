@@ -14,8 +14,8 @@ import (
 // Mock implementations for testing
 
 type mockUserRepo struct {
-	mu          sync.RWMutex
-	users       map[uuid.UUID]user.User
+	mu           sync.RWMutex
+	users        map[uuid.UUID]user.User
 	usersByEmail map[string]uuid.UUID
 }
 
@@ -64,9 +64,9 @@ func (r *mockUserRepo) addUser(u user.User) {
 }
 
 type mockTokenRepo struct {
-	mu      sync.RWMutex
-	tokens  map[uuid.UUID]user.PasswordResetToken
-	byHash  map[string]uuid.UUID
+	mu     sync.RWMutex
+	tokens map[uuid.UUID]user.PasswordResetToken
+	byHash map[string]uuid.UUID
 }
 
 func newMockTokenRepo() *mockTokenRepo {

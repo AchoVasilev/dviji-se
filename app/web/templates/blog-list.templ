@@ -86,7 +86,7 @@ templ blogCard(post models.PostListItem) {
 	<article class="flex flex-col bg-white dark:bg-card-dark rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 transition-transform hover:-translate-y-1">
 		<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="relative h-60 block">
 			if post.CoverImageUrl != "" {
-				<img src={ post.CoverImageUrl } alt={ post.Title } class="w-full h-full object-cover" />
+				<img src={ post.CoverImageUrl } alt={ post.Title } class="w-full h-full object-cover" loading="lazy" decoding="async" />
 			} else {
 				<div class="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
 					<span class="icon icon-article text-5xl text-slate-300 dark:text-slate-600"></span>
@@ -151,7 +151,7 @@ if len(posts) == 0 {
 for _, post := range posts {
 <a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
 if post.CoverImageUrl != "" {
-<img src={ post.CoverImageUrl } alt={ post.Title } class="w-10 h-10 rounded-lg object-cover shrink-0"/>
+<img src={ post.CoverImageUrl } alt={ post.Title } class="w-10 h-10 rounded-lg object-cover shrink-0" decoding="async"/>
 } else {
 <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
 <span class="icon icon-article text-slate-400"></span>

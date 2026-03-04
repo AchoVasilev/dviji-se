@@ -2,6 +2,7 @@ package posts
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,22 +18,23 @@ const (
 )
 
 type Post struct {
-	Id                 uuid.UUID    `json:"id"`
-	Title              string       `json:"title"`
-	Slug               string       `json:"slug"`
-	Content            string       `json:"content"`
-	Excerpt            string       `json:"excerpt"`
-	CoverImageUrl      string       `json:"cover_image_url"`
-	Status             PostStatus   `json:"status"`
-	PublishedAt        sql.NullTime `json:"published_at"`
-	MetaDescription    string       `json:"meta_description"`
-	ReadingTimeMinutes int          `json:"reading_time_minutes"`
-	CategoryId         uuid.UUID    `json:"category_id"`
-	CreatorUserId      uuid.UUID    `json:"creator_user_id"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          sql.NullTime `json:"updated_at"`
-	UpdatedBy          string       `json:"updated_by"`
-	IsDeleted          bool         `json:"is_deleted"`
+	Id                 uuid.UUID       `json:"id"`
+	Title              string          `json:"title"`
+	Slug               string          `json:"slug"`
+	Content            string          `json:"content"`
+	Excerpt            string          `json:"excerpt"`
+	CoverImageUrl      string          `json:"cover_image_url"`
+	Status             PostStatus      `json:"status"`
+	PublishedAt        sql.NullTime    `json:"published_at"`
+	MetaDescription    string          `json:"meta_description"`
+	ReadingTimeMinutes int             `json:"reading_time_minutes"`
+	CategoryId         uuid.UUID       `json:"category_id"`
+	CreatorUserId      uuid.UUID       `json:"creator_user_id"`
+	CreatedAt          time.Time       `json:"created_at"`
+	UpdatedAt          sql.NullTime    `json:"updated_at"`
+	UpdatedBy          string          `json:"updated_by"`
+	IsDeleted          bool            `json:"is_deleted"`
+	Metadata           json.RawMessage `json:"metadata"`
 }
 
 func (p *Post) IsPublished() bool {
