@@ -47,9 +47,6 @@ func SetupTestDB(t *testing.T) *TestDB {
 	once.Do(func() {
 		ctx := context.Background()
 
-		// Disable reaper for environments without bridge network
-		os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-
 		// Start PostgreSQL container
 		container, initErr = postgres.Run(ctx,
 			"postgres:16-alpine",
