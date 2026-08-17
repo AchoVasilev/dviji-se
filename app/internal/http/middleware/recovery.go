@@ -5,22 +5,24 @@ import (
 	"net/http"
 	"runtime/debug"
 	"server/util/httputils"
+	"strings"
 )
 
 func Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				slog.Error("Caught panic: %v. Stack trace: %s", err, string(debug.Stack()))
+				slog.ErrorContext(req.Context(), "Caught panic", "panic", err, "stack", string(debug.Stack()))
 
-				acceptHeader := req.Header.Get("Accept")
-				if acceptHeader == "application/json" {
-					req.Header.Set("Content-Type", "application/json")
+				// Content-Type belongs on the response. Setting it on req did
+				// nothing, and SendInternalServerResponse writes its own anyway.
+				if strings.Contains(req.Header.Get("Accept"), "application/json") {
 					httputils.SendInternalServerResponse(writer, req)
-				} else {
-					req.Header.Set("Content-Type", "text/html; charset=utf-8")
-					http.Redirect(writer, req, "/error", http.StatusSeeOther)
+					return
 				}
+
+				writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+				http.Redirect(writer, req, "/error", http.StatusSeeOther)
 			}
 		}()
 

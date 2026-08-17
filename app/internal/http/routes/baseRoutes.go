@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"log/slog"
 	"net/http"
 	"server/internal/application/categories"
 	"server/internal/domain/category"
@@ -21,13 +22,16 @@ func BaseRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
+		body := []byte(`{"status":"ok"}`)
 		if err := db.PingContext(r.Context()); err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(`{"status":"unhealthy","reason":"database unreachable"}`))
-			return
+			body = []byte(`{"status":"unhealthy","reason":"database unreachable"}`)
+		} else {
+			w.WriteHeader(http.StatusOK)
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		if _, err := w.Write(body); err != nil {
+			slog.WarnContext(r.Context(), "Failed to write health check response", "error", err)
+		}
 	})
 }

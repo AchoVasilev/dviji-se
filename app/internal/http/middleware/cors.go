@@ -36,7 +36,7 @@ func EnableCORS(next http.Handler) http.Handler {
 }
 
 func isPreflight(req *http.Request) bool {
-	return req.Method == "OPTIONS" &&
+	return req.Method == http.MethodOptions &&
 		req.Header.Get("Origin") != "" &&
 		req.Header.Get("Access-Control-Request-Method") != ""
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	appPosts "server/internal/application/posts"
@@ -39,10 +40,16 @@ func (h *FeedHandler) GetRSSFeed(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 
-	w.Write([]byte(xml.Header))
+	if _, err := w.Write([]byte(xml.Header)); err != nil {
+		slog.WarnContext(ctx, "Failed to write RSS feed", "error", err)
+		return
+	}
+
 	encoder := xml.NewEncoder(w)
 	encoder.Indent("", "  ")
-	encoder.Encode(feed)
+	if err := encoder.Encode(feed); err != nil {
+		slog.WarnContext(ctx, "Failed to encode RSS feed", "error", err)
+	}
 }
 
 func (h *FeedHandler) GetSitemap(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +58,9 @@ func (h *FeedHandler) GetSitemap(w http.ResponseWriter, r *http.Request) {
 
 	baseURL := config.BaseURL()
 
-	domainPosts, _, err := h.postService.GetPublished(ctx, 1, 1000)
+	domainPosts, err := h.postService.GetSitemapEntries(ctx)
 	if err != nil {
+		slog.ErrorContext(ctx, "Error fetching sitemap entries", "error", err)
 		domainPosts = nil
 	}
 
@@ -61,10 +69,16 @@ func (h *FeedHandler) GetSitemap(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 
-	w.Write([]byte(xml.Header))
+	if _, err := w.Write([]byte(xml.Header)); err != nil {
+		slog.WarnContext(ctx, "Failed to write sitemap", "error", err)
+		return
+	}
+
 	encoder := xml.NewEncoder(w)
 	encoder.Indent("", "  ")
-	encoder.Encode(sitemap)
+	if err := encoder.Encode(sitemap); err != nil {
+		slog.WarnContext(ctx, "Failed to encode sitemap", "error", err)
+	}
 }
 
 func (h *FeedHandler) GetRobotsTxt(w http.ResponseWriter, r *http.Request) {
@@ -78,5 +92,7 @@ Sitemap: %s/sitemap.xml
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	w.Write([]byte(robotsTxt))
+	if _, err := w.Write([]byte(robotsTxt)); err != nil {
+		slog.WarnContext(r.Context(), "Failed to write robots.txt", "error", err)
+	}
 }

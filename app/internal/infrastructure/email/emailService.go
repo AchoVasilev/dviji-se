@@ -2,6 +2,7 @@ package email
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -29,7 +30,7 @@ func NewEmailService() *EmailService {
 	}
 }
 
-func (s *EmailService) SendPasswordResetEmail(toEmail, token string) error {
+func (s *EmailService) SendPasswordResetEmail(ctx context.Context, toEmail, token string) error {
 	resetLink := fmt.Sprintf("%s/reset-password?token=%s", s.baseURL, token)
 
 	subject := "Заявка за смяна на парола - Движи се"
@@ -38,7 +39,7 @@ func (s *EmailService) SendPasswordResetEmail(toEmail, token string) error {
 		return err
 	}
 
-	return s.sendEmail(toEmail, subject, body)
+	return s.sendEmail(ctx, toEmail, subject, body)
 }
 
 func (s *EmailService) renderPasswordResetTemplate(resetLink string) (string, error) {
@@ -84,14 +85,14 @@ func (s *EmailService) renderPasswordResetTemplate(resetLink string) (string, er
 	return buf.String(), nil
 }
 
-func (s *EmailService) sendEmail(to, subject, htmlBody string) error {
+func (s *EmailService) sendEmail(ctx context.Context, to, subject, htmlBody string) error {
 	// If SMTP is not configured, log the email instead (for development)
 	if s.host == "" || s.from == "" {
-		slog.Info("Email would be sent (SMTP not configured)",
+		slog.InfoContext(ctx, "Email would be sent (SMTP not configured)",
 			"to", to,
 			"subject", subject,
 		)
-		slog.Debug("Email body", "body", htmlBody)
+		slog.DebugContext(ctx, "Email body", "body", htmlBody)
 		return nil
 	}
 
@@ -104,7 +105,7 @@ func (s *EmailService) sendEmail(to, subject, htmlBody string) error {
 
 	var msg bytes.Buffer
 	for k, v := range headers {
-		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+		fmt.Fprintf(&msg, "%s: %s\r\n", k, v)
 	}
 	msg.WriteString("\r\n")
 	msg.WriteString(htmlBody)
@@ -114,10 +115,10 @@ func (s *EmailService) sendEmail(to, subject, htmlBody string) error {
 
 	err := smtp.SendMail(addr, auth, s.from, []string{to}, msg.Bytes())
 	if err != nil {
-		slog.Error("Failed to send email", "error", err, "to", to)
+		slog.ErrorContext(ctx, "Failed to send email", "error", err, "to", to)
 		return err
 	}
 
-	slog.Info("Email sent successfully", "to", to, "subject", subject)
+	slog.InfoContext(ctx, "Email sent successfully", "to", to, "subject", subject)
 	return nil
 }

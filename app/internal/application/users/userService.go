@@ -4,7 +4,6 @@ import (
 	"context"
 	"server/internal/domain/user"
 	"server/internal/http/handlers/models"
-	"server/util"
 	"server/util/securityutil"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 )
 
 type userRepository interface {
-	Create(user.User) error
+	Create(ctx context.Context, u user.User) error
 	FindByEmail(ctx context.Context, email string) (user.User, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 }
@@ -35,32 +34,30 @@ func (userService *UserService) ExistsByEmail(ctx context.Context, email string)
 	return userService.userRepository.ExistsByEmail(ctx, email)
 }
 
-func (userService *UserService) RegisterUser(input *models.CreateUserResource) (uuid.UUID, error) {
-	hashed := util.MustProduce(securityutil.HashPassword(input.Password))
-
-	id := util.MustProduce(uuid.NewRandom())
-
-	user := user.User{
-		Id:        id,
-		Email:     input.Email,
-		Password:  hashed,
-		CreatedAt: time.Now(),
-		Status:    "Active",
-	}
-
-	err := userService.userRepository.Create(user)
+func (userService *UserService) RegisterUser(ctx context.Context, input *models.CreateUserResource) (uuid.UUID, error) {
+	// Hashing and id generation can fail; returning the error keeps a bad
+	// password hash from taking the request down with a panic.
+	hashed, err := securityutil.HashPassword(input.Password)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	return id, nil
-}
-
-func (userService *UserService) LoginUser(ctx context.Context, email string, password string) (user.User, error) {
-	user, err := userService.GetUserByEmail(ctx, email)
+	id, err := uuid.NewRandom()
 	if err != nil {
-		return user, err
+		return uuid.Nil, err
 	}
 
-	return user, nil
+	newUser := user.User{
+		Id:        id,
+		Email:     input.Email,
+		Password:  hashed,
+		CreatedAt: time.Now().UTC(),
+		Status:    "Active",
+	}
+
+	if err := userService.userRepository.Create(ctx, newUser); err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }

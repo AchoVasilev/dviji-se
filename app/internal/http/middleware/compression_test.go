@@ -36,6 +36,9 @@ func getClient() *http.Client {
 
 func getTestHandler() http.Handler {
 	return EnableCompression(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The ContentType middleware runs inside EnableCompression in the real
+		// chain, so the type is always set before a handler writes.
+		w.Header().Set(contentTypeHeader, "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(expect))
 	}))
@@ -132,5 +135,80 @@ func TestCompressionMiddleware_Deflate(t *testing.T) {
 
 	if buf.String() != expect {
 		t.Errorf("unexpected deflate response content: got %q, want %q", buf.String(), expect)
+	}
+}
+
+func TestShouldCompress(t *testing.T) {
+	tests := []struct {
+		name        string
+		status      int
+		contentType string
+		want        bool
+	}{
+		{"html", http.StatusOK, "text/html; charset=utf-8", true},
+		{"json", http.StatusOK, "application/json", true},
+		{"rss", http.StatusOK, "application/rss+xml; charset=utf-8", true},
+		{"svg", http.StatusOK, "image/svg+xml", true},
+		{"png is already compressed", http.StatusOK, "image/png", false},
+		{"webp is already compressed", http.StatusOK, "image/webp", false},
+		{"woff2 is already compressed", http.StatusOK, "font/woff2", false},
+		{"not modified carries no body", http.StatusNotModified, "text/html", false},
+		{"no content carries no body", http.StatusNoContent, "text/html", false},
+		{"unknown type", http.StatusOK, "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldCompress(tt.status, tt.contentType); got != tt.want {
+				t.Errorf("shouldCompress(%d, %q) = %v, want %v", tt.status, tt.contentType, got, tt.want)
+			}
+		})
+	}
+}
+
+// A 304 must carry no body at all; the previous implementation appended a gzip
+// header and footer to it.
+func TestCompression_NotModifiedHasEmptyBody(t *testing.T) {
+	handler := EnableCompression(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(contentTypeHeader, "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusNotModified)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/asset.css", nil)
+	req.Header.Set(acceptEncodingHeader, gzipEncoding)
+
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotModified {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusNotModified)
+	}
+
+	if encoding := resp.Header.Get(contentEncodingHeader); encoding != "" {
+		t.Errorf("Content-Encoding = %q, want empty on a 304", encoding)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if len(body) != 0 {
+		t.Errorf("304 response body = %q, want empty", body)
+	}
+}
+
+func TestCompression_VaryIsAlwaysSet(t *testing.T) {
+	handler := EnableCompression(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(contentTypeHeader, "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	// No Accept-Encoding at all: the response still varies by it.
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if vary := w.Result().Header.Get("Vary"); vary != acceptEncodingHeader {
+		t.Errorf("Vary = %q, want %q", vary, acceptEncodingHeader)
 	}
 }

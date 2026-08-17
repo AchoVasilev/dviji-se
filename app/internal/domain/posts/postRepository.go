@@ -3,6 +3,8 @@ package posts
 import (
 	"context"
 	"database/sql"
+	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
 )
@@ -286,14 +288,17 @@ func (r *PostRepository) FindRecent(ctx context.Context, limit int) ([]PostWithA
 }
 
 func (r *PostRepository) Search(ctx context.Context, query string, limit, offset int) ([]PostWithAuthor, int, error) {
-	searchPattern := "%" + query + "%"
+	tsQuery := buildTSQuery(query)
+	if tsQuery == "" {
+		return nil, 0, nil
+	}
 
 	countQuery := `
 		SELECT COUNT(*) FROM posts p
 		WHERE p.status = 'published' AND p.is_deleted = FALSE
-			AND (p.title ILIKE $1 OR p.excerpt ILIKE $1 OR p.content ILIKE $1)`
+			AND p.search_vector @@ to_tsquery('simple', $1)`
 	var total int
-	if err := r.Db.QueryRowContext(ctx, countQuery, searchPattern).Scan(&total); err != nil {
+	if err := r.Db.QueryRowContext(ctx, countQuery, tsQuery).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -305,11 +310,11 @@ func (r *PostRepository) Search(ctx context.Context, query string, limit, offset
 		JOIN users u ON p.creator_user_id = u.id
 		JOIN categories c ON p.category_id = c.id
 		WHERE p.status = 'published' AND p.is_deleted = FALSE
-			AND (p.title ILIKE $1 OR p.excerpt ILIKE $1 OR p.content ILIKE $1)
-		ORDER BY p.published_at DESC
+			AND p.search_vector @@ to_tsquery('simple', $1)
+		ORDER BY ts_rank(p.search_vector, to_tsquery('simple', $1)) DESC, p.published_at DESC
 		LIMIT $2 OFFSET $3`
 
-	rows, err := r.Db.QueryContext(ctx, selectQuery, searchPattern, limit, offset)
+	rows, err := r.Db.QueryContext(ctx, selectQuery, tsQuery, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -320,6 +325,97 @@ func (r *PostRepository) Search(ctx context.Context, query string, limit, offset
 		return nil, 0, err
 	}
 	return posts, total, nil
+}
+
+// SitemapEntry is the slice of a post the sitemap actually needs.
+type SitemapEntry struct {
+	Slug        string
+	PublishedAt sql.NullTime
+	UpdatedAt   sql.NullTime
+}
+
+// FindPublishedSitemapEntries selects only the columns the sitemap renders.
+// The sitemap previously loaded 1000 full posts, including every post body,
+// on every request.
+func (r *PostRepository) FindPublishedSitemapEntries(ctx context.Context) ([]SitemapEntry, error) {
+	// The sitemap protocol caps a single file at 50,000 URLs; two of those slots
+	// are taken by the home and blog links the handler adds.
+	query := `
+		SELECT slug, published_at, updated_at
+		FROM posts
+		WHERE status = 'published' AND is_deleted = FALSE
+		ORDER BY published_at DESC
+		LIMIT 49998`
+
+	rows, err := r.Db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []SitemapEntry
+	for rows.Next() {
+		var entry SitemapEntry
+		if err := rows.Scan(&entry.Slug, &entry.PublishedAt, &entry.UpdatedAt); err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+// PostCounts holds the dashboard totals.
+type PostCounts struct {
+	Total     int
+	Published int
+	Draft     int
+}
+
+// CountByStatus returns all dashboard counts in one round trip. Fetching them
+// via three paginated queries meant selecting and discarding whole rows.
+func (r *PostRepository) CountByStatus(ctx context.Context) (PostCounts, error) {
+	query := `
+		SELECT
+			COUNT(*),
+			COUNT(*) FILTER (WHERE status = 'published'),
+			COUNT(*) FILTER (WHERE status = 'draft')
+		FROM posts
+		WHERE is_deleted = FALSE`
+
+	var counts PostCounts
+	err := r.Db.QueryRowContext(ctx, query).Scan(&counts.Total, &counts.Published, &counts.Draft)
+
+	return counts, err
+}
+
+// buildTSQuery turns free text into a safe tsquery expression: terms are ANDed
+// and the final term gets a prefix match so type-ahead still finds "фитнес"
+// from "фит". Anything that is not a letter or digit is dropped, which keeps
+// tsquery operators in user input from reaching the parser and erroring.
+//
+// Returns "" when the input has no usable terms.
+func buildTSQuery(query string) string {
+	terms := strings.FieldsFunc(query, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+
+	if len(terms) == 0 {
+		return ""
+	}
+
+	for i, term := range terms {
+		terms[i] = strings.ToLower(term)
+	}
+
+	terms[len(terms)-1] += ":*"
+
+	return strings.Join(terms, " & ")
 }
 
 func (r *PostRepository) ExistsBySlug(ctx context.Context, slug string, excludeId *uuid.UUID) (bool, error) {
@@ -382,6 +478,11 @@ func (r *PostRepository) scanPostsWithAuthor(rows *sql.Rows) ([]PostWithAuthor, 
 
 		posts = append(posts, post)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return posts, nil
 }
 

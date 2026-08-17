@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"testing"
 	"time"
 )
@@ -128,10 +130,11 @@ func TestRateLimiter_Middleware(t *testing.T) {
 
 func TestGetClientIP(t *testing.T) {
 	tests := []struct {
-		name       string
-		remoteAddr string
-		headers    map[string]string
-		expected   string
+		name           string
+		trustedProxies []netip.Prefix
+		remoteAddr     string
+		headers        map[string]string
+		expected       string
 	}{
 		{
 			name:       "RemoteAddr only",
@@ -140,29 +143,52 @@ func TestGetClientIP(t *testing.T) {
 			expected:   "192.168.1.1",
 		},
 		{
-			name:       "X-Forwarded-For header",
-			remoteAddr: "10.0.0.1:12345",
-			headers:    map[string]string{"X-Forwarded-For": "203.0.113.195"},
-			expected:   "203.0.113.195",
+			name:       "RemoteAddr without port",
+			remoteAddr: "192.168.1.1",
+			headers:    nil,
+			expected:   "192.168.1.1",
 		},
 		{
-			name:       "X-Real-IP header",
-			remoteAddr: "10.0.0.1:12345",
-			headers:    map[string]string{"X-Real-IP": "203.0.113.100"},
-			expected:   "203.0.113.100",
-		},
-		{
-			name:       "X-Forwarded-For takes precedence over X-Real-IP",
+			name:       "Forwarding headers are ignored when no proxy is trusted",
 			remoteAddr: "10.0.0.1:12345",
 			headers: map[string]string{
 				"X-Forwarded-For": "203.0.113.195",
 				"X-Real-IP":       "203.0.113.100",
 			},
-			expected: "203.0.113.195",
+			expected: "10.0.0.1",
 		},
 		{
-			name:       "Invalid X-Forwarded-For falls back to X-Real-IP",
-			remoteAddr: "10.0.0.1:12345",
+			name:           "Forwarding headers are ignored from an untrusted peer",
+			trustedProxies: []netip.Prefix{netip.MustParsePrefix("10.0.0.1/32")},
+			remoteAddr:     "198.51.100.7:12345",
+			headers:        map[string]string{"X-Forwarded-For": "203.0.113.195"},
+			expected:       "198.51.100.7",
+		},
+		{
+			name:           "X-Forwarded-For is honoured from a trusted peer",
+			trustedProxies: []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")},
+			remoteAddr:     "10.0.0.1:12345",
+			headers:        map[string]string{"X-Forwarded-For": "203.0.113.195"},
+			expected:       "203.0.113.195",
+		},
+		{
+			name:           "Rightmost untrusted hop wins in a chain",
+			trustedProxies: []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")},
+			remoteAddr:     "10.0.0.1:12345",
+			headers:        map[string]string{"X-Forwarded-For": "203.0.113.195, 198.51.100.7, 10.0.0.5"},
+			expected:       "198.51.100.7",
+		},
+		{
+			name:           "Spoofed leading hops cannot displace the real client",
+			trustedProxies: []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")},
+			remoteAddr:     "10.0.0.1:12345",
+			headers:        map[string]string{"X-Forwarded-For": "1.1.1.1, 203.0.113.195"},
+			expected:       "203.0.113.195",
+		},
+		{
+			name:           "Falls back to X-Real-IP when X-Forwarded-For is unusable",
+			trustedProxies: []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")},
+			remoteAddr:     "10.0.0.1:12345",
 			headers: map[string]string{
 				"X-Forwarded-For": "invalid-ip",
 				"X-Real-IP":       "203.0.113.100",
@@ -170,19 +196,14 @@ func TestGetClientIP(t *testing.T) {
 			expected: "203.0.113.100",
 		},
 		{
-			name:       "All headers invalid falls back to RemoteAddr",
-			remoteAddr: "192.168.1.1:12345",
+			name:           "Falls back to the peer when every header is unusable",
+			trustedProxies: []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")},
+			remoteAddr:     "10.0.0.1:12345",
 			headers: map[string]string{
 				"X-Forwarded-For": "invalid",
 				"X-Real-IP":       "also-invalid",
 			},
-			expected: "192.168.1.1",
-		},
-		{
-			name:       "RemoteAddr without port",
-			remoteAddr: "192.168.1.1",
-			headers:    nil,
-			expected:   "192.168.1.1",
+			expected: "10.0.0.1",
 		},
 	}
 
@@ -195,7 +216,7 @@ func TestGetClientIP(t *testing.T) {
 				req.Header.Set(key, value)
 			}
 
-			got := getClientIP(req)
+			got := getClientIP(req, tt.trustedProxies)
 			if got != tt.expected {
 				t.Errorf("getClientIP() = %q, want %q", got, tt.expected)
 			}
@@ -256,4 +277,87 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 	}
 
 	// If we get here without deadlock or panic, test passes
+}
+
+// The tracking map must not grow without bound when many distinct addresses
+// arrive inside a single window.
+func TestRateLimiter_BoundsTrackedClients(t *testing.T) {
+	rl := &RateLimiter{
+		requests:   make(map[string]*clientRequests),
+		limit:      5,
+		window:     time.Hour, // long enough that nothing expires on its own
+		maxClients: 100,
+	}
+
+	for i := 0; i < 1000; i++ {
+		rl.isAllowed(fmt.Sprintf("10.1.%d.%d", i/256, i%256))
+	}
+
+	if got := len(rl.requests); got > rl.maxClients {
+		t.Errorf("tracked clients = %d, want <= %d", got, rl.maxClients)
+	}
+}
+
+// Eviction must not let a client that is already over the limit back in.
+func TestRateLimiter_LimitStillAppliesUnderPressure(t *testing.T) {
+	rl := &RateLimiter{
+		requests:   make(map[string]*clientRequests),
+		limit:      2,
+		window:     time.Hour,
+		maxClients: 10,
+	}
+
+	const victim = "203.0.113.9"
+	for i := 0; i < 2; i++ {
+		if !rl.isAllowed(victim) {
+			t.Fatalf("request %d should be allowed", i+1)
+		}
+	}
+
+	if rl.isAllowed(victim) {
+		t.Fatal("third request should be denied")
+	}
+
+	// Fill the map so eviction runs repeatedly.
+	for i := 0; i < 100; i++ {
+		rl.isAllowed(fmt.Sprintf("10.2.%d.%d", i/256, i%256))
+	}
+
+	// The victim may have been evicted, which resets it - that is the accepted
+	// trade-off - but the limiter must still refuse it once it is over again.
+	rl.isAllowed(victim)
+	rl.isAllowed(victim)
+
+	if rl.isAllowed(victim) {
+		t.Error("client over the limit should still be denied after eviction churn")
+	}
+}
+
+// Expired entries are reclaimed before anything live is evicted.
+func TestRateLimiter_PrefersEvictingExpiredEntries(t *testing.T) {
+	rl := &RateLimiter{
+		requests:   make(map[string]*clientRequests),
+		limit:      5,
+		window:     50 * time.Millisecond,
+		maxClients: 10,
+	}
+
+	for i := 0; i < 10; i++ {
+		rl.isAllowed(fmt.Sprintf("198.51.100.%d", i))
+	}
+
+	time.Sleep(60 * time.Millisecond)
+
+	rl.isAllowed("203.0.113.1")
+
+	if got := len(rl.requests); got > rl.maxClients {
+		t.Errorf("tracked clients = %d, want <= %d", got, rl.maxClients)
+	}
+}
+
+// NewRateLimiter must set a ceiling; a zero value one is explicitly unbounded.
+func TestNewRateLimiter_SetsClientCeiling(t *testing.T) {
+	if rl := NewRateLimiter(5, time.Minute); rl.maxClients <= 0 {
+		t.Errorf("maxClients = %d, want a positive ceiling", rl.maxClients)
+	}
 }

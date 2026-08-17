@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -125,24 +126,35 @@ func (ts *TestServer) Close() {
 	ts.Server.Close()
 }
 
-// runMigrations applies database migrations
+// runMigrations applies every up migration in order. Applying only the first
+// one leaves tests running against a schema that drifts from production.
 func runMigrations(db *sql.DB) error {
-	// Find migrations directory
 	migrationsDir := findMigrationsDir()
 	if migrationsDir == "" {
 		return fmt.Errorf("could not find migrations directory")
 	}
 
-	// Read and execute migration file
-	migrationFile := filepath.Join(migrationsDir, "00001_init.up.sql")
-	content, err := os.ReadFile(migrationFile)
+	migrationFiles, err := filepath.Glob(filepath.Join(migrationsDir, "*.up.sql"))
 	if err != nil {
-		return fmt.Errorf("failed to read migration file: %w", err)
+		return fmt.Errorf("failed to list migrations: %w", err)
 	}
 
-	_, err = db.Exec(string(content))
-	if err != nil {
-		return fmt.Errorf("failed to execute migration: %w", err)
+	if len(migrationFiles) == 0 {
+		return fmt.Errorf("no migrations found in %s", migrationsDir)
+	}
+
+	// Filenames are zero padded, so lexical order is migration order.
+	sort.Strings(migrationFiles)
+
+	for _, migrationFile := range migrationFiles {
+		content, err := os.ReadFile(migrationFile)
+		if err != nil {
+			return fmt.Errorf("failed to read migration %s: %w", filepath.Base(migrationFile), err)
+		}
+
+		if _, err := db.Exec(string(content)); err != nil {
+			return fmt.Errorf("failed to execute migration %s: %w", filepath.Base(migrationFile), err)
+		}
 	}
 
 	return nil

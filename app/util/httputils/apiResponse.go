@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"log/slog"
 	"net/http"
 	"server/util/ctxutils"
 	"server/util/jsonutils"
@@ -29,56 +30,64 @@ func SendApiResponse(writer http.ResponseWriter, req *http.Request, status int, 
 	switch status {
 	case http.StatusOK:
 		SendOkWithBody(writer, body)
-		break
 	case http.StatusCreated:
 		SendCreatedAt(writer, message)
-		break
 	case http.StatusNotFound:
 		SendNotFoundResponse(writer, message)
-		break
 	case http.StatusInternalServerError:
 		SendInternalServerResponse(writer, req)
-		break
 	case http.StatusConflict:
 		SendConflictResponse(writer, message)
-		break
 	case http.StatusBadRequest:
 		SendBadRequestResponse(writer, message)
-		break
 	default:
 		SendOkWithBody(writer, nil)
-		break
 	}
 }
 
 func SendCreatedAt(writer http.ResponseWriter, uri string) {
-	jsonutils.WriteCreatedAt(writer, uri, nil)
+	err := jsonutils.WriteCreatedAt(writer, uri, nil)
+	if err != nil {
+		slog.Warn("Failed to write response body", "error", err)
+	}
 }
 
 func SendOkWithBody(writer http.ResponseWriter, data interface{}) {
-	jsonutils.WriteJSON(writer, http.StatusOK, data)
+	err := jsonutils.WriteJSON(writer, http.StatusOK, data)
+	if err != nil {
+		slog.Warn("Failed to write response body", "error", err)
+	}
 }
 
 func SendSuccessResponse(writer http.ResponseWriter, message string, data interface{}, statusCode int) {
-	jsonutils.WriteJSON(writer, statusCode, JSONSuccessResponse{
+	err := jsonutils.WriteJSON(writer, statusCode, JSONSuccessResponse{
 		Success: true,
 		Message: message,
 		Data:    data,
 	})
+	if err != nil {
+		slog.Warn("Failed to write response body", "error", err)
+	}
 }
 
 func SendFailedValidationResponse(writer http.ResponseWriter, errors []*ValidationError) {
-	jsonutils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
+	err := jsonutils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
 		Success: false,
 		Errors:  errors,
 	})
+	if err != nil {
+		slog.Warn("Failed to write response body", "error", err)
+	}
 }
 
 func SendErrorResponse(writer http.ResponseWriter, message string, statusCode int) {
-	jsonutils.WriteJSON(writer, statusCode, JSONErrorResponse{
+	err := jsonutils.WriteJSON(writer, statusCode, JSONErrorResponse{
 		Success: false,
 		Message: message,
 	})
+	if err != nil {
+		slog.Warn("Failed to write response body", "error", err)
+	}
 }
 
 func SendNotFoundResponse(writer http.ResponseWriter, message string) {

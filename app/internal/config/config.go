@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"net/netip"
 	"os"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ type cfg struct {
 	xsrfKey           string
 	corsOrigins       []string
 	allowRegistration bool
+	trustedProxies    []netip.Prefix
 
 	// SMTP
 	smtpHost     string
@@ -78,6 +80,7 @@ func load() {
 			xsrfKey:           getEnvRequired("XSRF"),
 			corsOrigins:       getEnvSlice("CORS_ORIGINS", ",", []string{"http://localhost:3000"}),
 			allowRegistration: getEnvBool("ALLOW_REGISTRATION", true),
+			trustedProxies:    getEnvPrefixes("TRUSTED_PROXIES"),
 
 			// SMTP
 			smtpHost:     getEnv("SMTP_HOST", ""),
@@ -135,6 +138,12 @@ func XSRFKey() string         { return get().xsrfKey }
 func CORSOrigins() []string   { return get().corsOrigins }
 func AllowRegistration() bool { return get().allowRegistration }
 
+// TrustedProxies lists the networks whose X-Forwarded-For / X-Real-IP headers
+// may be believed. Empty means trust none, which is the safe default: any
+// client can set those headers, so believing them without a proxy in front
+// lets a caller forge its own address.
+func TrustedProxies() []netip.Prefix { return get().trustedProxies }
+
 // --- SMTP ---
 
 func SMTPHost() string     { return get().smtpHost }
@@ -190,6 +199,36 @@ func getEnvBool(key string, defaultValue bool) bool {
 		return value == "true" || value == "1" || value == "yes"
 	}
 	return defaultValue
+}
+
+// getEnvPrefixes reads a comma separated list of CIDRs or bare IP addresses.
+// Entries that do not parse are dropped with a warning rather than failing
+// startup, so one bad entry cannot take the service down.
+func getEnvPrefixes(key string) []netip.Prefix {
+	var prefixes []netip.Prefix
+
+	for _, entry := range getEnvSlice(key, ",", nil) {
+		if strings.Contains(entry, "/") {
+			prefix, err := netip.ParsePrefix(entry)
+			if err != nil {
+				log.Printf("Ignoring invalid CIDR %q in %s: %v", entry, key, err)
+				continue
+			}
+
+			prefixes = append(prefixes, prefix)
+			continue
+		}
+
+		addr, err := netip.ParseAddr(entry)
+		if err != nil {
+			log.Printf("Ignoring invalid IP %q in %s: %v", entry, key, err)
+			continue
+		}
+
+		prefixes = append(prefixes, netip.PrefixFrom(addr, addr.BitLen()))
+	}
+
+	return prefixes
 }
 
 func getEnvSlice(key, separator string, defaultValue []string) []string {

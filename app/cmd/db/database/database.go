@@ -1,13 +1,14 @@
 package database
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime"
 	"server/internal/config"
 	"time"
 
@@ -33,7 +34,10 @@ func ConnectDatabase() *sql.DB {
 	db.SetConnMaxLifetime(1 * time.Minute)
 	db.SetConnMaxIdleTime(5 * time.Minute)
 
-	err = db.Ping()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
 	if err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
@@ -61,26 +65,25 @@ func applyMigrations(db *sql.DB, path string) {
 
 	m, err := migrate.NewWithDatabaseInstance(path, "pgx5", driver)
 	if err != nil {
-		log.Fatalf("Could not instanciate migrations. Path=%s Error=%v", path, err)
+		log.Fatalf("Could not instantiate migrations. Path=%s Error=%v", path, err)
 	}
 
 	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		log.Fatalf("Error applying migrations. Path=%s, Error=%v", path, err)
 	}
 }
 
+// getMigrationsPath resolves the migrations directory relative to the working
+// directory: ./app locally, /app in the container. It must not be derived from
+// runtime.Caller, which yields the build machine's source path.
 func getMigrationsPath() string {
-	_, currentFilePath, _, ok := runtime.Caller(0)
-	if !ok {
-		log.Fatalf("Failed to get runtime caller information")
+	migrationsPath, err := filepath.Abs("cmd/db/migrations")
+	if err != nil {
+		log.Fatalf("Could not resolve migrations path: %v", err)
 	}
 
-	projectRoot := filepath.Join(filepath.Dir(currentFilePath), "../..")
-
-	migrationsPath := filepath.Join(projectRoot, "db/migrations")
-
-	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
+	if _, err := os.Stat(migrationsPath); err != nil {
 		log.Fatalf("Migrations folder not found at path: %s", migrationsPath)
 	}
 

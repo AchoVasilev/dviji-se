@@ -67,6 +67,26 @@ type PostListItem struct {
 	CreatedAt          time.Time  `json:"createdAt"`
 }
 
+// AuthorInitials renders the avatar initials. Author names are optional -
+// registration never collects them - so indexing into them directly panics on
+// any post whose author has no first or last name.
+func AuthorInitials(firstName, lastName string) string {
+	initials := firstOrEmpty(firstName) + firstOrEmpty(lastName)
+	if initials == "" {
+		return "?"
+	}
+
+	return initials
+}
+
+func firstOrEmpty(name string) string {
+	for _, r := range name {
+		return string(r)
+	}
+
+	return ""
+}
+
 type PaginatedResponse[T any] struct {
 	Items      []T `json:"items"`
 	Total      int `json:"total"`

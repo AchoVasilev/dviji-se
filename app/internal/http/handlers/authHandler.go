@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -35,15 +36,15 @@ func NewAuthHandler(
 }
 
 func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http.Request) {
-	slog.Info("Registering new user")
-
 	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
 	defer cancel()
+
+	slog.InfoContext(ctx, "Registering new user")
 
 	input := new(models.CreateUserResource)
 	result := httputils.ProcessBody(writer, req, input)
 	if result.ParsingError != nil {
-		slog.Error(result.ParsingError.Error())
+		slog.ErrorContext(ctx, result.ParsingError.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
@@ -63,41 +64,41 @@ func (handler *AuthHandler) HandleRegister(writer http.ResponseWriter, req *http
 	}
 
 	exists, err := handler.userService.ExistsByEmail(ctx, input.Email)
-	if err != nil && err != sql.ErrNoRows {
-		slog.Error(err.Error())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		slog.ErrorContext(ctx, err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
 	if exists {
-		slog.Info(fmt.Sprintf("Attempt to register with existing user. [email=%s]", input.Email))
+		slog.InfoContext(ctx, fmt.Sprintf("Attempt to register with existing user. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusConflict)
 		util.Must(templates.InvalidMessage("Потребител с този имейл съществува", "error-email").Render(req.Context(), writer))
 		return
 	}
 
-	id, err := handler.userService.RegisterUser(input)
+	id, err := handler.userService.RegisterUser(ctx, input)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.ErrorContext(ctx, err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
-	slog.Info(fmt.Sprintf("User successfully created. [id=%s]", id.String()))
+	slog.InfoContext(ctx, fmt.Sprintf("User successfully created. [id=%s]", id.String()))
 	writer.WriteHeader(http.StatusOK)
 	writer.Header().Add("HX-Redirect", "/")
 }
 
 func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Request) {
-	slog.Info("Handling user login")
-
 	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
 	defer cancel()
+
+	slog.InfoContext(ctx, "Handling user login")
 
 	input := new(models.LoginResource)
 	result := httputils.ProcessBody(writer, req, input)
 	if result.ParsingError != nil {
-		slog.Error(result.ParsingError.Error())
+		slog.ErrorContext(ctx, result.ParsingError.Error())
 		http.Error(writer, "internal.server.error", http.StatusInternalServerError)
 		writer.Header().Add("HX-Redirect", "/error")
 		return
@@ -110,29 +111,29 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 	}
 
 	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
-	if err != nil && err != sql.ErrNoRows {
-		slog.Error(err.Error())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		slog.ErrorContext(ctx, err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
-	if err == sql.ErrNoRows || user.Email == "" {
-		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
+	if errors.Is(err, sql.ErrNoRows) || user.Email == "" {
+		slog.InfoContext(ctx, fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
 		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(ctx, writer))
 		return
 	}
 
 	tokenResult, err := handler.authService.Authenticate(user, input.Password, input.RememberMe, ctx)
-	if err == auth.ErrHashNotMatch {
-		slog.Info(fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
+	if errors.Is(err, auth.ErrHashNotMatch) {
+		slog.InfoContext(ctx, fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
 		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(ctx, writer))
 		return
 	}
 
 	if err != nil {
-		slog.Error(err.Error())
+		slog.ErrorContext(ctx, err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
@@ -157,7 +158,6 @@ func (handler *AuthHandler) HandleLogout(writer http.ResponseWriter, req *http.R
 }
 
 func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.Request) {
-	return
 }
 
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
@@ -221,7 +221,7 @@ func (handler *AuthHandler) HandleForgotPassword(writer http.ResponseWriter, req
 	input := new(models.ForgotPasswordResource)
 	result := httputils.ProcessBody(writer, req, input)
 	if result.ParsingError != nil {
-		slog.Error(result.ParsingError.Error())
+		slog.ErrorContext(ctx, result.ParsingError.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
@@ -235,7 +235,7 @@ func (handler *AuthHandler) HandleForgotPassword(writer http.ResponseWriter, req
 	// Always return success to prevent email enumeration
 	err := handler.passwordResetService.RequestReset(ctx, input.Email)
 	if err != nil {
-		slog.Error("Failed to process password reset request", "error", err)
+		slog.ErrorContext(ctx, "Failed to process password reset request", "error", err)
 		// Still return success to prevent enumeration
 	}
 
@@ -278,7 +278,7 @@ func (handler *AuthHandler) HandleResetPassword(writer http.ResponseWriter, req 
 	input := new(models.ResetPasswordResource)
 	result := httputils.ProcessBody(writer, req, input)
 	if result.ParsingError != nil {
-		slog.Error(result.ParsingError.Error())
+		slog.ErrorContext(ctx, result.ParsingError.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
@@ -298,18 +298,18 @@ func (handler *AuthHandler) HandleResetPassword(writer http.ResponseWriter, req 
 	}
 
 	err := handler.passwordResetService.ResetPassword(ctx, input.Token, input.Password)
-	if err == auth.ErrInvalidToken {
+	if errors.Is(err, auth.ErrInvalidToken) {
 		writer.WriteHeader(http.StatusBadRequest)
 		util.Must(templates.InvalidMessage("Линкът е невалиден или изтекъл. Моля, заявете нов.", "error-token").Render(ctx, writer))
 		return
 	}
-	if err == auth.ErrPasswordWeak {
+	if errors.Is(err, auth.ErrPasswordWeak) {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
 		util.Must(templates.InvalidMessage("Паролата трябва да е поне 8 символа", "error-password").Render(ctx, writer))
 		return
 	}
 	if err != nil {
-		slog.Error("Failed to reset password", "error", err)
+		slog.ErrorContext(ctx, "Failed to reset password", "error", err)
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}

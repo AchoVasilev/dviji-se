@@ -1,0 +1,50 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: standard
+  enable:
+    - bodyclose      # HTTP response bodies must be closed
+    - errorlint      # use errors.Is/As instead of == and type asserts
+    - misspell
+    - nilerr         # returning nil after a non-nil error check
+    - noctx          # HTTP requests without context
+    - rowserrcheck   # sql.Rows.Err() must be checked
+    - sqlclosecheck  # sql.Rows/Stmt must be closed
+    - unconvert
+    - usestdlibvars
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+    govet:
+      enable:
+        - shadow
+    staticcheck:
+      checks:
+        - all
+        - -ST1000  # package comments not required
+        - -ST1003  # existing code uses mixedCaps names like Db/Id
+        - -ST1005  # existing error strings are capitalized
+
+  exclusions:
+    generated: strict
+    presets:
+      - common-false-positives
+      - std-error-handling
+    rules:
+      # Tests may ignore errors on setup helpers.
+      - path: (_test\.go|tests/)
+        linters:
+          - errcheck
+          - bodyclose
+          - noctx
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: strict

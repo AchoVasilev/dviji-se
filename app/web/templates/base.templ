@@ -175,7 +175,7 @@ templ Layout(contents templ.Component, title string, description string, activeL
 			</main>
 			@footer()
 			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/htmx.min.js") }></script>
-			<script defer src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/json-enc.js") }></script>
 		</body>
 	</html>
 }
@@ -190,7 +190,7 @@ templ SimpleLayout(contents templ.Component, title string, description string, c
 				@contents
 			</main>
 			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/htmx.min.js") }></script>
-			<script defer src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/json-enc.js") }></script>
 		</body>
 	</html>
 }

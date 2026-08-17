@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"os"
 	"server/internal/domain/user"
 	"server/util/securityutil"
@@ -93,7 +94,7 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 	ctx := context.Background()
 
 	result, err := service.Authenticate(testUser, "wrongpassword", false, ctx)
-	if err != ErrHashNotMatch {
+	if !errors.Is(err, ErrHashNotMatch) {
 		t.Errorf("Authenticate() error = %v, want ErrHashNotMatch", err)
 	}
 
@@ -112,7 +113,7 @@ func TestAuthenticate_EmptyPassword(t *testing.T) {
 	ctx := context.Background()
 
 	result, err := service.Authenticate(testUser, "", false, ctx)
-	if err != ErrHashNotMatch {
+	if !errors.Is(err, ErrHashNotMatch) {
 		t.Errorf("Authenticate() error = %v, want ErrHashNotMatch", err)
 	}
 

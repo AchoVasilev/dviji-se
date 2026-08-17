@@ -121,7 +121,7 @@ func rssItemsFromPosts(domainPosts []posts.PostWithAuthor, baseURL string) []RSS
 }
 
 // SitemapFromPosts creates a sitemap from posts
-func SitemapFromPosts(domainPosts []posts.PostWithAuthor, baseURL string) Sitemap {
+func SitemapFromPosts(domainPosts []posts.SitemapEntry, baseURL string) Sitemap {
 	urls := []SitemapURL{
 		{
 			Loc:        baseURL,

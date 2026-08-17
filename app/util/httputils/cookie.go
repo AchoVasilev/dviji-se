@@ -11,6 +11,9 @@ const (
 	AuthCookieName    CookieName = "X-LOGIN-TOKEN"
 	RefreshCookieName CookieName = "X-REFRESH-TOKEN"
 	XSRFCookieName    CookieName = "csrf_token"
+	// CSRFSessionCookieName identifies an anonymous browser so its CSRF token
+	// can be bound to something.
+	CSRFSessionCookieName CookieName = "csrf_session"
 )
 
 // SetHttpOnlyCookie sets a persistent HTTP-only cookie with expiration

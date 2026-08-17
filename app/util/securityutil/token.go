@@ -19,14 +19,6 @@ const (
 	RememberMeRefreshDuration = 30 * 24 * time.Hour // 30 days
 )
 
-type Claims struct {
-	Id          string            `json:"id"`
-	Username    string            `json:"username"`
-	Roles       []user.Role       `json:"roles"`
-	Permissions []user.Permission `json:"permissions"`
-	jwt.Claims
-}
-
 type LoggedInUser struct {
 	Id          string
 	Username    string

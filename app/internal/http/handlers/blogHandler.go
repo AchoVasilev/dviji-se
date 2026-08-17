@@ -46,14 +46,14 @@ func (h *BlogHandler) GetBlogList(w http.ResponseWriter, r *http.Request) {
 
 	domainPosts, total, err := h.postService.GetPublished(ctx, page, pageSize)
 	if err != nil {
-		slog.Error("Error fetching published posts", "error", err)
+		slog.ErrorContext(ctx, "Error fetching published posts", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
 
 	allCategories, err := h.categoryService.GetCategories(ctx)
 	if err != nil {
-		slog.Error("Error fetching categories", "error", err)
+		slog.ErrorContext(ctx, "Error fetching categories", "error", err)
 		allCategories = nil
 	}
 
@@ -81,7 +81,7 @@ func (h *BlogHandler) GetBlogPost(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.postService.GetBySlug(ctx, slug)
 	if err != nil {
-		slog.Error("Error fetching post by slug", "error", err, "slug", slug)
+		slog.ErrorContext(ctx, "Error fetching post by slug", "error", err, "slug", slug)
 		httputils.SendNotFoundResponse(w, "Post not found")
 		return
 	}
@@ -93,7 +93,7 @@ func (h *BlogHandler) GetBlogPost(w http.ResponseWriter, r *http.Request) {
 
 	recentPosts, err := h.postService.GetRecent(ctx, 3)
 	if err != nil {
-		slog.Error("Error fetching recent posts", "error", err)
+		slog.ErrorContext(ctx, "Error fetching recent posts", "error", err)
 		recentPosts = []posts.PostWithAuthor{}
 	}
 
@@ -124,14 +124,14 @@ func (h *BlogHandler) GetBlogByCategory(w http.ResponseWriter, r *http.Request) 
 
 	domainPosts, total, err := h.postService.GetByCategory(ctx, categorySlug, page, pageSize)
 	if err != nil {
-		slog.Error("Error fetching posts by category", "error", err, "categorySlug", categorySlug)
+		slog.ErrorContext(ctx, "Error fetching posts by category", "error", err, "categorySlug", categorySlug)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
 
 	allCategories, err := h.categoryService.GetCategories(ctx)
 	if err != nil {
-		slog.Error("Error fetching categories", "error", err)
+		slog.ErrorContext(ctx, "Error fetching categories", "error", err)
 		allCategories = nil
 	}
 
@@ -159,7 +159,7 @@ func (h *BlogHandler) SearchSuggestions(w http.ResponseWriter, r *http.Request) 
 
 	domainPosts, _, err := h.postService.SearchPublished(ctx, q, 1, 5)
 	if err != nil {
-		slog.Error("Error searching posts", "error", err, "query", q)
+		slog.ErrorContext(ctx, "Error searching posts", "error", err, "query", q)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -188,7 +188,7 @@ func (h *BlogHandler) SearchBlogPosts(w http.ResponseWriter, r *http.Request) {
 	if q != "" {
 		domainPosts, t, err := h.postService.SearchPublished(ctx, q, page, pageSize)
 		if err != nil {
-			slog.Error("Error searching posts", "error", err, "query", q)
+			slog.ErrorContext(ctx, "Error searching posts", "error", err, "query", q)
 			httputils.SendInternalServerResponse(w, r)
 			return
 		}
@@ -213,7 +213,7 @@ func (h *BlogHandler) GetRecentPosts(w http.ResponseWriter, r *http.Request) {
 
 	recentPosts, err := h.postService.GetRecent(ctx, limit)
 	if err != nil {
-		slog.Error("Error fetching recent posts", "error", err)
+		slog.ErrorContext(ctx, "Error fetching recent posts", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}

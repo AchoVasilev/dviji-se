@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -20,7 +21,7 @@ func main() {
 	server.Initialize(db)
 
 	go func() {
-		if err := server.Run(); err != nil && err != http.ErrServerClosed {
+		if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("Server failed to start", "error", err)
 			os.Exit(1)
 		}

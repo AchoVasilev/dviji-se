@@ -109,7 +109,7 @@ templ blogCard(post models.PostListItem) {
 			<div class="mt-auto flex items-center justify-between">
 				<div class="flex items-center gap-2">
 					<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-						{ string([]rune(post.AuthorFirstName)[0]) }{ string([]rune(post.AuthorLastName)[0]) }
+						{ models.AuthorInitials(post.AuthorFirstName, post.AuthorLastName) }
 					</div>
 					<span class="text-xs font-semibold">{ post.AuthorFirstName } { post.AuthorLastName }</span>
 				</div>

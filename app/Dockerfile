@@ -5,11 +5,18 @@ FROM alpine:3.21 AS tailwind-builder
 
 WORKDIR /build
 
-# Download tailwindcss CLI
-RUN apk add --no-cache curl && \
-    curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 && \
-    chmod +x tailwindcss-linux-x64 && \
-    mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
+# Download the tailwindcss CLI. The musl builds are the ones that run on
+# alpine, and the arch is taken from the build platform rather than hardcoded.
+ARG TARGETARCH
+RUN apk add --no-cache curl libstdc++ libgcc && \
+    case "$TARGETARCH" in \
+      amd64) TW_ASSET=tailwindcss-linux-x64-musl ;; \
+      arm64) TW_ASSET=tailwindcss-linux-arm64-musl ;; \
+      *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+    esac && \
+    curl -fsSLO "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/${TW_ASSET}" && \
+    chmod +x "${TW_ASSET}" && \
+    mv "${TW_ASSET}" /usr/local/bin/tailwindcss
 
 # Copy only files needed for CSS build
 COPY tailwind.config.js ./
@@ -22,15 +29,12 @@ RUN tailwindcss -i ./web/static/css/main.css -o ./web/static/css/styles.css --mi
 # ============================================
 # Stage 2: Build Go binary
 # ============================================
-FROM golang:1.24-alpine AS go-builder
+FROM golang:1.25-alpine AS go-builder
 
 WORKDIR /build
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
-
-# Install templ
-RUN go install github.com/a-h/templ/cmd/templ@latest
 
 # Copy go.mod and go.sum first for better caching
 COPY go.mod go.sum ./
@@ -42,11 +46,12 @@ COPY . .
 # Copy generated CSS from tailwind stage
 COPY --from=tailwind-builder /build/web/static/css/styles.css ./web/static/css/styles.css
 
-# Generate templ files
-RUN templ generate
+# Generate templ files (version pinned by the tool directive in go.mod)
+RUN go tool templ generate
 
-# Build static binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+# Build static binary. Architecture is left to the builder so this image also
+# builds natively on arm64 hosts.
+RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags='-w -s -extldflags "-static"' \
     -o /build/server \
     ./cmd/main.go

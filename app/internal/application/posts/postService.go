@@ -26,6 +26,8 @@ type postRepository interface {
 	FindRecent(ctx context.Context, limit int) ([]posts.PostWithAuthor, error)
 	Search(ctx context.Context, query string, limit, offset int) ([]posts.PostWithAuthor, int, error)
 	ExistsBySlug(ctx context.Context, slug string, excludeId *uuid.UUID) (bool, error)
+	CountByStatus(ctx context.Context) (posts.PostCounts, error)
+	FindPublishedSitemapEntries(ctx context.Context) ([]posts.SitemapEntry, error)
 }
 
 type CreatePostInput struct {
@@ -169,6 +171,16 @@ func (s *PostService) GetAll(ctx context.Context, page, pageSize int) ([]posts.P
 func (s *PostService) GetByStatus(ctx context.Context, status posts.PostStatus, page, pageSize int) ([]posts.PostWithAuthor, int, error) {
 	offset := (page - 1) * pageSize
 	return s.postRepository.FindByStatus(ctx, status, pageSize, offset)
+}
+
+// GetSitemapEntries returns just the fields the sitemap needs.
+func (s *PostService) GetSitemapEntries(ctx context.Context) ([]posts.SitemapEntry, error) {
+	return s.postRepository.FindPublishedSitemapEntries(ctx)
+}
+
+// GetCounts returns the dashboard totals in a single query.
+func (s *PostService) GetCounts(ctx context.Context) (posts.PostCounts, error) {
+	return s.postRepository.CountByStatus(ctx)
 }
 
 func (s *PostService) GetRecent(ctx context.Context, limit int) ([]posts.PostWithAuthor, error) {

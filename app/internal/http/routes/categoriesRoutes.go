@@ -6,6 +6,7 @@ import (
 	"server/internal/application/categories"
 	"server/internal/domain/category"
 	"server/internal/http/handlers"
+	"server/internal/http/middleware"
 )
 
 func CategoriesRoutes(mux *http.ServeMux, db *sql.DB) {
@@ -20,9 +21,9 @@ func CategoriesRoutes(mux *http.ServeMux, db *sql.DB) {
 	// @Router /categories [get]
 	mux.HandleFunc("GET "+prefix, controller.GetCategories)
 
-	// @Description Create a category
+	// @Description Create a category (admin only)
 	// @Produce json
 	// @Success 201 categories.CategoryResponseResource
 	// @Router /categories [post]
-	mux.HandleFunc("POST "+prefix, controller.Create)
+	mux.Handle("POST "+prefix, middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(controller.Create))))
 }

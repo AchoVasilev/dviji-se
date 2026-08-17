@@ -42,7 +42,7 @@ func (s *PasswordResetService) RequestReset(ctx context.Context, emailAddr strin
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// Don't reveal that the email doesn't exist
-			slog.Info("Password reset requested for non-existent email", "email", emailAddr)
+			slog.InfoContext(ctx, "Password reset requested for non-existent email", "email", emailAddr)
 			return nil
 		}
 		return err
@@ -55,8 +55,8 @@ func (s *PasswordResetService) RequestReset(ctx context.Context, emailAddr strin
 	}
 
 	// Invalidate any existing tokens for this user
-	if err := s.tokenRepo.InvalidateAllForUser(ctx, u.Id); err != nil {
-		slog.Warn("Failed to invalidate existing tokens", "error", err)
+	if invalidateErr := s.tokenRepo.InvalidateAllForUser(ctx, u.Id); invalidateErr != nil {
+		slog.WarnContext(ctx, "Failed to invalidate existing tokens", "error", invalidateErr)
 	}
 
 	// Store token hash
@@ -66,13 +66,13 @@ func (s *PasswordResetService) RequestReset(ctx context.Context, emailAddr strin
 	}
 
 	// Send email with plain token
-	err = s.emailService.SendPasswordResetEmail(u.Email, plainToken)
+	err = s.emailService.SendPasswordResetEmail(ctx, u.Email, plainToken)
 	if err != nil {
-		slog.Error("Failed to send password reset email", "error", err, "email", emailAddr)
+		slog.ErrorContext(ctx, "Failed to send password reset email", "error", err, "email", emailAddr)
 		// Don't return error to user - token is still valid if they got the email
 	}
 
-	slog.Info("Password reset requested", "email", emailAddr)
+	slog.InfoContext(ctx, "Password reset requested", "email", emailAddr)
 	return nil
 }
 
@@ -108,16 +108,16 @@ func (s *PasswordResetService) ResetPassword(ctx context.Context, plainToken, ne
 	// Mark token as used
 	err = s.tokenRepo.MarkAsUsed(ctx, token.Id)
 	if err != nil {
-		slog.Warn("Failed to mark token as used", "error", err)
+		slog.WarnContext(ctx, "Failed to mark token as used", "error", err)
 	}
 
 	// Invalidate all other tokens for this user
 	err = s.tokenRepo.InvalidateAllForUser(ctx, token.UserId)
 	if err != nil {
-		slog.Warn("Failed to invalidate other tokens", "error", err)
+		slog.WarnContext(ctx, "Failed to invalidate other tokens", "error", err)
 	}
 
-	slog.Info("Password reset successful", "userId", token.UserId)
+	slog.InfoContext(ctx, "Password reset successful", "userId", token.UserId)
 	return nil
 }
 

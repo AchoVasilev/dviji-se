@@ -32,7 +32,7 @@ func NewMockUserRepository() *MockUserRepository {
 	}
 }
 
-func (r *MockUserRepository) Create(u user.User) error {
+func (r *MockUserRepository) Create(_ context.Context, u user.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

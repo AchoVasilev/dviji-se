@@ -21,7 +21,7 @@ func WriteJSON(writer http.ResponseWriter, status int, value any) error {
 
 func ParseJSON(req *http.Request, value any) error {
 	if req.Body == nil {
-		slog.Warn("Missing request body. [requestMethod=%s, requestUri=%s]", req.Method, req.RequestURI)
+		slog.WarnContext(req.Context(), "Missing request body", "requestMethod", req.Method, "requestUri", req.RequestURI)
 		return fmt.Errorf("Body is required")
 	}
 

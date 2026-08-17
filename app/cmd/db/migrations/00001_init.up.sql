@@ -117,6 +117,16 @@ CREATE TABLE posts
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   metadata JSONB DEFAULT '{}',
 
+  -- Kept in sync by Postgres so search never depends on application code.
+  -- The 'simple' configuration is deliberate: Postgres ships no Bulgarian
+  -- stemmer, and 'simple' lowercases and splits on word boundaries without
+  -- applying English stemming rules to Bulgarian text.
+  search_vector tsvector GENERATED ALWAYS AS (
+    setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('simple', coalesce(excerpt, '')), 'B') ||
+    setweight(to_tsvector('simple', coalesce(content, '')), 'C')
+  ) STORED,
+
   CONSTRAINT pk_post_id PRIMARY KEY(id),
   CONSTRAINT fk_category_id FOREIGN KEY(category_id) REFERENCES categories(id),
   CONSTRAINT uq_posts_slug UNIQUE (slug),
@@ -124,6 +134,12 @@ CREATE TABLE posts
 );
 
 CREATE INDEX idx_posts_status ON posts (status, published_at DESC) WHERE is_deleted = FALSE;
+
+-- Category listings join and filter on this column.
+CREATE INDEX idx_posts_category ON posts (category_id) WHERE is_deleted = FALSE;
+
+-- Backs the search query; without it search scans every row.
+CREATE INDEX idx_posts_search ON posts USING GIN (search_vector);
 
 CREATE TABLE images
 (

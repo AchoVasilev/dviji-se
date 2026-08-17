@@ -26,7 +26,7 @@ func AdminRoutes(mux *http.ServeMux, db *sql.DB) {
 
 	// Wrap all admin routes with auth and admin middleware
 	adminAuth := func(h http.HandlerFunc) http.Handler {
-		return middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(h)))
+		return middleware.RequireAuth(middleware.RequireAdmin(h))
 	}
 
 	// Dashboard

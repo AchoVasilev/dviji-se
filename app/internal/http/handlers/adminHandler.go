@@ -46,33 +46,18 @@ func (h *AdminHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	recentPosts, err := h.postService.GetRecent(ctx, 5)
 	if err != nil {
-		slog.Error("Error fetching recent posts", "error", err)
+		slog.ErrorContext(ctx, "Error fetching recent posts", "error", err)
 		recentPosts = []posts.PostWithAuthor{}
 	}
 
-	allPosts, total, err := h.postService.GetAll(ctx, 1, 1)
+	counts, err := h.postService.GetCounts(ctx)
 	if err != nil {
-		slog.Error("Error fetching posts count", "error", err)
-		total = 0
+		slog.ErrorContext(ctx, "Error fetching post counts", "error", err)
+		counts = posts.PostCounts{}
 	}
-	_ = allPosts
-
-	publishedPosts, publishedCount, err := h.postService.GetByStatus(ctx, posts.PostStatusPublished, 1, 1)
-	if err != nil {
-		slog.Error("Error fetching published posts count", "error", err)
-		publishedCount = 0
-	}
-	_ = publishedPosts
-
-	draftPosts, draftCount, err := h.postService.GetByStatus(ctx, posts.PostStatusDraft, 1, 1)
-	if err != nil {
-		slog.Error("Error fetching draft posts count", "error", err)
-		draftCount = 0
-	}
-	_ = draftPosts
 
 	recentItems := models.PostListFromDomain(recentPosts)
-	util.Must(admin.Dashboard(total, publishedCount, draftCount, recentItems).Render(r.Context(), w))
+	util.Must(admin.Dashboard(counts.Total, counts.Published, counts.Draft, recentItems).Render(r.Context(), w))
 }
 
 func (h *AdminHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +86,7 @@ func (h *AdminHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		slog.Error("Error fetching posts", "error", err)
+		slog.ErrorContext(ctx, "Error fetching posts", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
@@ -118,7 +103,7 @@ func (h *AdminHandler) GetPostForm(w http.ResponseWriter, r *http.Request) {
 
 	allCategories, err := h.categoryService.GetCategories(ctx)
 	if err != nil {
-		slog.Error("Error fetching categories", "error", err)
+		slog.ErrorContext(ctx, "Error fetching categories", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
@@ -143,7 +128,7 @@ func (h *AdminHandler) GetPostForm(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.postService.GetById(ctx, id)
 	if err != nil {
-		slog.Error("Error fetching post", "error", err, "id", id)
+		slog.ErrorContext(ctx, "Error fetching post", "error", err, "id", id)
 		httputils.SendNotFoundResponse(w, "Post not found")
 		return
 	}
@@ -196,12 +181,12 @@ func (h *AdminHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.postService.Create(ctx, createInput, creatorId)
 	if err != nil {
-		slog.Error("Error creating post", "error", err)
+		slog.ErrorContext(ctx, "Error creating post", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
 
-	slog.Info(fmt.Sprintf("Successfully created post [id=%s]", post.Id.String()))
+	slog.InfoContext(ctx, fmt.Sprintf("Successfully created post [id=%s]", post.Id.String()))
 	httputils.SendSuccessResponse(w, "Post created successfully", map[string]string{"id": post.Id.String()}, http.StatusCreated)
 }
 
@@ -246,12 +231,12 @@ func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.postService.Update(ctx, id, updateInput, user.Username)
 	if err != nil {
-		slog.Error("Error updating post", "error", err, "id", id)
+		slog.ErrorContext(ctx, "Error updating post", "error", err, "id", id)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
 
-	slog.Info(fmt.Sprintf("Successfully updated post [id=%s]", post.Id.String()))
+	slog.InfoContext(ctx, fmt.Sprintf("Successfully updated post [id=%s]", post.Id.String()))
 	httputils.SendSuccessResponse(w, "Post updated successfully", map[string]string{"id": post.Id.String()}, http.StatusOK)
 }
 
@@ -274,12 +259,12 @@ func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 
 	err = h.postService.Delete(ctx, id, user.Username)
 	if err != nil {
-		slog.Error("Error deleting post", "error", err, "id", id)
+		slog.ErrorContext(ctx, "Error deleting post", "error", err, "id", id)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
 
-	slog.Info(fmt.Sprintf("Successfully deleted post [id=%s]", id.String()))
+	slog.InfoContext(ctx, fmt.Sprintf("Successfully deleted post [id=%s]", id.String()))
 	httputils.SendSuccessResponse(w, "Post deleted successfully", nil, http.StatusOK)
 }
 
@@ -307,7 +292,7 @@ func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.cloudinaryService.Upload(ctx, file, header.Filename)
 	if err != nil {
-		slog.Error("Error uploading image", "error", err)
+		slog.ErrorContext(ctx, "Error uploading image", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}
@@ -347,7 +332,7 @@ func (h *AdminHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.cloudinaryService.UploadRaw(ctx, file, header.Filename)
 	if err != nil {
-		slog.Error("Error uploading file", "error", err)
+		slog.ErrorContext(ctx, "Error uploading file", "error", err)
 		httputils.SendInternalServerResponse(w, r)
 		return
 	}

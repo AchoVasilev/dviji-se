@@ -29,7 +29,7 @@ func (controller *CategoriesHandler) GetCategories(writer http.ResponseWriter, r
 
 	allCategories, err := controller.categoryService.GetCategories(ctx)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.ErrorContext(ctx, err.Error())
 		httputils.SendInternalServerResponse(writer, req)
 
 		return
@@ -45,9 +45,10 @@ func (controller *CategoriesHandler) GetCategories(writer http.ResponseWriter, r
 }
 
 func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *http.Request) {
-	slog.Info("Creating a new category")
-	ctx, cancel := context.WithTimeout(context.Background(), cancelTime)
+	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
 	defer cancel()
+
+	slog.InfoContext(ctx, "Creating a new category")
 
 	var input models.CreateCategoryResource
 	success := httputils.ProcessRequestBody(writer, req, &input)
@@ -57,12 +58,12 @@ func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *htt
 
 	result, err := controller.categoryService.Create(ctx, input)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.ErrorContext(ctx, err.Error())
 		httputils.SendInternalServerResponse(writer, req)
 		return
 	}
 
-	slog.Info(fmt.Sprintf("Successfully created a new category. [id=%s]", result.Id.String()))
+	slog.InfoContext(ctx, fmt.Sprintf("Successfully created a new category. [id=%s]", result.Id.String()))
 
 	var response models.CategoryResponseResource
 	response = response.CreateCategoryResponseFrom(result)

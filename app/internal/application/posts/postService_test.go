@@ -208,6 +208,48 @@ func (r *mockPostRepository) Search(ctx context.Context, query string, limit, of
 	return result[offset:end], total, nil
 }
 
+func (r *mockPostRepository) FindPublishedSitemapEntries(ctx context.Context) ([]posts.SitemapEntry, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var entries []posts.SitemapEntry
+	for _, p := range r.posts {
+		if p.IsDeleted || p.Status != posts.PostStatusPublished {
+			continue
+		}
+
+		entries = append(entries, posts.SitemapEntry{
+			Slug:        p.Slug,
+			PublishedAt: p.PublishedAt,
+			UpdatedAt:   p.UpdatedAt,
+		})
+	}
+
+	return entries, nil
+}
+
+func (r *mockPostRepository) CountByStatus(ctx context.Context) (posts.PostCounts, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var counts posts.PostCounts
+	for _, p := range r.posts {
+		if p.IsDeleted {
+			continue
+		}
+
+		counts.Total++
+		switch p.Status {
+		case posts.PostStatusPublished:
+			counts.Published++
+		case posts.PostStatusDraft:
+			counts.Draft++
+		}
+	}
+
+	return counts, nil
+}
+
 func (r *mockPostRepository) addPost(p posts.Post) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

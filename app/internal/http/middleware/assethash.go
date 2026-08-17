@@ -29,8 +29,8 @@ func InitAssetHashes(staticDir string) {
 		defer f.Close()
 
 		h := sha1.New()
-		if _, err := io.Copy(h, f); err != nil {
-			return err
+		if _, copyErr := io.Copy(h, f); copyErr != nil {
+			return copyErr
 		}
 
 		rel, err := filepath.Rel(staticDir, path)
@@ -61,3 +61,8 @@ func AssetURL(path string) string {
 	return path
 }
 
+// assetHash returns the precomputed hash for a /static/... URL path.
+func assetHash(urlPath string) (string, bool) {
+	h, ok := assetHashes[urlPath]
+	return h, ok
+}

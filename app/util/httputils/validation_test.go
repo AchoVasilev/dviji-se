@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -77,23 +78,56 @@ func TestValidatePayload_InvalidEmail(t *testing.T) {
 }
 
 func TestGetErrorMessage(t *testing.T) {
-	tests := []struct {
-		tag      string
-		expected string
-	}{
-		{"required", "field is required"},
-		{"email", "field must be a valid email"},
-		{"unknown", ""},
-		{"min", ""},
+	type payload struct {
+		Required string `json:"required" validate:"required"`
+		Email    string `json:"email" validate:"omitempty,email"`
+		Min      string `json:"min" validate:"omitempty,min=8"`
+		Max      string `json:"max" validate:"omitempty,max=3"`
+		OneOf    string `json:"oneOf" validate:"omitempty,oneof=draft published"`
+		UUID     string `json:"uuid" validate:"omitempty,uuid"`
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.tag, func(t *testing.T) {
-			got := getErrorMessage(tt.tag)
-			if got != tt.expected {
-				t.Errorf("getErrorMessage(%q) = %q, want %q", tt.tag, got, tt.expected)
-			}
-		})
+	got := map[string]string{}
+	for _, validationErr := range validatePayload(&payload{
+		Email: "nope",
+		Min:   "short",
+		Max:   "toolong",
+		OneOf: "bogus",
+		UUID:  "not-a-uuid",
+	}) {
+		got[validationErr.Field] = validationErr.Error
+	}
+
+	want := map[string]string{
+		"required": "field is required",
+		"email":    "field must be a valid email",
+		"min":      "field must be at least 8 characters",
+		"max":      "field must be at most 3 characters",
+		"oneOf":    "field must be one of: draft, published",
+		"uuid":     "field must be a valid UUID",
+	}
+
+	for field, expected := range want {
+		if got[field] != expected {
+			t.Errorf("message for %q = %q, want %q", field, got[field], expected)
+		}
+	}
+}
+
+// Every rule must yield a non-empty message: these are returned to API callers
+// verbatim, and an unmapped tag used to render as "".
+func TestGetErrorMessage_UnknownTagIsNotEmpty(t *testing.T) {
+	type payload struct {
+		Colour string `json:"colour" validate:"iscolor"`
+	}
+
+	errs := validatePayload(&payload{Colour: "definitely-not-a-colour"})
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 validation error, got %d", len(errs))
+	}
+
+	if errs[0].Error == "" {
+		t.Error("unknown tag produced an empty message")
 	}
 }
 
@@ -164,8 +198,31 @@ func TestProcessBody_ValidInput(t *testing.T) {
 		t.Errorf("ParsingError = %v, want nil", result.ParsingError)
 	}
 
-	// Note: The Success field logic appears inverted in the source code
-	// errors != nil means validation passed (no errors)
+	if len(result.ValidationErrors) != 0 {
+		t.Errorf("ValidationErrors = %v, want none", result.ValidationErrors)
+	}
+
+	if !result.Success {
+		t.Error("Success should be true when the payload parses and validates")
+	}
+}
+
+func TestProcessBody_ValidationFailure(t *testing.T) {
+	body := `{"email": "invalid", "password": "short", "name": ""}`
+	req := httptest.NewRequest(http.MethodPost, "/test", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	payload := &testPayload{}
+	result := ProcessBody(w, req, payload)
+
+	if len(result.ValidationErrors) == 0 {
+		t.Fatal("expected validation errors")
+	}
+
+	if result.Success {
+		t.Error("Success should be false when validation fails")
+	}
 }
 
 func TestProcessBody_InvalidJSON(t *testing.T) {
@@ -268,5 +325,26 @@ func TestValidatePayload_MinLength(t *testing.T) {
 				t.Errorf("Unexpected validation error: %v", errors)
 			}
 		})
+	}
+}
+
+// An oversized body must be reported as 413, not as a server error.
+func TestProcessRequestBody_TooLarge(t *testing.T) {
+	const limit = 64
+
+	body := `{"email":"` + strings.Repeat("a", limit*4) + `@example.com"}`
+	req := httptest.NewRequest(http.MethodPost, "/test", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	req.Body = http.MaxBytesReader(w, req.Body, limit)
+
+	payload := &testPayload{}
+	if ok := ProcessRequestBody(w, req, payload); ok {
+		t.Fatal("ProcessRequestBody() should fail for an oversized body")
+	}
+
+	if w.Code != http.StatusRequestEntityTooLarge {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusRequestEntityTooLarge)
 	}
 }

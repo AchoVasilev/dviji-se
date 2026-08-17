@@ -7,13 +7,28 @@
   - Login: 5 attempts per 15 minutes per IP
   - Register: 3 accounts per hour per IP
   - Implemented in `internal/http/middleware/ratelimit.go`
+- [x] Only trust X-Forwarded-For / X-Real-IP from configured proxies
+  - `TRUSTED_PROXIES` (CIDRs or IPs); empty means trust none
+  - Without this any client could rotate the header and bypass the limit
+- [x] Bound the rate limiter map
+  - Capped at 50k tracked clients; expired entries are reclaimed first, then
+    the oldest is evicted
 
 ### Authorization
 - [x] Create authorization middleware to check user roles/permissions
 - [x] Protect admin endpoints (RequireAuth + RequireAdmin middleware)
 - [x] Add role-based access control (RBAC) checks in handlers
-- [ ] Protect category endpoints (create, update, delete)
+- [x] Protect category endpoints (`POST /categories` was fully unauthenticated)
 - [ ] Protect user-specific endpoints
+
+### CSRF
+- [x] Compare the CSRF cookie against the submitted header
+  - Each was validated on its own, so any server-issued token matched any other
+- [x] Bind the CSRF token to the session
+  - Tokens now carry the user id when logged in, and a per browser id when not
+  - CSRFCookie re-mints whenever the identity changes, so login and logout
+    rotate the token without handler changes
+  - CheckAuth moved ahead of the CSRF middlewares so the identity is known
 
 ## High Priority
 
@@ -26,18 +41,50 @@
 - [x] Re-enable Content-Security-Policy middleware in `server.go`
 - [x] Add X-Frame-Options: DENY
 - [x] Add X-Content-Type-Options: nosniff
-- [ ] Add Strict-Transport-Security header for production (requires HTTPS)
+- [x] Add Strict-Transport-Security header for production (production only, so
+      dev does not pin localhost to HTTPS)
 
 ## Medium Priority
 
 ### Token Management
-- [ ] Implement RefreshToken endpoint in `authHandler.go`
+- [ ] Implement the refresh token flow
+  - `HandleLogin` already generates a refresh token via `AuthService.Authenticate`
+    but drops it: only the access cookie is set, so there is nothing to refresh from
+  - Set `RefreshCookieName` on login (path-scoped to the refresh endpoint)
+  - `AuthHandler.RefreshToken` is an empty stub: validate the refresh cookie with
+    `securityutil.ValidateRefreshToken`, re-issue the access token, return 401 on failure
+  - Register the route outside the `ALLOW_REGISTRATION` block in `authRoutes.go` -
+    admin login works with registration disabled, so its session must be refreshable too
 - [ ] Add token revocation/blacklist system (Redis or database)
 - [ ] Invalidate tokens on password change
 
 ### Bug Fixes
 - [x] Fix user context type assertion in `util/ctxutils/ctxutils.go:66-73`
   - Fixed: now correctly asserts `*LoggedInUser` pointer type
+- [x] Stop mutating the global logger per request
+  - `slog.SetDefault` in a middleware raced and attributed ids to the wrong
+    request; the default handler now reads the id from the record's context
+- [x] Fix printf-style `slog` calls that emitted a literal `%v`
+  - Panic stack traces in `recovery.go` were unreadable
+- [x] Set response headers before writing the body
+  - `csrfError` and `recovery.go` set them afterwards, so they were dropped
+- [x] Fix nil dereference in `CheckAuth`
+  - An invalid bearer header with no auth cookie panicked on `authCookie.Value`
+- [x] Fix inverted `ValidationResult.Success` in `util/httputils/validation.go`
+- [x] Limit request body size
+  - `LimitRequestBody` middleware: 1 MiB default, 12 MiB on the upload routes;
+    oversized bodies return 413
+- [x] Guard the empty-permissions case in `UserRepository.Create`
+- [x] Fix the blog card crash on authors with no name
+  - `[]rune(post.AuthorFirstName)[0]` panicked, and registration never collects
+    names, so any post by a self-registered author 500s the blog and search pages
+
+### Logging
+- [x] Migrate request-scoped `slog` calls to the `*Context` variants
+  - Handlers, middleware, services and the email/JSON helpers now carry the
+    request id; startup logs (main, database, config) intentionally do not
+- [ ] Thread a context through the `httputils.Send*` response helpers
+  - Their write-failure logs are the last request-scoped lines without an id
 
 ### CSRF Improvements
 - [x] Use actual request method instead of hardcoded POST for CSRF tokens
@@ -81,17 +128,18 @@
 ## High Priority
 
 ### Search
-- [ ] Add full-text search for posts
-  - Search by title, content, excerpt
-  - `GET /blog/search?q={query}`
+- [x] Search posts by title, content, excerpt
+  - `GET /blog/search?q={query}` plus `GET /blog/search/suggestions`
   - Search results page template
-  - Consider PostgreSQL full-text search or add search index
+- [x] Replace the `ILIKE '%q%'` scan with PostgreSQL full-text search
+  - Generated `tsvector` column + GIN index, weighted title > excerpt > content
+  - Measured on 205k rows: 163ms parallel seq scan -> 1.7ms index scan
+  - Note: matching is now by word (with a prefix match on the last term for
+    type-ahead) rather than arbitrary substring
 
 ### RSS Feed
-- [ ] Implement RSS feed endpoint
-  - `GET /feed.xml` or `GET /rss`
-  - Include title, description, link, pubDate for each post
-  - Only published posts, ordered by date
+- [x] Implement RSS feed endpoint
+  - `GET /feed.xml`, published posts ordered by date
 
 ## Medium Priority
 
@@ -122,7 +170,7 @@
 ## Low Priority
 
 ### SEO & Discovery
-- [ ] Add XML sitemap (`/sitemap.xml`)
+- [x] Add XML sitemap (`/sitemap.xml`) and `robots.txt`
 - [ ] Add Open Graph meta tags for social sharing
 - [ ] Add Schema.org Article markup
 
@@ -144,7 +192,7 @@
 > Detailed implementation plans are in `IMPLEMENTATION_PLAN.md`
 
 ## Milestone 1: Search & Discovery
-- [ ] Full-text search for posts (`GET /blog/search?q=`)
+- [x] Search for posts (`GET /blog/search?q=`) - full-text search, GIN indexed
 - [x] RSS feed (`GET /feed.xml`)
 - [x] XML sitemap (`GET /sitemap.xml`)
 - [x] robots.txt (`GET /robots.txt`)

@@ -1,6 +1,8 @@
 package httputils
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"reflect"
@@ -25,7 +27,15 @@ type ValidationResult struct {
 
 func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload any) bool {
 	if err := jsonutils.ParseJSON(req, payload); err != nil {
-		slog.Error("Could not parse request body. Error: %v. Stacktrace: %s", err.Error(), string(debug.Stack()))
+		// An oversized body is the caller's problem, not a server fault.
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			slog.WarnContext(req.Context(), "Request body too large", "limit", maxBytesErr.Limit, "path", req.URL.Path)
+			SendErrorResponse(writer, "request.body.too.large", http.StatusRequestEntityTooLarge)
+			return false
+		}
+
+		slog.ErrorContext(req.Context(), "Could not parse request body", "error", err, "stack", string(debug.Stack()))
 		SendInternalServerResponse(writer, req)
 		return false
 	}
@@ -47,23 +57,24 @@ func ProcessBody(writer http.ResponseWriter, req *http.Request, payload any) *Va
 		}
 	}
 
-	errors := validatePayload(payload)
+	validationErrors := validatePayload(payload)
 	return &ValidationResult{
 		ParsingError:     nil,
-		ValidationErrors: errors,
-		Success:          errors != nil,
+		ValidationErrors: validationErrors,
+		Success:          validationErrors == nil,
 	}
 }
 
-func validatePayload(payload any) []*ValidationError {
-	var validate *validator.Validate
-	validate = validator.New(validator.WithRequiredStructEnabled())
+// validate is safe for concurrent use and caches struct metadata, so it is
+// built once rather than per request.
+var validate = validator.New(validator.WithRequiredStructEnabled())
 
-	var errors []*ValidationError
+func validatePayload(payload any) []*ValidationError {
+	var result []*ValidationError
 	err := validate.Struct(payload)
 
-	validationErrors, ok := err.(validator.ValidationErrors)
-	if ok {
+	var validationErrors validator.ValidationErrors
+	if errors.As(err, &validationErrors) {
 		reflected := reflect.ValueOf(payload)
 		for _, validationErr := range validationErrors {
 			field, _ := reflected.Elem().Type().FieldByName(validationErr.StructField())
@@ -72,34 +83,47 @@ func validatePayload(payload any) []*ValidationError {
 				key = strings.ToLower(validationErr.StructField())
 			}
 
-			var currentErr *ValidationError
-			if validationErr.Tag() == "password" {
-				currentErr = &ValidationError{
-					Field: key,
-					Error: getErrorMessage(validationErr.Tag()),
-					Value: "",
-				}
-			} else {
-				currentErr = &ValidationError{
-					Field: key,
-					Error: getErrorMessage(validationErr.Tag()),
-					Value: validationErr.Value().(string),
+			value := ""
+			// Never echo back a password, and only report values that are
+			// already strings - Value() is an any and may hold anything.
+			if validationErr.Tag() != "password" {
+				if s, ok := validationErr.Value().(string); ok {
+					value = s
 				}
 			}
-			errors = append(errors, currentErr)
+
+			result = append(result, &ValidationError{
+				Field: key,
+				Error: getErrorMessage(validationErr),
+				Value: value,
+			})
 		}
 	}
 
-	return errors
+	return result
 }
 
-func getErrorMessage(tag string) string {
-	switch tag {
+// getErrorMessage renders a human readable message for a failed rule. These
+// surface in JSON responses via SendFailedValidationResponse; the HTMX form
+// path renders its own copy keyed on the field name. Unknown tags must still
+// produce something, otherwise the caller receives an empty string.
+func getErrorMessage(fieldErr validator.FieldError) string {
+	switch fieldErr.Tag() {
 	case "required":
 		return "field is required"
 	case "email":
 		return "field must be a valid email"
+	case "min":
+		return fmt.Sprintf("field must be at least %s characters", fieldErr.Param())
+	case "max":
+		return fmt.Sprintf("field must be at most %s characters", fieldErr.Param())
+	case "oneof":
+		return fmt.Sprintf("field must be one of: %s", strings.ReplaceAll(fieldErr.Param(), " ", ", "))
+	case "uuid":
+		return "field must be a valid UUID"
+	case "url":
+		return "field must be a valid URL"
+	default:
+		return fmt.Sprintf("field failed the %q rule", fieldErr.Tag())
 	}
-
-	return ""
 }

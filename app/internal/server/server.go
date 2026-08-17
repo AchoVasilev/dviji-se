@@ -18,20 +18,25 @@ type ApiServer struct {
 var api *ApiServer
 
 func Initialize(db *sql.DB) {
+	middleware.InitLogger()
+
 	router := routes.RegisterRoutes(db)
 
 	stack := middleware.CreateChain(
 		middleware.Recovery,
+		middleware.LimitRequestBody,
 		middleware.EnableCompression,
 		middleware.EnableCORS,
+		// PopulateRequestId first so every log line below carries the id, and
+		// CheckAuth before the CSRF pair because CSRF tokens are bound to the
+		// authenticated identity.
+		middleware.PopulateRequestId,
+		middleware.CheckAuth,
 		middleware.CSRFValidate,
 		middleware.CSRFCookie,
 		middleware.ContentType,
-		middleware.CheckAuth,
 		middleware.SecurityHeaders,
 		middleware.ContentSecurityPolicy,
-		middleware.PopulateRequestId,
-		middleware.AppendLogger,
 	)
 
 	port := config.Port()

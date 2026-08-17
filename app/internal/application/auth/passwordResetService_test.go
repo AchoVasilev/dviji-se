@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"server/internal/domain/user"
 	"sync"
 	"testing"
@@ -190,7 +191,7 @@ func TestPasswordResetService_RequestReset_NonExistentEmail(t *testing.T) {
 
 	// Simulate the logic: user not found should not reveal info
 	_, err := userRepo.FindByEmail(ctx, "nonexistent@example.com")
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("Expected sql.ErrNoRows for non-existent email")
 	}
 
@@ -302,7 +303,7 @@ func TestPasswordResetService_ResetPassword_ValidToken(t *testing.T) {
 
 	// Verify token is now invalid (used)
 	_, err = tokenRepo.FindValidByHash(ctx, user.HashToken(plainToken))
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		t.Error("Token should be invalid after being used")
 	}
 
@@ -327,7 +328,7 @@ func TestPasswordResetService_ResetPassword_ExpiredToken(t *testing.T) {
 
 	// Try to find the expired token
 	_, err := tokenRepo.FindValidByHash(ctx, user.HashToken(plainToken))
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		t.Error("Expired token should not be found")
 	}
 }
@@ -351,7 +352,7 @@ func TestPasswordResetService_ResetPassword_UsedToken(t *testing.T) {
 
 	// Try to find the used token
 	_, err := tokenRepo.FindValidByHash(ctx, user.HashToken(plainToken))
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		t.Error("Used token should not be found")
 	}
 }
@@ -363,7 +364,7 @@ func TestPasswordResetService_ResetPassword_InvalidToken(t *testing.T) {
 
 	// Try to find a token that doesn't exist
 	_, err := tokenRepo.FindValidByHash(ctx, "nonexistenthash")
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		t.Error("Non-existent token should return sql.ErrNoRows")
 	}
 }
