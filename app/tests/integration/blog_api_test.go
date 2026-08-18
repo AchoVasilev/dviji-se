@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,7 +12,14 @@ import (
 	"server/tests/integration/testdb"
 	"strings"
 	"testing"
+	"time"
 )
+
+// alwaysValidSessions skips the revocation lookup: these tests exercise
+// routing and authorisation, not token revocation.
+type alwaysValidSessions struct{}
+
+func (alwaysValidSessions) IsSessionValid(context.Context, string, time.Time) bool { return true }
 
 // createTestHandler creates a handler with middleware stack for testing
 func createTestHandler(tdb *testdb.TestDB) http.Handler {
@@ -19,7 +27,7 @@ func createTestHandler(tdb *testdb.TestDB) http.Handler {
 
 	// Apply middleware stack similar to server.Initialize
 	stack := middleware.CreateChain(
-		middleware.CheckAuth, // Extract user from JWT cookies
+		middleware.CheckAuth(alwaysValidSessions{}), // Extract user from JWT cookies
 	)
 
 	return stack(router)
@@ -335,8 +343,8 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 		// Register a regular user and login
 		registerPayload := map[string]string{
 			"email":          "regularuser@example.com",
-			"password":       "password123",
-			"repeatPassword": "password123",
+			"password":       "Str0ng!Passw0rd",
+			"repeatPassword": "Str0ng!Passw0rd",
 		}
 		body, _ := json.Marshal(registerPayload)
 		req, _ := http.NewRequest(http.MethodPost, server.URL+"/register", bytes.NewBuffer(body))
@@ -347,7 +355,7 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 		// Login
 		loginPayload := map[string]interface{}{
 			"email":      "regularuser@example.com",
-			"password":   "password123",
+			"password":   "Str0ng!Passw0rd",
 			"rememberMe": false,
 		}
 		body, _ = json.Marshal(loginPayload)
@@ -394,8 +402,8 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 		adminEmail := "admin@example.com"
 		registerPayload := map[string]string{
 			"email":          adminEmail,
-			"password":       "adminpass123",
-			"repeatPassword": "adminpass123",
+			"password":       "Adm1n!Passw0rd",
+			"repeatPassword": "Adm1n!Passw0rd",
 		}
 		body, _ := json.Marshal(registerPayload)
 		req, _ := http.NewRequest(http.MethodPost, server.URL+"/register", bytes.NewBuffer(body))
@@ -414,7 +422,7 @@ func TestAdminAPI_CreatePost(t *testing.T) {
 		// Login
 		loginPayload := map[string]interface{}{
 			"email":      adminEmail,
-			"password":   "adminpass123",
+			"password":   "Adm1n!Passw0rd",
 			"rememberMe": false,
 		}
 		body, _ = json.Marshal(loginPayload)
@@ -707,7 +715,7 @@ func TestBlogAPI_SearchSuggestions(t *testing.T) {
 func createTestUser(t *testing.T, tdb *testdb.TestDB) string {
 	t.Helper()
 
-	// Use bcrypt-hashed password for "password123"
+	// Use bcrypt-hashed password for "Str0ng!Passw0rd"
 	hashedPassword := "$2a$10$N9qo8uLOickgx2ZMRZoMy.MQDaLKCKyQXqxQq5qXJV4xJmQXXqMCG"
 	return tdb.SeedTestUser(t, "testuser@example.com", hashedPassword)
 }

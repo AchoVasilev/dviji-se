@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"server/internal/application/users"
 	"server/internal/config"
+	"server/internal/domain/user"
 	"server/internal/http/middleware"
 	"server/internal/http/routes"
 )
@@ -22,6 +24,10 @@ func Initialize(db *sql.DB) {
 
 	router := routes.RegisterRoutes(db)
 
+	// CheckAuth needs to know whether a token has been revoked, which is a
+	// database question, so the validator is wired in here.
+	sessions := users.NewUserService(user.NewUserRepository(db))
+
 	stack := middleware.CreateChain(
 		middleware.Recovery,
 		middleware.LimitRequestBody,
@@ -31,7 +37,7 @@ func Initialize(db *sql.DB) {
 		// CheckAuth before the CSRF pair because CSRF tokens are bound to the
 		// authenticated identity.
 		middleware.PopulateRequestId,
-		middleware.CheckAuth,
+		middleware.CheckAuth(sessions),
 		middleware.CSRFValidate,
 		middleware.CSRFCookie,
 		middleware.ContentType,

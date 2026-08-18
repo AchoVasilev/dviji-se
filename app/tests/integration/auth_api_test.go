@@ -44,8 +44,8 @@ func TestAuthAPI_Register(t *testing.T) {
 	t.Run("successful registration", func(t *testing.T) {
 		payload := map[string]string{
 			"email":          "newuser@example.com",
-			"password":       "password123",
-			"repeatPassword": "password123",
+			"password":       "Str0ng!Passw0rd",
+			"repeatPassword": "Str0ng!Passw0rd",
 		}
 		body, _ := json.Marshal(payload)
 
@@ -68,8 +68,8 @@ func TestAuthAPI_Register(t *testing.T) {
 		// First registration
 		payload := map[string]string{
 			"email":          "duplicate@example.com",
-			"password":       "password123",
-			"repeatPassword": "password123",
+			"password":       "Str0ng!Passw0rd",
+			"repeatPassword": "Str0ng!Passw0rd",
 		}
 		body, _ := json.Marshal(payload)
 
@@ -95,8 +95,8 @@ func TestAuthAPI_Register(t *testing.T) {
 	t.Run("invalid email returns validation error", func(t *testing.T) {
 		payload := map[string]string{
 			"email":          "not-an-email",
-			"password":       "password123",
-			"repeatPassword": "password123",
+			"password":       "Str0ng!Passw0rd",
+			"repeatPassword": "Str0ng!Passw0rd",
 		}
 		body, _ := json.Marshal(payload)
 
@@ -156,8 +156,8 @@ func TestAuthAPI_Login(t *testing.T) {
 	// Register a user first
 	registerPayload := map[string]string{
 		"email":          "logintest@example.com",
-		"password":       "password123",
-		"repeatPassword": "password123",
+		"password":       "Str0ng!Passw0rd",
+		"repeatPassword": "Str0ng!Passw0rd",
 	}
 	body, _ := json.Marshal(registerPayload)
 	req, _ := http.NewRequest(http.MethodPost, server.URL+"/register", bytes.NewBuffer(body))
@@ -168,7 +168,7 @@ func TestAuthAPI_Login(t *testing.T) {
 	t.Run("successful login", func(t *testing.T) {
 		payload := map[string]interface{}{
 			"email":      "logintest@example.com",
-			"password":   "password123",
+			"password":   "Str0ng!Passw0rd",
 			"rememberMe": false,
 		}
 		body, _ := json.Marshal(payload)
@@ -203,7 +203,7 @@ func TestAuthAPI_Login(t *testing.T) {
 	t.Run("wrong password returns not found", func(t *testing.T) {
 		payload := map[string]interface{}{
 			"email":      "logintest@example.com",
-			"password":   "wrongpassword",
+			"password":   "Wr0ng!Passw0rd",
 			"rememberMe": false,
 		}
 		body, _ := json.Marshal(payload)
@@ -226,7 +226,7 @@ func TestAuthAPI_Login(t *testing.T) {
 	t.Run("non-existent email returns not found", func(t *testing.T) {
 		payload := map[string]interface{}{
 			"email":      "nonexistent@example.com",
-			"password":   "password123",
+			"password":   "Str0ng!Passw0rd",
 			"rememberMe": false,
 		}
 		body, _ := json.Marshal(payload)
@@ -264,8 +264,8 @@ func TestAuthAPI_PasswordReset(t *testing.T) {
 	// Register a user first
 	registerPayload := map[string]string{
 		"email":          "resettest@example.com",
-		"password":       "password123",
-		"repeatPassword": "password123",
+		"password":       "Str0ng!Passw0rd",
+		"repeatPassword": "Str0ng!Passw0rd",
 	}
 	body, _ := json.Marshal(registerPayload)
 	req, _ := http.NewRequest(http.MethodPost, server.URL+"/register", bytes.NewBuffer(body))
@@ -318,8 +318,8 @@ func TestAuthAPI_PasswordReset(t *testing.T) {
 	t.Run("reset password with invalid token returns bad request", func(t *testing.T) {
 		payload := map[string]string{
 			"token":          "invalid-token-12345678901234567890123456789012345678901234567890123456",
-			"password":       "newpassword123",
-			"repeatPassword": "newpassword123",
+			"password":       "N3w!Str0ngPass",
+			"repeatPassword": "N3w!Str0ngPass",
 		}
 		body, _ := json.Marshal(payload)
 

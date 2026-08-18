@@ -28,10 +28,10 @@ templ InvalidEmail(email string) {
 
 templ InvalidPassword() {
 <label for="password" class="input-field-label error" id="password-label" hx-swap-oob="true">Парола</label>
-<input type="password" name="password" id="password" placeholder="••••••••" minlength="6"
+<input type="password" name="password" id="password" placeholder="••••••••" minlength="12"
 	class="input-field input-error" required
-	oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
-	onblur="addErrorToElement('password', 'Паролата трябва да е поне 6 символа')"
+	oninvalid="addErrorToElement('password', 'Паролата трябва да е поне 12 символа и да съдържа главна и малка буква, цифра и символ')"
+	onblur="addErrorToElement('password', 'Паролата трябва да е поне 12 символа и да съдържа главна и малка буква, цифра и символ')"
 	oninput="checkElementValidity('password')" hx-swap-oob="true" />
 @InvalidMessage("Невалидна парола", "error-password")
 }

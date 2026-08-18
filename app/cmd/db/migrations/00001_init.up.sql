@@ -9,7 +9,12 @@ CREATE TABLE users
   created_at TIMESTAMPTZ NOT NULL DEFAULT(now() at time zone 'utc'),
   updated_at TIMESTAMPTZ,
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
-  
+
+  -- Any access token issued at or before this instant is rejected. Set on a
+  -- password change so tokens already in circulation stop working, which is
+  -- what makes revocation possible without storing every issued token.
+  tokens_valid_after TIMESTAMPTZ,
+
   CONSTRAINT pk_users_id PRIMARY KEY(id)
 );
 

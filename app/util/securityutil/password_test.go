@@ -130,3 +130,39 @@ func TestHashPassword_BcryptCost(t *testing.T) {
 		t.Errorf("HashPassword() cost mismatch, got prefix %s, want %s", hash[:7], expectedPrefix)
 	}
 }
+
+func TestIsPasswordStrong(t *testing.T) {
+	tests := []struct {
+		name     string
+		password string
+		want     bool
+	}{
+		{"meets every rule", "Str0ng!Passw0rd", true},
+		{"space counts as a symbol", "Str0ng Passw0rd", true},
+		{"cyrillic with all classes", "Парола123!дълга", true},
+		{"too short", "Sh0rt!Aa", false},
+		{"exactly one under the limit", "Str0ng!Pas1", false},
+		{"no upper case", "str0ng!passw0rd", false},
+		{"no lower case", "STR0NG!PASSW0RD", false},
+		{"no digit", "Strong!Password", false},
+		{"no symbol", "Str0ngPassw0rdAb", false},
+		{"empty", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsPasswordStrong(tt.password); got != tt.want {
+				t.Errorf("IsPasswordStrong(%q) = %v, want %v", tt.password, got, tt.want)
+			}
+		})
+	}
+}
+
+// The limit counts characters, not bytes: multibyte passwords must not be
+// rejected for being "short" when they are long enough.
+func TestIsPasswordStrong_CountsRunesNotBytes(t *testing.T) {
+	// 11 runes, but well over 12 bytes in UTF-8.
+	if IsPasswordStrong("Парола123!ъ") {
+		t.Error("an 11 character password should be rejected regardless of byte length")
+	}
+}

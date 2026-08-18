@@ -19,4 +19,7 @@ type User struct {
 	CreatedAt   time.Time
 	UpdatedAt   sql.NullTime
 	IsDeleted   bool
+
+	// TokensValidAfter invalidates every access token issued at or before it.
+	TokensValidAfter sql.NullTime
 }

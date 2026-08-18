@@ -122,14 +122,14 @@ func (h *AdminHandler) GetPostForm(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Invalid post ID")
+		httputils.SendBadRequestResponse(ctx, w, "Invalid post ID")
 		return
 	}
 
 	post, err := h.postService.GetById(ctx, id)
 	if err != nil {
 		slog.ErrorContext(ctx, "Error fetching post", "error", err, "id", id)
-		httputils.SendNotFoundResponse(w, "Post not found")
+		httputils.SendNotFoundResponse(ctx, w, "Post not found")
 		return
 	}
 
@@ -147,19 +147,19 @@ func (h *AdminHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	user, err := ctxutils.GetUser(r.Context())
 	if err != nil {
-		httputils.SendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		httputils.SendErrorResponse(ctx, w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	creatorId, err := uuid.Parse(user.Id)
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Invalid user ID")
+		httputils.SendBadRequestResponse(ctx, w, "Invalid user ID")
 		return
 	}
 
 	categoryId, err := uuid.Parse(input.CategoryId)
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Invalid category ID")
+		httputils.SendBadRequestResponse(ctx, w, "Invalid category ID")
 		return
 	}
 
@@ -187,7 +187,7 @@ func (h *AdminHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.InfoContext(ctx, fmt.Sprintf("Successfully created post [id=%s]", post.Id.String()))
-	httputils.SendSuccessResponse(w, "Post created successfully", map[string]string{"id": post.Id.String()}, http.StatusCreated)
+	httputils.SendSuccessResponse(ctx, w, "Post created successfully", map[string]string{"id": post.Id.String()}, http.StatusCreated)
 }
 
 func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +197,7 @@ func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Invalid post ID")
+		httputils.SendBadRequestResponse(ctx, w, "Invalid post ID")
 		return
 	}
 
@@ -208,13 +208,13 @@ func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	user, err := ctxutils.GetUser(r.Context())
 	if err != nil {
-		httputils.SendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		httputils.SendErrorResponse(ctx, w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	categoryId, err := uuid.Parse(input.CategoryId)
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Invalid category ID")
+		httputils.SendBadRequestResponse(ctx, w, "Invalid category ID")
 		return
 	}
 
@@ -237,7 +237,7 @@ func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.InfoContext(ctx, fmt.Sprintf("Successfully updated post [id=%s]", post.Id.String()))
-	httputils.SendSuccessResponse(w, "Post updated successfully", map[string]string{"id": post.Id.String()}, http.StatusOK)
+	httputils.SendSuccessResponse(ctx, w, "Post updated successfully", map[string]string{"id": post.Id.String()}, http.StatusOK)
 }
 
 func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
@@ -247,13 +247,13 @@ func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Invalid post ID")
+		httputils.SendBadRequestResponse(ctx, w, "Invalid post ID")
 		return
 	}
 
 	user, err := ctxutils.GetUser(r.Context())
 	if err != nil {
-		httputils.SendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		httputils.SendErrorResponse(ctx, w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -265,7 +265,7 @@ func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.InfoContext(ctx, fmt.Sprintf("Successfully deleted post [id=%s]", id.String()))
-	httputils.SendSuccessResponse(w, "Post deleted successfully", nil, http.StatusOK)
+	httputils.SendSuccessResponse(ctx, w, "Post deleted successfully", nil, http.StatusOK)
 }
 
 func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
@@ -274,19 +274,19 @@ func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Failed to parse form")
+		httputils.SendBadRequestResponse(ctx, w, "Failed to parse form")
 		return
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "No file uploaded")
+		httputils.SendBadRequestResponse(ctx, w, "No file uploaded")
 		return
 	}
 	defer file.Close()
 
 	if h.cloudinaryService == nil {
-		httputils.SendErrorResponse(w, "Image upload not configured", http.StatusServiceUnavailable)
+		httputils.SendErrorResponse(ctx, w, "Image upload not configured", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -297,7 +297,7 @@ func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputils.SendSuccessResponse(w, "Image uploaded successfully", map[string]string{
+	httputils.SendSuccessResponse(ctx, w, "Image uploaded successfully", map[string]string{
 		"location": result.URL,
 	}, http.StatusOK)
 }
@@ -308,25 +308,25 @@ func (h *AdminHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "Failed to parse form")
+		httputils.SendBadRequestResponse(ctx, w, "Failed to parse form")
 		return
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		httputils.SendBadRequestResponse(w, "No file uploaded")
+		httputils.SendBadRequestResponse(ctx, w, "No file uploaded")
 		return
 	}
 	defer file.Close()
 
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	if ext != ".gpx" {
-		httputils.SendBadRequestResponse(w, "Only .gpx files are allowed")
+		httputils.SendBadRequestResponse(ctx, w, "Only .gpx files are allowed")
 		return
 	}
 
 	if h.cloudinaryService == nil {
-		httputils.SendErrorResponse(w, "File upload not configured", http.StatusServiceUnavailable)
+		httputils.SendErrorResponse(ctx, w, "File upload not configured", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -337,7 +337,7 @@ func (h *AdminHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputils.SendSuccessResponse(w, "File uploaded successfully", map[string]string{
+	httputils.SendSuccessResponse(ctx, w, "File uploaded successfully", map[string]string{
 		"location": result.URL,
 	}, http.StatusOK)
 }

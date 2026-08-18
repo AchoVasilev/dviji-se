@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"server/util/ctxutils"
@@ -26,84 +27,84 @@ type JSONErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func SendApiResponse(writer http.ResponseWriter, req *http.Request, status int, body any, message string) {
+func SendApiResponse(ctx context.Context, writer http.ResponseWriter, req *http.Request, status int, body any, message string) {
 	switch status {
 	case http.StatusOK:
-		SendOkWithBody(writer, body)
+		SendOkWithBody(ctx, writer, body)
 	case http.StatusCreated:
-		SendCreatedAt(writer, message)
+		SendCreatedAt(ctx, writer, message)
 	case http.StatusNotFound:
-		SendNotFoundResponse(writer, message)
+		SendNotFoundResponse(ctx, writer, message)
 	case http.StatusInternalServerError:
 		SendInternalServerResponse(writer, req)
 	case http.StatusConflict:
-		SendConflictResponse(writer, message)
+		SendConflictResponse(ctx, writer, message)
 	case http.StatusBadRequest:
-		SendBadRequestResponse(writer, message)
+		SendBadRequestResponse(ctx, writer, message)
 	default:
-		SendOkWithBody(writer, nil)
+		SendOkWithBody(ctx, writer, nil)
 	}
 }
 
-func SendCreatedAt(writer http.ResponseWriter, uri string) {
+func SendCreatedAt(ctx context.Context, writer http.ResponseWriter, uri string) {
 	err := jsonutils.WriteCreatedAt(writer, uri, nil)
 	if err != nil {
-		slog.Warn("Failed to write response body", "error", err)
+		slog.WarnContext(ctx, "Failed to write response body", "error", err)
 	}
 }
 
-func SendOkWithBody(writer http.ResponseWriter, data interface{}) {
+func SendOkWithBody(ctx context.Context, writer http.ResponseWriter, data interface{}) {
 	err := jsonutils.WriteJSON(writer, http.StatusOK, data)
 	if err != nil {
-		slog.Warn("Failed to write response body", "error", err)
+		slog.WarnContext(ctx, "Failed to write response body", "error", err)
 	}
 }
 
-func SendSuccessResponse(writer http.ResponseWriter, message string, data interface{}, statusCode int) {
+func SendSuccessResponse(ctx context.Context, writer http.ResponseWriter, message string, data interface{}, statusCode int) {
 	err := jsonutils.WriteJSON(writer, statusCode, JSONSuccessResponse{
 		Success: true,
 		Message: message,
 		Data:    data,
 	})
 	if err != nil {
-		slog.Warn("Failed to write response body", "error", err)
+		slog.WarnContext(ctx, "Failed to write response body", "error", err)
 	}
 }
 
-func SendFailedValidationResponse(writer http.ResponseWriter, errors []*ValidationError) {
+func SendFailedValidationResponse(ctx context.Context, writer http.ResponseWriter, errors []*ValidationError) {
 	err := jsonutils.WriteJSON(writer, http.StatusUnprocessableEntity, JSONFailedValidationResponse{
 		Success: false,
 		Errors:  errors,
 	})
 	if err != nil {
-		slog.Warn("Failed to write response body", "error", err)
+		slog.WarnContext(ctx, "Failed to write response body", "error", err)
 	}
 }
 
-func SendErrorResponse(writer http.ResponseWriter, message string, statusCode int) {
+func SendErrorResponse(ctx context.Context, writer http.ResponseWriter, message string, statusCode int) {
 	err := jsonutils.WriteJSON(writer, statusCode, JSONErrorResponse{
 		Success: false,
 		Message: message,
 	})
 	if err != nil {
-		slog.Warn("Failed to write response body", "error", err)
+		slog.WarnContext(ctx, "Failed to write response body", "error", err)
 	}
 }
 
-func SendNotFoundResponse(writer http.ResponseWriter, message string) {
-	SendErrorResponse(writer, message, http.StatusNotFound)
+func SendNotFoundResponse(ctx context.Context, writer http.ResponseWriter, message string) {
+	SendErrorResponse(ctx, writer, message, http.StatusNotFound)
 }
 
-func SendBadRequestResponse(writer http.ResponseWriter, message string) {
-	SendErrorResponse(writer, message, http.StatusBadRequest)
+func SendBadRequestResponse(ctx context.Context, writer http.ResponseWriter, message string) {
+	SendErrorResponse(ctx, writer, message, http.StatusBadRequest)
 }
 
 func SendInternalServerResponse(writer http.ResponseWriter, req *http.Request) {
 	reqId := ctxutils.RequestIdFromContext(req.Context())
 	writer.Header().Set("X-REQUEST-ID", reqId)
-	SendErrorResponse(writer, "internal.server.error", http.StatusInternalServerError)
+	SendErrorResponse(req.Context(), writer, "internal.server.error", http.StatusInternalServerError)
 }
 
-func SendConflictResponse(writer http.ResponseWriter, message string) {
-	SendErrorResponse(writer, message, http.StatusConflict)
+func SendConflictResponse(ctx context.Context, writer http.ResponseWriter, message string) {
+	SendErrorResponse(ctx, writer, message, http.StatusConflict)
 }

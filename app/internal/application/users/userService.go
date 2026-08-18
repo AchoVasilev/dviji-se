@@ -2,6 +2,8 @@ package users
 
 import (
 	"context"
+	"database/sql"
+	"log/slog"
 	"server/internal/domain/user"
 	"server/internal/http/handlers/models"
 	"server/util/securityutil"
@@ -13,7 +15,10 @@ import (
 type userRepository interface {
 	Create(ctx context.Context, u user.User) error
 	FindByEmail(ctx context.Context, email string) (user.User, error)
+	FindById(ctx context.Context, userId string) (user.User, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
+	TokensValidAfter(ctx context.Context, userId string) (sql.NullTime, error)
+	RevokeTokensIssuedBefore(ctx context.Context, userId string, cutoff time.Time) error
 }
 
 type UserService struct {
@@ -32,6 +37,36 @@ func (userService *UserService) GetUserByEmail(ctx context.Context, email string
 
 func (userService *UserService) ExistsByEmail(ctx context.Context, email string) (bool, error) {
 	return userService.userRepository.ExistsByEmail(ctx, email)
+}
+
+func (userService *UserService) GetUserById(ctx context.Context, userId string) (user.User, error) {
+	return userService.userRepository.FindById(ctx, userId)
+}
+
+// IsSessionValid reports whether a token minted at issuedAt still authenticates
+// its user. A token issued at or before the user's revocation cutoff - set on a
+// password change - is rejected even though its signature and expiry are fine.
+//
+// Errors fail closed: if the cutoff cannot be read, the session is refused.
+func (userService *UserService) IsSessionValid(ctx context.Context, userId string, issuedAt time.Time) bool {
+	validAfter, err := userService.userRepository.TokensValidAfter(ctx, userId)
+	if err != nil {
+		slog.ErrorContext(ctx, "Could not read the token revocation cutoff", "error", err, "userId", userId)
+		return false
+	}
+
+	if !validAfter.Valid {
+		return true
+	}
+
+	// Second resolution on iat means a token minted in the same second as the
+	// revocation is treated as revoked, which errs towards refusing access.
+	return issuedAt.After(validAfter.Time)
+}
+
+// RevokeSessions invalidates every access token issued for the user so far.
+func (userService *UserService) RevokeSessions(ctx context.Context, userId string) error {
+	return userService.userRepository.RevokeTokensIssuedBefore(ctx, userId, time.Now().UTC())
 }
 
 func (userService *UserService) RegisterUser(ctx context.Context, input *models.CreateUserResource) (uuid.UUID, error) {

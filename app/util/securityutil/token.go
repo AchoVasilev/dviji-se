@@ -24,6 +24,10 @@ type LoggedInUser struct {
 	Username    string
 	Roles       []user.Role
 	Permissions []user.Permission
+
+	// IssuedAt is the token's iat claim, needed to reject tokens minted before
+	// a revocation point such as a password change.
+	IssuedAt time.Time
 }
 
 func GenerateAccessToken(user user.User, rememberMe bool) (string, time.Time) {
@@ -95,11 +99,19 @@ func UserFromToken(tokenStr string) (*LoggedInUser, error) {
 		}
 	}
 
+	// iat is set on every token we mint; treat a missing one as issued at the
+	// zero time so it sorts before any revocation point.
+	var issuedAt time.Time
+	if iat, ok := claims["iat"].(float64); ok {
+		issuedAt = time.Unix(int64(iat), 0).UTC()
+	}
+
 	return &LoggedInUser{
 		Id:          id,
 		Username:    username,
 		Roles:       roles,
 		Permissions: permissions,
+		IssuedAt:    issuedAt,
 	}, nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -124,11 +125,11 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User
 	var updatedAt sql.NullTime
 
 	err := repo.db.QueryRowContext(ctx, `
-		SELECT id, email, first_name, last_name, password, status, created_at, updated_at, is_deleted
+		SELECT id, email, first_name, last_name, password, status, created_at, updated_at, is_deleted, tokens_valid_after
 		FROM users
 		WHERE email = $1 AND is_deleted = FALSE`, email).Scan(
 		&user.Id, &user.Email, &firstName, &lastName, &user.Password,
-		&user.Status, &user.CreatedAt, &updatedAt, &user.IsDeleted,
+		&user.Status, &user.CreatedAt, &updatedAt, &user.IsDeleted, &user.TokensValidAfter,
 	)
 	if err != nil {
 		return User{}, err
@@ -138,14 +139,23 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User
 	user.LastName = lastName
 	user.UpdatedAt = updatedAt
 
-	// 2. Get roles
+	if err := repo.loadRolesAndPermissions(ctx, &user); err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+}
+
+// loadRolesAndPermissions fills in the user's roles and permissions. Shared so
+// that every path which builds an access token sees the same authority.
+func (repo *UserRepository) loadRolesAndPermissions(ctx context.Context, user *User) error {
 	roleRows, err := repo.db.QueryContext(ctx, `
 		SELECT r.id, r.name, r.created_at, r.updated_at, r.updated_by, r.is_deleted
 		FROM roles r
 		JOIN users_roles ur ON r.id = ur.role_id
 		WHERE ur.user_id = $1 AND r.is_deleted = FALSE`, user.Id)
 	if err != nil {
-		return User{}, err
+		return err
 	}
 	defer roleRows.Close()
 
@@ -153,23 +163,22 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User
 	for roleRows.Next() {
 		var role Role
 		if scanErr := roleRows.Scan(&role.Id, &role.Name, &role.CreatedAt, &role.UpdatedAt, &role.UpdatedBy, &role.IsDeleted); scanErr != nil {
-			return User{}, scanErr
+			return scanErr
 		}
 		user.Roles = append(user.Roles, role)
 	}
 
 	if rowsErr := roleRows.Err(); rowsErr != nil {
-		return User{}, rowsErr
+		return rowsErr
 	}
 
-	// 3. Get permissions
 	permRows, err := repo.db.QueryContext(ctx, `
 		SELECT p.id, p.name, p.created_at, p.updated_at, p.updated_by, p.is_deleted
 		FROM permissions p
 		JOIN users_permissions up ON p.id = up.permission_id
 		WHERE up.user_id = $1 AND p.is_deleted = FALSE`, user.Id)
 	if err != nil {
-		return User{}, err
+		return err
 	}
 	defer permRows.Close()
 
@@ -177,16 +186,12 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (User
 	for permRows.Next() {
 		var perm Permission
 		if scanErr := permRows.Scan(&perm.Id, &perm.Name, &perm.CreatedAt, &perm.UpdatedAt, &perm.UpdatedBy, &perm.IsDeleted); scanErr != nil {
-			return User{}, scanErr
+			return scanErr
 		}
 		user.Permissions = append(user.Permissions, perm)
 	}
 
-	if rowsErr := permRows.Err(); rowsErr != nil {
-		return User{}, rowsErr
-	}
-
-	return user, nil
+	return permRows.Err()
 }
 
 func (repo *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
@@ -197,23 +202,32 @@ func (repo *UserRepository) ExistsByEmail(ctx context.Context, email string) (bo
 	return exists, err
 }
 
+// UpdatePassword changes the password and revokes tokens issued before now, so
+// a password change ends sessions that were already open.
 func (repo *UserRepository) UpdatePassword(ctx context.Context, userId string, hashedPassword string) error {
-	query := `UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2 AND is_deleted = FALSE`
+	query := `
+		UPDATE users
+		SET password = $1, updated_at = NOW(), tokens_valid_after = NOW()
+		WHERE id = $2 AND is_deleted = FALSE`
 	_, err := repo.db.ExecContext(ctx, query, hashedPassword, userId)
+
 	return err
 }
 
+// FindById loads the user together with roles and permissions. Refreshing a
+// session rebuilds the access token from this, so omitting roles here would
+// silently strip an admin of their role on the next refresh.
 func (repo *UserRepository) FindById(ctx context.Context, userId string) (User, error) {
 	var user User
 	var firstName, lastName sql.NullString
 	var updatedAt sql.NullTime
 
 	err := repo.db.QueryRowContext(ctx, `
-		SELECT id, email, first_name, last_name, password, status, created_at, updated_at, is_deleted
+		SELECT id, email, first_name, last_name, password, status, created_at, updated_at, is_deleted, tokens_valid_after
 		FROM users
 		WHERE id = $1 AND is_deleted = FALSE`, userId).Scan(
 		&user.Id, &user.Email, &firstName, &lastName, &user.Password,
-		&user.Status, &user.CreatedAt, &updatedAt, &user.IsDeleted,
+		&user.Status, &user.CreatedAt, &updatedAt, &user.IsDeleted, &user.TokensValidAfter,
 	)
 	if err != nil {
 		return User{}, err
@@ -223,5 +237,27 @@ func (repo *UserRepository) FindById(ctx context.Context, userId string) (User, 
 	user.LastName = lastName
 	user.UpdatedAt = updatedAt
 
+	if err := repo.loadRolesAndPermissions(ctx, &user); err != nil {
+		return User{}, err
+	}
+
 	return user, nil
+}
+
+// RevokeTokensIssuedBefore stops every access token minted at or before the
+// given instant from authenticating.
+func (repo *UserRepository) RevokeTokensIssuedBefore(ctx context.Context, userId string, cutoff time.Time) error {
+	query := `UPDATE users SET tokens_valid_after = $1, updated_at = NOW() WHERE id = $2`
+	_, err := repo.db.ExecContext(ctx, query, cutoff.UTC(), userId)
+
+	return err
+}
+
+// TokensValidAfter returns the revocation cutoff for a user, if any.
+func (repo *UserRepository) TokensValidAfter(ctx context.Context, userId string) (sql.NullTime, error) {
+	var validAfter sql.NullTime
+	err := repo.db.QueryRowContext(ctx,
+		`SELECT tokens_valid_after FROM users WHERE id = $1 AND is_deleted = FALSE`, userId).Scan(&validAfter)
+
+	return validAfter, err
 }

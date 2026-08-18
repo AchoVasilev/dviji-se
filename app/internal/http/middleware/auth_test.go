@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"server/util/httputils"
 	"server/util/securityutil"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,8 +23,25 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+// allowAllSessions accepts every session, isolating these tests from the
+// revocation lookup.
+type allowAllSessions struct{}
+
+func (allowAllSessions) IsSessionValid(context.Context, string, time.Time) bool { return true }
+
+// denyAllSessions models a user whose tokens have all been revoked.
+type denyAllSessions struct{}
+
+func (denyAllSessions) IsSessionValid(context.Context, string, time.Time) bool { return false }
+
 // checkAuthResult reports whether CheckAuth attached a user to the context.
 func checkAuthResult(t *testing.T, req *http.Request) *securityutil.LoggedInUser {
+	t.Helper()
+
+	return checkAuthResultWith(t, req, allowAllSessions{})
+}
+
+func checkAuthResultWith(t *testing.T, req *http.Request, sessions SessionValidator) *securityutil.LoggedInUser {
 	t.Helper()
 
 	var attached *securityutil.LoggedInUser
@@ -35,7 +54,7 @@ func checkAuthResult(t *testing.T, req *http.Request) *securityutil.LoggedInUser
 	})
 
 	w := httptest.NewRecorder()
-	CheckAuth(next).ServeHTTP(w, req)
+	CheckAuth(sessions)(next).ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("next handler was not reached, status = %d", w.Code)
@@ -123,5 +142,16 @@ func TestCheckAuth_EmptyCookieValue(t *testing.T) {
 
 	if attached := checkAuthResult(t, req); attached != nil {
 		t.Errorf("expected no user to be attached, got %+v", attached)
+	}
+}
+
+// A revoked token must not authenticate, even though its signature and expiry
+// are still valid.
+func TestCheckAuth_RejectsRevokedToken(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+validAccessToken(t))
+
+	if attached := checkAuthResultWith(t, req, denyAllSessions{}); attached != nil {
+		t.Errorf("expected a revoked token to be rejected, got %+v", attached)
 	}
 }

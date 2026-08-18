@@ -10,6 +10,7 @@ import (
 	"server/internal/http/handlers"
 	"server/internal/http/middleware"
 	"server/internal/infrastructure/email"
+	"server/util/httputils"
 )
 
 func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
@@ -33,6 +34,10 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 	// Logout (always available)
 	mux.HandleFunc("POST /logout", authHandler.HandleLogout)
 
+	// Refresh is always available: admin login works with registration
+	// disabled, so those sessions must be refreshable too.
+	mux.Handle("POST "+httputils.RefreshTokenPath, authLimiter.Middleware(http.HandlerFunc(authHandler.RefreshToken)))
+
 	// Public auth routes (only when registration is enabled)
 	if config.AllowRegistration() {
 		mux.HandleFunc("GET /login", authHandler.GetLogin)
@@ -43,6 +48,5 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 		mux.Handle("POST /forgot-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleForgotPassword)))
 		mux.HandleFunc("GET /reset-password", authHandler.GetResetPassword)
 		mux.Handle("POST /reset-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleResetPassword)))
-		mux.Handle("POST /refresh-token", authLimiter.Middleware(http.HandlerFunc(authHandler.RefreshToken)))
 	}
 }

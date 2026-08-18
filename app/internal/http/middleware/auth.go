@@ -1,30 +1,49 @@
 package middleware
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
 	"server/util/ctxutils"
 	"server/util/httputils"
 	"server/util/securityutil"
 	"strings"
+	"time"
 )
+
+// SessionValidator reports whether a token that is otherwise valid has been
+// revoked - for instance by a password change.
+type SessionValidator interface {
+	IsSessionValid(ctx context.Context, userId string, issuedAt time.Time) bool
+}
 
 // CheckAuth attaches the logged in user to the context when a valid token is
 // present. A missing or invalid token is not an error here: the request
 // continues unauthenticated and RequireAuth decides whether that is allowed.
-func CheckAuth(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for _, token := range authTokens(r) {
-			loggedInUser, err := securityutil.UserFromToken(token)
-			if err != nil {
-				continue
+//
+// The validator is consulted only when a well formed token is found, so
+// anonymous traffic costs no lookup.
+func CheckAuth(sessions SessionValidator) Middleware {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, token := range authTokens(r) {
+				loggedInUser, err := securityutil.UserFromToken(token)
+				if err != nil {
+					continue
+				}
+
+				if !sessions.IsSessionValid(r.Context(), loggedInUser.Id, loggedInUser.IssuedAt) {
+					slog.InfoContext(r.Context(), "Rejected a revoked token", "userId", loggedInUser.Id)
+					continue
+				}
+
+				h.ServeHTTP(w, r.WithContext(ctxutils.WithLoggedUser(r.Context(), loggedInUser)))
+				return
 			}
 
-			h.ServeHTTP(w, r.WithContext(ctxutils.WithLoggedUser(r.Context(), loggedInUser)))
-			return
-		}
-
-		h.ServeHTTP(w, r)
-	})
+			h.ServeHTTP(w, r)
+		})
+	}
 }
 
 // authTokens returns the candidate tokens in precedence order: the bearer

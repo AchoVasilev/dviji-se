@@ -78,8 +78,8 @@ func (s *PasswordResetService) RequestReset(ctx context.Context, emailAddr strin
 
 // ResetPassword resets the password using the token
 func (s *PasswordResetService) ResetPassword(ctx context.Context, plainToken, newPassword string) error {
-	// Validate password strength
-	if len(newPassword) < 8 {
+	// Validate password strength against the shared policy
+	if !securityutil.IsPasswordStrong(newPassword) {
 		return ErrPasswordWeak
 	}
 

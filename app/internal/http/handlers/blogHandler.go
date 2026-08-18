@@ -75,19 +75,19 @@ func (h *BlogHandler) GetBlogPost(w http.ResponseWriter, r *http.Request) {
 
 	slug := r.PathValue("slug")
 	if slug == "" {
-		httputils.SendNotFoundResponse(w, "Post not found")
+		httputils.SendNotFoundResponse(ctx, w, "Post not found")
 		return
 	}
 
 	post, err := h.postService.GetBySlug(ctx, slug)
 	if err != nil {
 		slog.ErrorContext(ctx, "Error fetching post by slug", "error", err, "slug", slug)
-		httputils.SendNotFoundResponse(w, "Post not found")
+		httputils.SendNotFoundResponse(ctx, w, "Post not found")
 		return
 	}
 
 	if post.Status != posts.PostStatusPublished {
-		httputils.SendNotFoundResponse(w, "Post not found")
+		httputils.SendNotFoundResponse(ctx, w, "Post not found")
 		return
 	}
 
@@ -109,7 +109,7 @@ func (h *BlogHandler) GetBlogByCategory(w http.ResponseWriter, r *http.Request) 
 
 	categorySlug := r.PathValue("slug")
 	if categorySlug == "" {
-		httputils.SendNotFoundResponse(w, "Category not found")
+		httputils.SendNotFoundResponse(ctx, w, "Category not found")
 		return
 	}
 

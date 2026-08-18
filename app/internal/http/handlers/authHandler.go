@@ -13,8 +13,12 @@ import (
 	"server/util"
 	"server/util/ctxutils"
 	"server/util/httputils"
+	"server/util/securityutil"
 	"server/web/templates"
 	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthHandler struct {
@@ -139,6 +143,7 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 	}
 
 	httputils.SetAuthCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, input.RememberMe, writer)
+	httputils.SetRefreshCookie(tokenResult.RefreshToken, tokenResult.RefreshTokenTime, writer)
 
 	redirect := "/"
 	if strings.HasPrefix(req.URL.Path, "/admin") {
@@ -149,15 +154,88 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 }
 
 func (handler *AuthHandler) HandleLogout(writer http.ResponseWriter, req *http.Request) {
-	httputils.ClearCookie(httputils.AuthCookieName, writer)
-	httputils.ClearCookie(httputils.RefreshCookieName, writer)
+	handler.clearSession(writer)
 	httputils.ClearCookie(httputils.XSRFCookieName, writer)
 
 	writer.Header().Set("HX-Redirect", "/")
 	writer.WriteHeader(http.StatusOK)
 }
 
+// RefreshToken exchanges a valid refresh token for a fresh access token. The
+// user is reloaded from the database rather than trusted from the token, so
+// role changes, deletions and revocations take effect on refresh.
 func (handler *AuthHandler) RefreshToken(writer http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), cancelTime)
+	defer cancel()
+
+	refreshCookie, err := req.Cookie(string(httputils.RefreshCookieName))
+	if err != nil || refreshCookie.Value == "" {
+		httputils.SendErrorResponse(ctx, writer, "refresh.token.missing", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := securityutil.ValidateRefreshToken(refreshCookie.Value)
+	if err != nil {
+		slog.InfoContext(ctx, "Rejected an invalid refresh token", "error", err)
+		handler.clearSession(writer)
+		httputils.SendErrorResponse(ctx, writer, "refresh.token.invalid", http.StatusUnauthorized)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		handler.clearSession(writer)
+		httputils.SendErrorResponse(ctx, writer, "refresh.token.invalid", http.StatusUnauthorized)
+		return
+	}
+
+	userId, ok := claims["id"].(string)
+	if !ok || userId == "" {
+		handler.clearSession(writer)
+		httputils.SendErrorResponse(ctx, writer, "refresh.token.invalid", http.StatusUnauthorized)
+		return
+	}
+
+	// A refresh token is only as good as the account behind it.
+	currentUser, err := handler.userService.GetUserById(ctx, userId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			handler.clearSession(writer)
+			httputils.SendErrorResponse(ctx, writer, "refresh.token.invalid", http.StatusUnauthorized)
+			return
+		}
+
+		slog.ErrorContext(ctx, "Could not load the user while refreshing", "error", err, "userId", userId)
+		httputils.SendInternalServerResponse(writer, req)
+		return
+	}
+
+	issuedAt := time.Unix(int64(claimFloat(claims, "iat")), 0).UTC()
+	if !handler.userService.IsSessionValid(ctx, userId, issuedAt) {
+		slog.InfoContext(ctx, "Rejected a revoked refresh token", "userId", userId)
+		handler.clearSession(writer)
+		httputils.SendErrorResponse(ctx, writer, "refresh.token.revoked", http.StatusUnauthorized)
+		return
+	}
+
+	accessToken, accessExpiry := securityutil.GenerateAccessToken(currentUser, false)
+	httputils.SetAuthCookie(httputils.AuthCookieName, accessToken, accessExpiry, false, writer)
+
+	slog.InfoContext(ctx, "Refreshed an access token", "userId", userId)
+	httputils.SendSuccessResponse(ctx, writer, "Token refreshed", nil, http.StatusOK)
+}
+
+// clearSession drops both session cookies. The refresh cookie is path scoped,
+// so it has to be cleared on that same path.
+func (handler *AuthHandler) clearSession(writer http.ResponseWriter) {
+	httputils.ClearCookie(httputils.AuthCookieName, writer)
+	httputils.ClearCookieAtPath(httputils.RefreshCookieName, httputils.RefreshTokenPath, writer)
+}
+
+func claimFloat(claims jwt.MapClaims, key string) float64 {
+	value, _ := claims[key].(float64)
+
+	return value
 }
 
 func (handler *AuthHandler) GetLogin(writer http.ResponseWriter, req *http.Request) {
@@ -305,7 +383,7 @@ func (handler *AuthHandler) HandleResetPassword(writer http.ResponseWriter, req 
 	}
 	if errors.Is(err, auth.ErrPasswordWeak) {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
-		util.Must(templates.InvalidMessage("Паролата трябва да е поне 8 символа", "error-password").Render(ctx, writer))
+		util.Must(templates.InvalidMessage("Паролата трябва да е поне 12 символа и да съдържа главна и малка буква, цифра и символ", "error-password").Render(ctx, writer))
 		return
 	}
 	if err != nil {

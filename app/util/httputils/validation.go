@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"runtime/debug"
 	"server/util/jsonutils"
+	"server/util/securityutil"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -31,7 +32,7 @@ func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload a
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {
 			slog.WarnContext(req.Context(), "Request body too large", "limit", maxBytesErr.Limit, "path", req.URL.Path)
-			SendErrorResponse(writer, "request.body.too.large", http.StatusRequestEntityTooLarge)
+			SendErrorResponse(req.Context(), writer, "request.body.too.large", http.StatusRequestEntityTooLarge)
 			return false
 		}
 
@@ -41,7 +42,7 @@ func ProcessRequestBody(writer http.ResponseWriter, req *http.Request, payload a
 	}
 
 	if err := validatePayload(payload); err != nil {
-		SendFailedValidationResponse(writer, err)
+		SendFailedValidationResponse(req.Context(), writer, err)
 		return false
 	}
 
@@ -67,7 +68,21 @@ func ProcessBody(writer http.ResponseWriter, req *http.Request, payload any) *Va
 
 // validate is safe for concurrent use and caches struct metadata, so it is
 // built once rather than per request.
-var validate = validator.New(validator.WithRequiredStructEnabled())
+var validate = newValidator()
+
+func newValidator() *validator.Validate {
+	v := validator.New(validator.WithRequiredStructEnabled())
+
+	// "strongpassword" is for passwords being set, never for login: existing
+	// accounts may hold weaker passwords and must still be able to sign in.
+	if err := v.RegisterValidation("strongpassword", func(fl validator.FieldLevel) bool {
+		return securityutil.IsPasswordStrong(fl.Field().String())
+	}); err != nil {
+		panic(fmt.Sprintf("could not register the strongpassword rule: %v", err))
+	}
+
+	return v
+}
 
 func validatePayload(payload any) []*ValidationError {
 	var result []*ValidationError
@@ -84,9 +99,11 @@ func validatePayload(payload any) []*ValidationError {
 			}
 
 			value := ""
-			// Never echo back a password, and only report values that are
-			// already strings - Value() is an any and may hold anything.
-			if validationErr.Tag() != "password" {
+			// Never echo back a secret, and only report values that are already
+			// strings - Value() is an any and may hold anything. Keyed on the
+			// field rather than the rule, so renaming a rule cannot silently
+			// start leaking the submitted password back to the caller.
+			if !isSecretField(key) {
 				if s, ok := validationErr.Value().(string); ok {
 					value = s
 				}
@@ -101,6 +118,14 @@ func validatePayload(payload any) []*ValidationError {
 	}
 
 	return result
+}
+
+// isSecretField reports whether a field's submitted value must never be echoed
+// back in a validation response.
+func isSecretField(field string) bool {
+	lower := strings.ToLower(field)
+
+	return strings.Contains(lower, "password") || strings.Contains(lower, "token") || strings.Contains(lower, "secret")
 }
 
 // getErrorMessage renders a human readable message for a failed rule. These
@@ -119,6 +144,10 @@ func getErrorMessage(fieldErr validator.FieldError) string {
 		return fmt.Sprintf("field must be at most %s characters", fieldErr.Param())
 	case "oneof":
 		return fmt.Sprintf("field must be one of: %s", strings.ReplaceAll(fieldErr.Param(), " ", ", "))
+	case "strongpassword":
+		return fmt.Sprintf(
+			"password must be at least %d characters and include an upper case letter, a lower case letter, a digit and a symbol",
+			securityutil.MinPasswordLength)
 	case "uuid":
 		return "field must be a valid UUID"
 	case "url":

@@ -19,7 +19,10 @@
 - [x] Protect admin endpoints (RequireAuth + RequireAdmin middleware)
 - [x] Add role-based access control (RBAC) checks in handlers
 - [x] Protect category endpoints (`POST /categories` was fully unauthenticated)
-- [ ] Protect user-specific endpoints
+- [x] Protect user-specific endpoints - nothing to protect yet
+  - Audited every route: all are public content, auth entry points, or already
+    behind RequireAuth+RequireAdmin. There are no user-scoped endpoints
+  - Revisit when the account pages arrive (bookmarks, data export, deletion)
 
 ### CSRF
 - [x] Compare the CSRF cookie against the submitted header
@@ -34,8 +37,12 @@
 
 ### Password Security
 - [x] Increase bcrypt cost from 10 to 12 in `util/securityutil/password.go`
-- [ ] Add password complexity validation (uppercase, lowercase, numbers, special chars)
-- [ ] Increase minimum password length to 12 characters
+- [x] Add password complexity validation (uppercase, lowercase, numbers, special chars)
+- [x] Increase minimum password length to 12 characters
+  - `securityutil.IsPasswordStrong` backs both the `strongpassword` validator
+    tag and the reset service, so one policy governs every path
+  - Login deliberately enforces no policy: existing accounts hold weaker
+    passwords and must still be able to sign in
 
 ### Security Headers
 - [x] Re-enable Content-Security-Policy middleware in `server.go`
@@ -47,16 +54,22 @@
 ## Medium Priority
 
 ### Token Management
-- [ ] Implement the refresh token flow
-  - `HandleLogin` already generates a refresh token via `AuthService.Authenticate`
-    but drops it: only the access cookie is set, so there is nothing to refresh from
-  - Set `RefreshCookieName` on login (path-scoped to the refresh endpoint)
-  - `AuthHandler.RefreshToken` is an empty stub: validate the refresh cookie with
-    `securityutil.ValidateRefreshToken`, re-issue the access token, return 401 on failure
-  - Register the route outside the `ALLOW_REGISTRATION` block in `authRoutes.go` -
-    admin login works with registration disabled, so its session must be refreshable too
-- [ ] Add token revocation/blacklist system (Redis or database)
-- [ ] Invalidate tokens on password change
+- [x] Implement the refresh token flow
+  - Login stores the refresh token in a cookie scoped to `/refresh-token`
+  - `POST /refresh-token` reloads the user from the database rather than
+    trusting the token, so role changes and deletions take effect on refresh
+  - Registered outside the `ALLOW_REGISTRATION` block so admin sessions refresh
+- [x] Add token revocation
+  - `users.tokens_valid_after`: any access token issued at or before it is
+    refused. No token store needed, and it covers "revoke all sessions"
+  - Checked in `CheckAuth` and again when refreshing; failures fail closed
+- [x] Invalidate tokens on password change
+  - `UpdatePassword` sets the cutoff in the same statement
+- [ ] Rotate the refresh token on use
+  - Refresh currently re-issues only the access token, so a stolen refresh
+    token stays usable until it expires
+- [ ] Cache the revocation lookup
+  - It costs one query per authenticated request
 
 ### Bug Fixes
 - [x] Fix user context type assertion in `util/ctxutils/ctxutils.go:66-73`
@@ -83,8 +96,7 @@
 - [x] Migrate request-scoped `slog` calls to the `*Context` variants
   - Handlers, middleware, services and the email/JSON helpers now carry the
     request id; startup logs (main, database, config) intentionally do not
-- [ ] Thread a context through the `httputils.Send*` response helpers
-  - Their write-failure logs are the last request-scoped lines without an id
+- [x] Thread a context through the `httputils.Send*` response helpers
 
 ### CSRF Improvements
 - [x] Use actual request method instead of hardcoded POST for CSRF tokens

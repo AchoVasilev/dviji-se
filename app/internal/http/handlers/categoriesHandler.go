@@ -67,5 +67,5 @@ func (controller *CategoriesHandler) Create(writer http.ResponseWriter, req *htt
 
 	var response models.CategoryResponseResource
 	response = response.CreateCategoryResponseFrom(result)
-	httputils.SendOkWithBody(writer, response)
+	httputils.SendOkWithBody(ctx, writer, response)
 }
