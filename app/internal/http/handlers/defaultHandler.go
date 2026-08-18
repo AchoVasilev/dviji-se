@@ -25,10 +25,13 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 		return
 	}
 
-	util.Must(templates.Layout(
+	util.Must(templates.LayoutSEO(
 		templates.Home(),
-		"Начало",
-		"Тренировки, хранителни режими и рецепти за здравословен начин на живот.",
+		templates.SEO{
+			Title:       "Начало",
+			Description: "Тренировки, хранителни режими и рецепти за здравословен начин на живот.",
+			Path:        "/",
+		},
 		"/",
 		ctxutils.GetCSRF(req.Context()),
 		config.AllowRegistration(),

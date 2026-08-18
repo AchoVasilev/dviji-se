@@ -38,9 +38,8 @@ func TestSessionRevocation_PasswordChangeInvalidatesExistingTokens(t *testing.T)
 
 	userId := seedRevocationUser(t, tdb, "revocation@example.com")
 
-	// A token issued before any revocation is accepted.
-	issuedAt := time.Now().UTC()
-	if !service.IsSessionValid(ctx, userId.String(), issuedAt) {
+	// With no cutoff set, any token is accepted.
+	if !service.IsSessionValid(ctx, userId.String(), time.Now().UTC()) {
 		t.Fatal("a freshly issued token should be valid")
 	}
 
@@ -49,12 +48,24 @@ func TestSessionRevocation_PasswordChangeInvalidatesExistingTokens(t *testing.T)
 		t.Fatalf("failed to update the password: %v", err)
 	}
 
-	if service.IsSessionValid(ctx, userId.String(), issuedAt) {
+	// The cutoff is written by the database clock, so the comparison points are
+	// derived from the stored value. Using time.Now() here would compare the
+	// host clock against the container's and fail whenever they skew.
+	cutoff, err := repo.TokensValidAfter(ctx, userId.String())
+	if err != nil {
+		t.Fatalf("failed to read the cutoff: %v", err)
+	}
+
+	if !cutoff.Valid {
+		t.Fatal("changing the password should have set a revocation cutoff")
+	}
+
+	if service.IsSessionValid(ctx, userId.String(), cutoff.Time.Add(-time.Second)) {
 		t.Error("a token issued before the password change should be rejected")
 	}
 
 	// A token minted after the change works again, so the user can sign back in.
-	if !service.IsSessionValid(ctx, userId.String(), time.Now().UTC().Add(time.Second)) {
+	if !service.IsSessionValid(ctx, userId.String(), cutoff.Time.Add(time.Second)) {
 		t.Error("a token issued after the password change should be accepted")
 	}
 }

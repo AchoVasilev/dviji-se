@@ -55,13 +55,20 @@ func (userService *UserService) IsSessionValid(ctx context.Context, userId strin
 		return false
 	}
 
-	if !validAfter.Valid {
+	return sessionValidAt(validAfter, issuedAt)
+}
+
+// sessionValidAt compares a token's issue time against a revocation cutoff.
+// Shared by the cached and uncached validators so the two cannot drift.
+//
+// Second resolution on iat means a token minted in the same second as the
+// revocation is treated as revoked, which errs towards refusing access.
+func sessionValidAt(cutoff sql.NullTime, issuedAt time.Time) bool {
+	if !cutoff.Valid {
 		return true
 	}
 
-	// Second resolution on iat means a token minted in the same second as the
-	// revocation is treated as revoked, which errs towards refusing access.
-	return issuedAt.After(validAfter.Time)
+	return issuedAt.After(cutoff.Time)
 }
 
 // RevokeSessions invalidates every access token issued for the user so far.

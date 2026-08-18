@@ -25,8 +25,9 @@ func Initialize(db *sql.DB) {
 	router := routes.RegisterRoutes(db)
 
 	// CheckAuth needs to know whether a token has been revoked, which is a
-	// database question, so the validator is wired in here.
-	sessions := users.NewUserService(user.NewUserRepository(db))
+	// database question. Every authenticated request asks it, so the answer is
+	// cached briefly; revocations take effect within the TTL.
+	sessions := users.NewCachedSessionValidator(user.NewUserRepository(db), users.DefaultRevocationCacheTTL)
 
 	stack := middleware.CreateChain(
 		middleware.Recovery,

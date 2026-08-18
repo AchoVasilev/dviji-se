@@ -68,8 +68,11 @@
 - [ ] Rotate the refresh token on use
   - Refresh currently re-issues only the access token, so a stolen refresh
     token stays usable until it expires
-- [ ] Cache the revocation lookup
-  - It costs one query per authenticated request
+- [x] Cache the revocation lookup
+  - Static assets skip auth entirely: the auth cookie rides along on every one,
+    so a page view cost one lookup per asset (measured 4 for a page + 3 assets)
+  - Remaining page requests read a 30s TTL cache of the cutoff, so revocation is
+    eventually consistent within that window
 
 ### Bug Fixes
 - [x] Fix user context type assertion in `util/ctxutils/ctxutils.go:66-73`
@@ -183,8 +186,13 @@
 
 ### SEO & Discovery
 - [x] Add XML sitemap (`/sitemap.xml`) and `robots.txt`
-- [ ] Add Open Graph meta tags for social sharing
-- [ ] Add Schema.org Article markup
+- [x] Add Open Graph meta tags for social sharing
+- [x] Add Schema.org Article markup
+  - `templates.SEO` drives title, canonical, Open Graph, Twitter card and
+    JSON-LD; posts become og:type=article with author, section and dates
+  - Search results deliberately emit no canonical so they are not indexed
+  - Requires `APP_BASE_URL` to be correct in production: canonical and og:url
+    are absolute and built from it
 
 ### Admin Enhancements
 - [ ] Post duplication (clone existing post)
@@ -219,13 +227,13 @@
 - [ ] Bulk actions (publish/archive/delete multiple)
 
 ## Milestone 4: Security Hardening
-- [ ] Token revocation (blacklist on logout/password change)
-- [ ] Password complexity validation (12+ chars, mixed case, numbers, symbols)
+- [x] Token revocation (cutoff per user, applied on password change)
+- [x] Password complexity validation (12+ chars, mixed case, numbers, symbols)
 - [ ] Audit logging (login, logout, password changes)
 
 ## Milestone 5: SEO & Social
-- [ ] Open Graph meta tags
-- [ ] Schema.org Article markup (JSON-LD)
+- [x] Open Graph meta tags
+- [x] Schema.org Article markup (JSON-LD)
 
 ## Milestone 6: Monetization & Ads
 - [ ] Ad consent system (popup → minimized widget, ads only if consented)

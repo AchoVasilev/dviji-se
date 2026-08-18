@@ -97,12 +97,20 @@ jobs:
       - name: Generate templ templates
         run: go tool templ generate
 
+      # Two constraints, both of which fail the job before a single file is
+      # linted:
+      #   - app/.golangci.yml is a version "2" config, which needs action v7+;
+      #     v6 installs golangci-lint v1 and cannot parse it.
+      #   - golangci-lint refuses to run when the Go it was built with is older
+      #     than the go directive in go.mod (currently 1.25.6), so raising that
+      #     directive means raising this pin too.
+      # Pinned rather than "latest" so a new release cannot break the build
+      # without a deliberate bump. The timeout lives in the config file.
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12.2
           working-directory: ./app
-          args: --timeout=5m
 
   build:
     name: Build Docker Image

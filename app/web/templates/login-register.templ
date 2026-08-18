@@ -1,16 +1,24 @@
 package templates
 
+import "server/internal/http/middleware"
+
+// heroBackground points at the fingerprinted asset so a changed image is picked
+// up rather than served from a year long browser cache.
+func heroBackground() templ.SafeCSS {
+	return templ.SafeCSS("background-image: url('" + middleware.AssetURL("/static/img/running-man.png") + "');")
+}
+
 templ LoginRegister(content templ.Component) {
 <div class="flex min-h-screen flex-col lg:flex-row">
 	<!-- Left Section: Visual (desktop only) -->
 	<div class="relative hidden lg:flex lg:w-1/2 xl:w-3/5 overflow-hidden">
-		<div class="absolute inset-0 bg-contain bg-center bg-no-repeat" style="background-image: url('/static/img/running-man.png');"></div>
+		<div class="absolute inset-0 bg-contain bg-center bg-no-repeat" style={ heroBackground() }></div>
 		<div class="absolute inset-0 bg-gradient-to-t from-bg-dark via-bg-dark/40 to-transparent"></div>
 		<div class="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
 		<div class="absolute inset-0 tactical-grid pointer-events-none opacity-20"></div>
 		<div class="relative z-10 flex flex-col justify-between p-12 w-full">
 			<a href="/" class="flex items-center gap-3">
-				<img src="/static/img/logo_128x128.png" alt="Движи се" class="w-10 h-10"/>
+				<img src={ middleware.AssetURL("/static/img/logo_128x128.png") } alt="Движи се" class="w-10 h-10"/>
 				<h2 class="text-2xl font-bold tracking-tight text-white uppercase">Движи се</h2>
 			</a>
 			<div class="max-w-xl">
@@ -33,7 +41,7 @@ templ LoginRegister(content templ.Component) {
 		<!-- Mobile Logo -->
 		<div class="lg:hidden flex items-center gap-3 mb-12">
 			<a href="/" class="flex items-center gap-3">
-				<img src="/static/img/logo_128x128.png" alt="Движи се" class="w-8 h-8"/>
+				<img src={ middleware.AssetURL("/static/img/logo_128x128.png") } alt="Движи се" class="w-8 h-8"/>
 				<h2 class="text-xl font-extrabold tracking-tight uppercase">Движи се</h2>
 			</a>
 		</div>
@@ -52,7 +60,7 @@ templ LoginRegister(content templ.Component) {
 			</div>
 			<!-- Social login -->
 			<button class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-3 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-				<img class="h-5" src="/static/img/google.svg" alt="Google" />
+				<img class="h-5" src={ middleware.AssetURL("/static/img/google.svg") } alt="Google"/>
 				<span>Продължи с Google</span>
 			</button>
 		</div>
@@ -62,7 +70,7 @@ templ LoginRegister(content templ.Component) {
 		</div>
 	</div>
 </div>
-<script defer type="text/javascript" src="/static/scripts/validation.js"></script>
+<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/validation.js") }></script>
 }
 
 templ Login() {

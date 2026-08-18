@@ -155,3 +155,49 @@ func TestCheckAuth_RejectsRevokedToken(t *testing.T) {
 		t.Errorf("expected a revoked token to be rejected, got %+v", attached)
 	}
 }
+
+// countingSessions records how often the revocation check is consulted.
+type countingSessions struct{ calls int }
+
+func (c *countingSessions) IsSessionValid(context.Context, string, time.Time) bool {
+	c.calls++
+	return true
+}
+
+// Static assets are identical for everyone, and the auth cookie is sent with
+// each one. Authenticating them made a page view cost one revocation lookup
+// per asset.
+func TestCheckAuth_SkipsStaticAssets(t *testing.T) {
+	sessions := &countingSessions{}
+	token := validAccessToken(t)
+
+	for _, path := range []string{
+		"/static/scripts/htmx.min.js",
+		"/static/css/styles.css",
+		"/static/img/logo-sm.png",
+	} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.AddCookie(&http.Cookie{Name: string(httputils.AuthCookieName), Value: token})
+
+		checkAuthResultWith(t, req, sessions)
+	}
+
+	if sessions.calls != 0 {
+		t.Errorf("revocation checked %d times for static assets, want 0", sessions.calls)
+	}
+}
+
+func TestCheckAuth_StillAuthenticatesPageRequests(t *testing.T) {
+	sessions := &countingSessions{}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	req.AddCookie(&http.Cookie{Name: string(httputils.AuthCookieName), Value: validAccessToken(t)})
+
+	if attached := checkAuthResultWith(t, req, sessions); attached == nil {
+		t.Fatal("expected a user to be attached for a page request")
+	}
+
+	if sessions.calls != 1 {
+		t.Errorf("revocation checked %d times, want 1", sessions.calls)
+	}
+}

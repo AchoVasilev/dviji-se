@@ -7,8 +7,40 @@ import (
 	"server/util/ctxutils"
 )
 
+// blogListSEO describes the blog index and its category views. The canonical
+// URL is self referencing and keeps the page number, so paginated pages are
+// indexed in their own right rather than all collapsing onto page one.
+func blogListSEO(currentCategory string, categories []models.CategoryResponseResource, page int) SEO {
+	seo := SEO{
+		Title:       "Блог",
+		Description: "Статии за фитнес, хранене и здравословен начин на живот",
+		Path:        "/blog",
+	}
+
+	if currentCategory != "" {
+		seo.Path = "/blog/category/" + currentCategory
+
+		for _, category := range categories {
+			if category.Slug == currentCategory {
+				seo.Title = category.Name
+				seo.Description = "Статии в категория " + category.Name
+				seo.ImageURL = category.ImageUrl
+
+				break
+			}
+		}
+	}
+
+	if page > 1 {
+		seo.Title = fmt.Sprintf("%s - страница %d", seo.Title, page)
+		seo.Path = fmt.Sprintf("%s?page=%d", seo.Path, page)
+	}
+
+	return seo
+}
+
 templ BlogList(posts []models.PostListItem, categories []models.CategoryResponseResource, page int, totalPages int, total int, currentCategory string) {
-	@Layout(blogListContent(posts, categories, page, totalPages, total, currentCategory), "Блог", "Статии за фитнес, хранене и здравословен начин на живот", "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
+	@LayoutSEO(blogListContent(posts, categories, page, totalPages, total, currentCategory), blogListSEO(currentCategory, categories, page), "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
 }
 
 templ blogListContent(posts []models.PostListItem, categories []models.CategoryResponseResource, page int, totalPages int, total int, currentCategory string) {
@@ -171,7 +203,10 @@ if post.CoverImageUrl != "" {
 }
 
 templ BlogSearchResults(posts []models.PostListItem, query string, page int, totalPages int, total int) {
-@Layout(blogSearchContent(posts, query, page, totalPages, total), fmt.Sprintf("Търсене: %s", query), fmt.Sprintf("Резултати от търсене за %s", query), "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
+@LayoutSEO(blogSearchContent(posts, query, page, totalPages, total), SEO{
+		Title:       fmt.Sprintf("Търсене: %s", query),
+		Description: fmt.Sprintf("Резултати от търсене за %s", query),
+	}, "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
 }
 
 templ blogSearchContent(posts []models.PostListItem, query string, page int, totalPages int, total int) {

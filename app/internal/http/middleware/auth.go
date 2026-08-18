@@ -26,6 +26,14 @@ type SessionValidator interface {
 func CheckAuth(sessions SessionValidator) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Static files are served the same way to everyone, and the auth
+			// cookie rides along on every one of them. Authenticating them
+			// turned a single page view into one revocation lookup per asset.
+			if isStaticAssetPath(r.URL.Path) {
+				h.ServeHTTP(w, r)
+				return
+			}
+
 			for _, token := range authTokens(r) {
 				loggedInUser, err := securityutil.UserFromToken(token)
 				if err != nil {
@@ -44,6 +52,12 @@ func CheckAuth(sessions SessionValidator) Middleware {
 			h.ServeHTTP(w, r)
 		})
 	}
+}
+
+// isStaticAssetPath reports whether the request is for a file under /static,
+// which is public and identical for every visitor.
+func isStaticAssetPath(path string) bool {
+	return strings.HasPrefix(path, "/static/")
 }
 
 // authTokens returns the candidate tokens in precedence order: the bearer

@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"strings"
 	"encoding/json"
 	"fmt"
 	"server/internal/config"
@@ -24,7 +25,30 @@ func getGpxUrl(metadata json.RawMessage) string {
 }
 
 templ BlogPost(post models.PostResponseResource, relatedPosts []models.PostListItem) {
-	@Layout(blogPostContent(post, relatedPosts), post.Title, post.MetaDescription, "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
+	@LayoutSEO(blogPostContent(post, relatedPosts), postSEO(post), "/blog", ctxutils.GetCSRF(ctx), config.AllowRegistration())
+}
+
+// postSEO describes a single post for search engines and social previews.
+// The excerpt stands in when no meta description was written, so a shared link
+// is never left without a summary.
+func postSEO(post models.PostResponseResource) SEO {
+	description := post.MetaDescription
+	if description == "" {
+		description = post.Excerpt
+	}
+
+	author := strings.TrimSpace(post.AuthorFirstName + " " + post.AuthorLastName)
+
+	return SEO{
+		Title:       post.Title,
+		Description: description,
+		Path:        "/blog/" + post.Slug,
+		ImageURL:    post.CoverImageUrl,
+		PublishedAt: post.PublishedAt,
+		ModifiedAt:  post.UpdatedAt,
+		AuthorName:  author,
+		Section:     post.CategoryName,
+	}
 }
 
 templ blogPostContent(post models.PostResponseResource, relatedPosts []models.PostListItem) {
