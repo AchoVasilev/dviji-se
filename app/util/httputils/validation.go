@@ -156,3 +156,10 @@ func getErrorMessage(fieldErr validator.FieldError) string {
 		return fmt.Sprintf("field failed the %q rule", fieldErr.Tag())
 	}
 }
+
+// IsValidEmail reports whether an address passes the same rule the login and
+// registration payloads use. Bootstrapping an administrator with an address
+// that fails it would create an account that cannot sign in.
+func IsValidEmail(email string) bool {
+	return validate.Var(email, "required,email") == nil
+}

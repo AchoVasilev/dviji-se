@@ -15,6 +15,20 @@ import (
 	"time"
 )
 
+// getFragment requests an HTMX fragment endpoint the way the browser does.
+// Without the header the endpoint redirects to the page that hosts it, so a
+// plain GET would exercise the guard rather than the handler.
+func getFragment(url string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("HX-Request", "true")
+
+	return http.DefaultClient.Do(req)
+}
+
 // alwaysValidSessions skips the revocation lookup: these tests exercise
 // routing and authorisation, not token revocation.
 type alwaysValidSessions struct{}
@@ -255,7 +269,7 @@ func TestBlogAPI_GetRecentPosts(t *testing.T) {
 	tdb.SeedTestPost(t, "Recent Post 2", "recent-post-2", "Content 2", categoryId, userId, "published")
 
 	t.Run("returns recent published posts", func(t *testing.T) {
-		resp, err := http.Get(server.URL + "/blog/recent")
+		resp, err := getFragment(server.URL + "/blog/recent")
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -274,7 +288,7 @@ func TestBlogAPI_GetRecentPosts(t *testing.T) {
 	})
 
 	t.Run("respects limit parameter", func(t *testing.T) {
-		resp, err := http.Get(server.URL + "/blog/recent?limit=1")
+		resp, err := getFragment(server.URL + "/blog/recent?limit=1")
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -651,7 +665,7 @@ func TestBlogAPI_SearchSuggestions(t *testing.T) {
 	tdb.SeedTestPost(t, "Advanced Yoga Poses", "advanced-yoga-poses", "Take your practice further", categoryId, userId, "published")
 
 	t.Run("returns suggestions for matching query", func(t *testing.T) {
-		resp, err := http.Get(server.URL + "/blog/search/suggestions?q=Yoga")
+		resp, err := getFragment(server.URL + "/blog/search/suggestions?q=Yoga")
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -674,7 +688,7 @@ func TestBlogAPI_SearchSuggestions(t *testing.T) {
 	})
 
 	t.Run("returns empty for no matches", func(t *testing.T) {
-		resp, err := http.Get(server.URL + "/blog/search/suggestions?q=zzzznotfound")
+		resp, err := getFragment(server.URL + "/blog/search/suggestions?q=zzzznotfound")
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -693,7 +707,7 @@ func TestBlogAPI_SearchSuggestions(t *testing.T) {
 	})
 
 	t.Run("returns empty body for empty query", func(t *testing.T) {
-		resp, err := http.Get(server.URL + "/blog/search/suggestions?q=")
+		resp, err := getFragment(server.URL + "/blog/search/suggestions?q=")
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -718,4 +732,59 @@ func createTestUser(t *testing.T, tdb *testdb.TestDB) string {
 	// Use bcrypt-hashed password for "Str0ng!Passw0rd"
 	hashedPassword := "$2a$10$N9qo8uLOickgx2ZMRZoMy.MQDaLKCKyQXqxQq5qXJV4xJmQXXqMCG"
 	return tdb.SeedTestUser(t, "testuser@example.com", hashedPassword)
+}
+
+// Fragment endpoints must not serve partial pages to someone who opens the URL
+// directly; they redirect to the page that hosts the fragment instead.
+func TestBlogAPI_FragmentEndpointsRedirectDirectVisits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	cleanup := setupAuthTestEnv(t)
+	defer cleanup()
+
+	tdb := testdb.SetupTestDB(t)
+	tdb.CleanupTables(t)
+	tdb.EnsureCategories(t)
+
+	server := httptest.NewServer(routes.RegisterRoutes(tdb.DB))
+	defer server.Close()
+
+	client := &http.Client{
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	tests := []struct {
+		path     string
+		location string
+	}{
+		{"/blog/recent", "/blog"},
+		{"/blog/search/suggestions?q=yoga", "/blog/search?q=yoga"},
+		{"/categories", "/"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			resp, err := client.Get(server.URL + tt.path)
+			if err != nil {
+				t.Fatalf("request failed: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusSeeOther {
+				t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusSeeOther)
+			}
+
+			if location := resp.Header.Get("Location"); location != tt.location {
+				t.Errorf("Location = %q, want %q", location, tt.location)
+			}
+
+			if robots := resp.Header.Get("X-Robots-Tag"); robots != "noindex" {
+				t.Errorf("X-Robots-Tag = %q, want noindex", robots)
+			}
+		})
+	}
 }

@@ -8,6 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"server/cmd/db/database"
+	"server/internal/application/users"
+	"server/internal/config"
+	"server/internal/domain/user"
 	"server/internal/infrastructure/environment"
 	"server/internal/server"
 	"syscall"
@@ -18,6 +21,17 @@ func main() {
 	environment.LoadEnvironmentVariables()
 	db := database.ConnectDatabase()
 	database.RunMigrations(db)
+
+	// A fresh database has no administrator, and registration only grants the
+	// USER role, so the admin panel would otherwise be unreachable.
+	bootstrapCtx, cancelBootstrap := context.WithTimeout(context.Background(), 30*time.Second)
+	if err := users.EnsureAdmin(bootstrapCtx, user.NewUserRepository(db), config.AdminEmail(), config.AdminPassword()); err != nil {
+		cancelBootstrap()
+		slog.Error("Failed to bootstrap the administrator", "error", err)
+		os.Exit(1)
+	}
+	cancelBootstrap()
+
 	server.Initialize(db)
 
 	go func() {

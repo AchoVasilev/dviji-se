@@ -9,6 +9,7 @@ import (
 	"server/internal/domain/category"
 	"server/internal/domain/posts"
 	"server/internal/http/handlers"
+	"server/internal/http/middleware"
 )
 
 func BlogRoutes(mux *http.ServeMux, db *sql.DB) {
@@ -24,11 +25,11 @@ func BlogRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("GET /blog", handler.GetBlogList)
 
 	// Search
-	mux.HandleFunc("GET /blog/search/suggestions", handler.SearchSuggestions)
+	mux.Handle("GET /blog/search/suggestions", middleware.FragmentOnly("/blog/search", http.HandlerFunc(handler.SearchSuggestions)))
 	mux.HandleFunc("GET /blog/search", handler.SearchBlogPosts)
 
 	// Recent posts (HTMX endpoint for home page)
-	mux.HandleFunc("GET /blog/recent", handler.GetRecentPosts)
+	mux.Handle("GET /blog/recent", middleware.FragmentOnly("/blog", http.HandlerFunc(handler.GetRecentPosts)))
 
 	// Blog by category
 	mux.HandleFunc("GET /blog/category/{slug}", handler.GetBlogByCategory)

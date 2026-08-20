@@ -1,6 +1,9 @@
 package templates
 
-import "server/internal/http/middleware"
+import (
+	"server/internal/config"
+	"server/internal/http/middleware"
+)
 
 // heroBackground points at the fingerprinted asset so a changed image is picked
 // up rather than served from a year long browser cache.
@@ -49,20 +52,24 @@ templ LoginRegister(content templ.Component) {
 			<div id="template-container">
 				@content
 			</div>
-			<!-- Divider -->
-			<div class="relative my-8">
-				<div aria-hidden="true" class="absolute inset-0 flex items-center">
-					<div class="w-full border-t border-slate-300 dark:border-slate-700"></div>
+			// Social sign in belongs to public registration and is not wired up
+			// yet. With registration off, the admin form is all that shows.
+			if config.AllowRegistration() {
+				<!-- Divider -->
+				<div class="relative my-8">
+					<div aria-hidden="true" class="absolute inset-0 flex items-center">
+						<div class="w-full border-t border-slate-300 dark:border-slate-700"></div>
+					</div>
+					<div class="relative flex justify-center text-sm leading-6">
+						<span class="bg-white dark:bg-card-dark px-4 text-slate-500 font-medium">или</span>
+					</div>
 				</div>
-				<div class="relative flex justify-center text-sm leading-6">
-					<span class="bg-white dark:bg-card-dark px-4 text-slate-500 font-medium">или</span>
-				</div>
-			</div>
-			<!-- Social login -->
-			<button class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-3 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-				<img class="h-5" src={ middleware.AssetURL("/static/img/google.svg") } alt="Google"/>
-				<span>Продължи с Google</span>
-			</button>
+				<!-- Social login -->
+				<button class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-3 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+					<img class="h-5" src={ middleware.AssetURL("/static/img/google.svg") } alt="Google"/>
+					<span>Продължи с Google</span>
+				</button>
+			}
 		</div>
 		<!-- Footer -->
 		<div class="mt-auto pt-10 text-center text-[10px] text-slate-400 dark:text-slate-600 uppercase tracking-widest">

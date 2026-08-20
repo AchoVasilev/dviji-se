@@ -51,6 +51,14 @@ type cfg struct {
 	cloudinaryAPISecret string
 	cloudinaryFolder    string
 
+	// Feature flags
+	workoutsEnabled  bool
+	nutritionEnabled bool
+
+	// Admin bootstrap
+	adminEmail    string
+	adminPassword string
+
 	// App
 	baseURL    string
 	tinymceURL string
@@ -77,9 +85,12 @@ func load() {
 			jwtRefreshKey: getEnvRequired("JWT_REFRESH_KEY"),
 
 			// Security
-			xsrfKey:           getEnvRequired("XSRF"),
-			corsOrigins:       getEnvSlice("CORS_ORIGINS", ",", []string{"http://localhost:3000"}),
-			allowRegistration: getEnvBool("ALLOW_REGISTRATION", true),
+			xsrfKey:     getEnvRequired("XSRF"),
+			corsOrigins: getEnvSlice("CORS_ORIGINS", ",", []string{"http://localhost:3000"}),
+			// Off by default: this is a single author blog, so public
+			// registration is opt in rather than something you must remember
+			// to switch off.
+			allowRegistration: getEnvBool("ALLOW_REGISTRATION", false),
 			trustedProxies:    getEnvPrefixes("TRUSTED_PROXIES"),
 
 			// SMTP
@@ -94,6 +105,14 @@ func load() {
 			cloudinaryAPIKey:    getEnv("CLOUDINARY_API_KEY", ""),
 			cloudinaryAPISecret: getEnv("CLOUDINARY_API_SECRET", ""),
 			cloudinaryFolder:    getEnv("CLOUDINARY_FOLDER", "uploads"),
+
+			// Feature flags: the sections are hidden until their pages exist.
+			workoutsEnabled:  getEnvBool("ENABLED_WORKOUTS", false),
+			nutritionEnabled: getEnvBool("ENABLED_NUTRITION", false),
+
+			// Admin bootstrap
+			adminEmail:    getEnv("ADMIN_EMAIL", ""),
+			adminPassword: getEnv("ADMIN_PASSWORD", ""),
 
 			// App
 			baseURL:    getEnv("APP_BASE_URL", "http://localhost:8080"),
@@ -162,6 +181,25 @@ func CloudinaryFolder() string    { return get().cloudinaryFolder }
 func CloudinaryConfigured() bool {
 	return get().cloudinaryCloudName != "" && get().cloudinaryAPIKey != "" && get().cloudinaryAPISecret != ""
 }
+
+// --- Feature flags ---
+
+// The flags below gate navigation entries for sections that are not built
+// yet. They control visibility only: turning one on shows the link, but the
+// route still has to exist or it will 404.
+
+// WorkoutsEnabled reports whether the workouts section is advertised.
+func WorkoutsEnabled() bool { return get().workoutsEnabled }
+
+// NutritionEnabled reports whether the nutrition section is advertised.
+func NutritionEnabled() bool { return get().nutritionEnabled }
+
+// --- Admin bootstrap ---
+
+// AdminEmail and AdminPassword seed the first administrator when the database
+// has none. They are ignored once an administrator exists.
+func AdminEmail() string    { return get().adminEmail }
+func AdminPassword() string { return get().adminPassword }
 
 // --- App ---
 

@@ -2,6 +2,33 @@
 
 ## Critical Priority
 
+### Deployment blockers
+- [x] Bootstrap the first administrator
+  - Registration only grants USER, so a fresh database had no way into the
+    admin panel; `ADMIN_EMAIL`/`ADMIN_PASSWORD` seed one on first start
+  - Ignored once an administrator exists, so it cannot reset an account
+- [x] Build the about page (`/about`) and advertise it by default
+- [x] Hide nav links to pages that do not exist (`/workouts`, `/nutrition`)
+  - Kept in the markup behind `ENABLED_WORKOUTS`, `ENABLED_NUTRITION` and
+    `ENABLED_ABOUT`, all defaulting to off
+  - The flags control visibility only; each still needs a route before it is
+    turned on
+- [x] Stop fragment endpoints serving partial pages
+  - `/blog/recent`, `/blog/search/suggestions` and `/categories` returned
+    unstyled markup to anyone opening the URL directly
+  - `middleware.FragmentOnly` redirects non-HTMX requests to the hosting page
+    and marks the responses noindex
+- [x] Point the mobile Тренировки / Хранене entries at the category pages
+  - They fall back to the category page and switch to the dedicated section
+    when `ENABLED_WORKOUTS` / `ENABLED_NUTRITION` are turned on
+- [x] Hide the public login entries when registration is off
+  - Two mobile links (menu and bottom bar) were ungated and pointed at a route
+    that is not registered, so they 404'd
+- [x] Default `ALLOW_REGISTRATION` to off
+- [x] Redirect the public auth paths home when registration is off
+  - They stay registered so a stale bookmark lands on the site rather than a
+    404; `/admin/login` is deliberately excluded
+
 ### Rate Limiting
 - [x] Implement rate limiting middleware for authentication endpoints
   - Login: 5 attempts per 15 minutes per IP

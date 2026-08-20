@@ -48,5 +48,18 @@ func AuthRoutes(mux *http.ServeMux, db *sql.DB) {
 		mux.Handle("POST /forgot-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleForgotPassword)))
 		mux.HandleFunc("GET /reset-password", authHandler.GetResetPassword)
 		mux.Handle("POST /reset-password", passwordResetLimiter.Middleware(http.HandlerFunc(authHandler.HandleResetPassword)))
+
+		return
+	}
+
+	// Registration is off, so the public auth paths stay registered purely to
+	// send visitors home. Leaving them unregistered would give a stale
+	// bookmark or an old link a dead end instead of the site.
+	//
+	// The admin login is deliberately not among these: pointing the public at
+	// it would only invite password guessing.
+	for _, path := range []string{"/login", "/register", "/forgot-password", "/reset-password"} {
+		mux.Handle("GET "+path, http.RedirectHandler("/", http.StatusSeeOther))
+		mux.Handle("POST "+path, http.RedirectHandler("/", http.StatusSeeOther))
 	}
 }

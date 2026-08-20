@@ -15,6 +15,7 @@ func BaseRoutes(mux *http.ServeMux, db *sql.DB) {
 	handler := handlers.NewDefaultHandler(categoryService)
 
 	mux.HandleFunc("GET /", handler.HandleHomePage)
+	mux.HandleFunc("GET /about", handler.HandleAbout)
 	mux.HandleFunc("GET /not-found", handler.HandleNotFound)
 	mux.HandleFunc("GET /error", handler.HandleError)
 

@@ -19,7 +19,7 @@ func CategoriesRoutes(mux *http.ServeMux, db *sql.DB) {
 	// @Produce json
 	// @Success 200 {array} categories.CategoryResponseResource
 	// @Router /categories [get]
-	mux.HandleFunc("GET "+prefix, controller.GetCategories)
+	mux.Handle("GET "+prefix, middleware.FragmentOnly("/", http.HandlerFunc(controller.GetCategories)))
 
 	// @Description Create a category (admin only)
 	// @Produce json

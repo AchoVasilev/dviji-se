@@ -38,6 +38,11 @@ func (handler *DefaultHandler) HandleHomePage(writer http.ResponseWriter, req *h
 	).Render(req.Context(), writer))
 }
 
+// HandleAbout renders the about page.
+func (handler *DefaultHandler) HandleAbout(writer http.ResponseWriter, req *http.Request) {
+	util.Must(templates.About().Render(req.Context(), writer))
+}
+
 func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
 	util.Must(templates.Layout(

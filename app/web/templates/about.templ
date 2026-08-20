@@ -1,0 +1,152 @@
+package templates
+
+import (
+	"server/internal/config"
+	"server/internal/http/middleware"
+	"server/util/ctxutils"
+)
+
+templ About() {
+	@LayoutSEO(
+		aboutContent(),
+		SEO{
+			Title:       "За нас",
+			Description: "Практични тренировки и разбираемо хранене за хора, които искат да се движат постоянно.",
+			Path:        "/about",
+			ImageURL:    "/static/img/running-man.png",
+		},
+		"/about",
+		ctxutils.GetCSRF(ctx),
+		config.AllowRegistration(),
+	)
+}
+
+templ aboutContent() {
+	<!-- Hero -->
+	<section class="relative flex min-h-[380px] sm:min-h-[460px] w-full items-center justify-center overflow-hidden bg-slate-900 py-16 sm:py-24">
+		<div class="absolute inset-0 hero-gradient"></div>
+		<div class="absolute inset-0 tactical-grid pointer-events-none opacity-20"></div>
+		<div class="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+			<div class="mx-auto max-w-3xl">
+				<h1 class="mb-4 sm:mb-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase italic leading-none tracking-tighter text-white">
+					Повече от <span class="text-primary">тренировка</span>
+				</h1>
+				<p class="text-base sm:text-lg md:text-xl font-light leading-relaxed text-slate-300">
+					Създадено за хора, които тренират в реалния живот. Фокусираме се върху резултата, не върху сложните теории.
+				</p>
+			</div>
+		</div>
+	</section>
+	<!-- Mission -->
+	<section class="border-b border-slate-200 dark:border-slate-800 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
+		<div class="mx-auto max-w-4xl text-center">
+			<span class="mb-6 sm:mb-8 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-primary">
+				Нашата мисия
+			</span>
+			<h2 class="mb-8 sm:mb-10 text-2xl sm:text-3xl md:text-4xl font-bold uppercase leading-tight">
+				Да ти помогнем да се движиш и да останеш постоянен
+			</h2>
+			<div class="space-y-6 sm:space-y-8">
+				<p class="text-base sm:text-lg md:text-xl leading-relaxed text-slate-600 dark:text-slate-300">
+					Вярваме, че формата не трябва да е сложна. Целта ни е проста: да ти дадем инструментите и мотивацията да се движиш всеки ден. Не предлагаме временни решения, а начин на живот, който издържа.
+				</p>
+				<p class="text-sm sm:text-base md:text-lg leading-relaxed text-slate-500 dark:text-slate-400">
+					Пишем за практично движение и устойчиви навици, за да постигаш траен резултат без излишно търсене и гадаене.
+				</p>
+			</div>
+		</div>
+	</section>
+	<!-- Values -->
+	<section class="bg-slate-50 dark:bg-slate-900/30 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
+		<div class="mx-auto max-w-7xl">
+			<div class="mb-12 sm:mb-16 text-center">
+				<h2 class="mb-4 text-2xl sm:text-3xl md:text-4xl font-extrabold uppercase tracking-tight">В какво вярваме</h2>
+				<p class="mx-auto max-w-xl text-base sm:text-lg text-slate-500 dark:text-slate-400">
+					Принципите, които стоят зад всичко, което правим.
+				</p>
+				<div class="mx-auto mt-6 h-1 w-16 rounded-full bg-primary"></div>
+			</div>
+			<div class="grid gap-6 sm:gap-8 md:grid-cols-3 lg:gap-12">
+				@valueCard("check_circle", "Простота", "Махаме шума. Ефективната тренировка не е сложна - тя е ясна и изпълнима.")
+				@valueCard("fitness_center", "Упорита работа", "Няма преки пътища. Ценим усилието във всяка тренировка и постоянството да се появяваш.")
+				@valueCard("bolt", "По-добри навици", "Успехът е в ежедневието. Малки последователни промени водят до голяма разлика.")
+			</div>
+		</div>
+	</section>
+	<!-- Philosophy -->
+	<section class="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
+		<div class="mx-auto max-w-7xl">
+			<div class="flex flex-col items-center gap-10 md:flex-row md:gap-12 lg:gap-20">
+				<div class="order-2 w-full md:order-1 md:w-1/2">
+					<div class="space-y-10 sm:space-y-12">
+						<div>
+							<h3 class="mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-tight">Нашата философия</h3>
+							<p class="text-base sm:text-lg text-slate-500 dark:text-slate-400">
+								Всичко стъпва на три опори, които работят за хора с реален график.
+							</p>
+						</div>
+						<div class="space-y-6 sm:space-y-8">
+							@philosophyPillar("directions_run", "Практични тренировки", "Тренировки, които можеш да правиш навсякъде. Движения, които се пренасят в ежедневието.")
+							@philosophyPillar("trending_flat", "Истински резултати", "Измерим напредък, който виждаш и усещаш. Следим това, което има значение.")
+							@philosophyPillar("restaurant", "Разбираемо хранене", "Прости навици, които захранват формата ти, без ограничителни режими.")
+						</div>
+					</div>
+				</div>
+				<div class="order-1 w-full md:order-2 md:w-1/2">
+					<img
+						src={ middleware.AssetURL("/static/img/strength-training-resized.webp") }
+						alt="Тренировка със свободни тежести"
+						class="h-56 sm:h-72 md:h-[420px] lg:h-[500px] w-full rounded-2xl sm:rounded-3xl object-cover shadow-2xl"
+						loading="lazy"
+						decoding="async"
+					/>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- Call to action -->
+	<section class="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
+		<div class="relative mx-auto max-w-6xl overflow-hidden rounded-2xl sm:rounded-3xl p-8 sm:p-12 md:p-16 lg:p-20 text-center">
+			<div class="absolute inset-0 bg-primary"></div>
+			<div class="absolute inset-0 bg-gradient-to-br from-primary via-primary to-red-900 opacity-90"></div>
+			<div class="relative z-10">
+				<h2 class="mb-6 sm:mb-8 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase leading-tight text-white">
+					Готов ли си да започнеш?
+				</h2>
+				<p class="mx-auto mb-8 sm:mb-12 max-w-2xl text-base sm:text-lg md:text-xl font-medium text-white/90">
+					Разгледай статиите и започни пътя към по-силна и по-постоянна версия на себе си.
+				</p>
+				<div class="flex flex-col justify-center gap-4 sm:flex-row sm:gap-5">
+					<a
+						href="/blog"
+						class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-8 sm:px-10 py-4 text-base sm:text-lg font-bold uppercase tracking-wider text-primary shadow-2xl transition-all hover:-translate-y-1"
+					>
+						Към статиите <span class="icon icon-trending_flat"></span>
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+}
+
+templ valueCard(icon string, title string, description string) {
+	<div class="group flex flex-col items-center rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-8 sm:p-10 text-center transition-all hover:border-primary/50 dark:border-slate-700/50 dark:bg-card-dark">
+		<div class="mb-6 sm:mb-8 flex size-16 sm:size-20 items-center justify-center rounded-full bg-primary/10 transition-all duration-300 group-hover:bg-primary">
+			<span class={ "icon text-primary text-3xl transition-colors group-hover:text-white", "icon-" + icon }></span>
+		</div>
+		<h4 class="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold uppercase tracking-tight">{ title }</h4>
+		<p class="text-base sm:text-lg leading-relaxed text-slate-500 dark:text-slate-400">{ description }</p>
+	</div>
+}
+
+templ philosophyPillar(icon string, title string, description string) {
+	<div class="flex gap-4 sm:gap-6">
+		<div class="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+			<span class={ "icon text-primary", "icon-" + icon }></span>
+		</div>
+		<div>
+			<h5 class="mb-1 sm:mb-2 text-lg sm:text-xl font-bold">{ title }</h5>
+			<p class="text-sm sm:text-base text-slate-500 dark:text-slate-400">{ description }</p>
+		</div>
+	</div>
+}

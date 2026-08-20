@@ -48,7 +48,15 @@ services:
       XSRF: local-dev-xsrf-key
 
       CORS_ORIGINS: http://localhost:8080
-      ALLOW_REGISTRATION: "true"
+      ALLOW_REGISTRATION: "false"
+
+      # Nav entries for sections that are not built yet.
+      ENABLED_WORKOUTS: "false"
+      ENABLED_NUTRITION: "false"
+
+      # Seeds the first administrator; ignored once one exists.
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: L0cal!DevPassw0rd
     restart: unless-stopped
 
 volumes:

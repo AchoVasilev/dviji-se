@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -21,7 +20,18 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	}
 }
 
+// Create adds a user with the default USER role.
 func (repo *UserRepository) Create(ctx context.Context, user User) error {
+	return repo.createWithRole(ctx, user, "USER")
+}
+
+// CreateAdmin adds a user with the ADMIN role. Used to bootstrap the first
+// administrator, since registration only ever grants USER.
+func (repo *UserRepository) CreateAdmin(ctx context.Context, user User) error {
+	return repo.createWithRole(ctx, user, "ADMIN")
+}
+
+func (repo *UserRepository) createWithRole(ctx context.Context, user User, roleName string) error {
 	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: false})
 	if err != nil {
 		return err
@@ -46,8 +56,8 @@ func (repo *UserRepository) Create(ctx context.Context, user User) error {
 		FROM roles r
 		JOIN roles_permissions rp ON r.id = rp.role_id
 		JOIN permissions p ON p.id = rp.permission_id
-		WHERE r.name = 'USER' AND r.is_deleted = FALSE`
-	roles, err := tx.QueryContext(ctx, roleQuery)
+		WHERE r.name = $1 AND r.is_deleted = FALSE`
+	roles, err := tx.QueryContext(ctx, roleQuery, roleName)
 	if err != nil {
 		return err
 	}
@@ -75,7 +85,7 @@ func (repo *UserRepository) Create(ctx context.Context, user User) error {
 	}
 
 	if role.Id == uuid.Nil {
-		err = errors.New("default USER role not found, cannot create user")
+		err = fmt.Errorf("role %q not found, cannot create user", roleName)
 		return err
 	}
 
@@ -242,6 +252,20 @@ func (repo *UserRepository) FindById(ctx context.Context, userId string) (User, 
 	}
 
 	return user, nil
+}
+
+// AdminExists reports whether any administrator account is present.
+func (repo *UserRepository) AdminExists(ctx context.Context) (bool, error) {
+	var exists bool
+	err := repo.db.QueryRowContext(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM users u
+			JOIN users_roles ur ON u.id = ur.user_id
+			JOIN roles r ON r.id = ur.role_id
+			WHERE r.name = 'ADMIN' AND u.is_deleted = FALSE AND r.is_deleted = FALSE
+		)`).Scan(&exists)
+
+	return exists, err
 }
 
 // RevokeTokensIssuedBefore stops every access token minted at or before the
