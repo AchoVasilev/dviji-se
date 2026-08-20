@@ -1,0 +1,119 @@
+package templates
+
+// Consent lives entirely in the page shell: the cookie dialog, the ad dialog
+// and the button that reopens the latter. Both dialogs share the .consent-*
+// classes so they cannot drift apart visually.
+//
+// Everything starts hidden and consent.js decides what to show from the
+// stored choice. With JavaScript off nothing appears and no advertising slot
+// is ever revealed, which is the safe direction to fail in.
+
+// cookieConsent asks the one question that has to be answered before any
+// non-essential cookie is set. The dialog cannot be dismissed without
+// choosing: closing it silently would leave the choice unrecorded and the
+// dialog would return on the next page.
+templ cookieConsent() {
+	<div class="consent-overlay" id="cookie-consent" role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title">
+		<div class="consent-panel">
+			<div class="flex flex-col items-center text-center">
+				<div class="consent-icon">
+					<span class="icon icon-cookie"></span>
+				</div>
+				<h2 class="consent-title" id="cookie-consent-title">Бисквитки</h2>
+				<p class="consent-text">
+					Използваме само необходимите бисквитки, за да работи сайтът - вход
+					и защита на формите. С твое съгласие ще показваме и реклами, които
+					поддържат проекта. Подробностите са в
+					{ " " }
+					<a class="text-primary hover:underline" href="/privacy">политиката за поверителност</a>.
+				</p>
+				<div class="consent-actions">
+					<button type="button" class="consent-accept" data-consent-action="accept-all">
+						Приемам всички
+					</button>
+					<button type="button" class="consent-decline" data-consent-action="necessary-only">
+						Само необходимите
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// adConsent is the same dialog for the advertising choice on its own, opened
+// from the floating button. It is dismissable, because leaving it changes
+// nothing: the previous answer stands.
+templ adConsent() {
+	<div class="consent-overlay" id="ad-consent" role="dialog" aria-modal="true" aria-labelledby="ad-consent-title">
+		<div class="consent-panel">
+			<button type="button" class="consent-close" data-consent-action="close" aria-label="Затвори">
+				<span class="icon icon-close"></span>
+			</button>
+			<div class="flex flex-col items-center text-center">
+				<div class="consent-icon">
+					<span class="icon icon-gift"></span>
+				</div>
+				<h2 class="consent-title" id="ad-consent-title">Подкрепи проекта</h2>
+				<p class="consent-text">
+					Рекламите плащат хостинга и оставят съдържанието безплатно.
+					Съгласяваш ли се да ти показваме реклами?
+				</p>
+				<div class="consent-actions">
+					<button type="button" class="consent-accept" data-consent-action="accept-ads">
+						Да, показвай реклами
+					</button>
+					<button type="button" class="consent-decline" data-consent-action="decline-ads">
+						Не, благодаря
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// adConsentButton stays on screen whatever the answer was, so the choice can
+// be revisited at any time - including a withdrawal, which the GDPR requires
+// to be as easy as giving it.
+templ adConsentButton() {
+	<button
+		type="button"
+		class="consent-fab"
+		id="ad-consent-button"
+		data-consent-action="open"
+		aria-haspopup="dialog"
+		aria-controls="ad-consent"
+		aria-label="Настройки за реклами"
+	>
+		<span class="icon icon-gift"></span>
+	</button>
+}
+
+// Consent renders the whole thing. Included once per public page.
+templ Consent() {
+	@cookieConsent()
+	@adConsent()
+	@adConsentButton()
+}
+
+// AdSlot is where an advertisement goes, in whichever placement the variant
+// names. It holds no third party markup of its own: consent.js fills it
+// through the window.dvijiSe.renderAds hook, so a visitor who never consents
+// never loads an ad network.
+//
+// Visibility is not a class toggled on the element. Which placement applies
+// depends on the viewport - the rail wants a wide screen, the banner a narrow
+// one - and flipping a `hidden` class here would override that breakpoint and
+// reveal the wrong slot. The markup therefore stays fixed, consent.js only
+// marks the document with `ads-on`, and the .ad-slot-* rules decide the rest.
+templ AdSlot(id string, variant AdVariant) {
+	<aside
+		class={ "ad-slot", variant.Class() }
+		id={ id }
+		data-ad-slot
+		data-ad-variant={ string(variant) }
+		aria-hidden="true"
+		aria-label="Реклама"
+	>
+		<div class="ad-slot-frame">Реклама</div>
+	</aside>
+}

@@ -184,7 +184,7 @@ templ footer(allowLogin bool) {
 				<span class="text-xl font-black tracking-tighter uppercase italic">Движи се</span>
 			</div>
 			<div class="flex justify-center gap-8 mb-8 text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-				<a class="hover:text-primary transition-colors" href="#">Поверителност</a>
+				<a class="hover:text-primary transition-colors" href="/privacy">Поверителност</a>
 				<a class="hover:text-primary transition-colors" href="#">Условия</a>
 				<a class="hover:text-primary transition-colors" href="#">Контакти</a>
 			</div>
@@ -231,12 +231,24 @@ templ LayoutSEO(contents templ.Component, seo SEO, activeLink string, csrfToken 
 		@head(seo)
 		<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 font-sans min-h-screen transition-colors duration-200 pb-16 lg:pb-0">
 			@header(activeLink, allowLogin)
-			<main>
-				@contents
-			</main>
+			// The rail sits beside the page rather than inside it, so every
+			// page picks it up without knowing about advertising. With no
+			// consent both slots are display:none and the row collapses back
+			// to a single full width column.
+			<div class="flex items-start">
+				@AdSlot("ad-rail", AdRail)
+				<div class="flex-1 min-w-0">
+					@AdSlot("ad-banner", AdBanner)
+					<main>
+						@contents
+					</main>
+				</div>
+			</div>
 			@footer(allowLogin)
+			@Consent()
 			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/htmx.min.js") }></script>
 			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/json-enc.js") }></script>
+			<script defer type="text/javascript" src={ middleware.AssetURL("/static/scripts/consent.js") }></script>
 		</body>
 	</html>
 }

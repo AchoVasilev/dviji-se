@@ -1,0 +1,182 @@
+package templates
+
+import (
+	"server/internal/config"
+	"server/util/ctxutils"
+)
+
+// privacyUpdated is the date shown on the page. Bump it whenever the text
+// below changes in a way a reader would care about - that is the only way
+// someone can tell whether they have read the current version.
+const privacyUpdated = "20 август 2026"
+
+templ Privacy() {
+	@LayoutSEO(
+		privacyContent(),
+		SEO{
+			Title:       "Политика за поверителност",
+			Description: "Какви данни събира Движи се, защо ги обработва и какви права имаш върху тях.",
+			Path:        "/privacy",
+		},
+		"/privacy",
+		ctxutils.GetCSRF(ctx),
+		config.AllowRegistration(),
+	)
+}
+
+// privacySection is the card the page repeats: an icon, a heading and the
+// text. Defined once so the sections cannot drift apart.
+templ privacySection(icon string, title string) {
+	<section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-card-dark p-6 sm:p-8 transition-colors hover:border-primary/50">
+		<div class="mb-6 flex items-center gap-4">
+			<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-2xl text-primary">
+				<span class={ "icon", "icon-" + icon }></span>
+			</div>
+			<h2 class="text-xl sm:text-2xl font-bold uppercase tracking-tight">{ title }</h2>
+		</div>
+		<div class="space-y-4 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
+			{ children... }
+		</div>
+	</section>
+}
+
+templ privacyContent() {
+	<section class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+		<div class="mx-auto max-w-3xl">
+			<h1 class="mb-4 text-3xl sm:text-4xl md:text-5xl font-black uppercase italic leading-none tracking-tighter">
+				Политика за <span class="text-primary">поверителност</span>
+			</h1>
+			<p class="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+				Последна промяна: { privacyUpdated }
+			</p>
+			<p class="mt-6 text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+				Движи се е блог. Не ти трябва профил, за да четеш, и не искаме от теб
+				нищо, което не ни е нужно. Тук пише точно какви данни минават през
+				сайта, защо и колко се пазят.
+			</p>
+		</div>
+	</section>
+	<div class="mx-auto max-w-3xl space-y-6 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+		@privacySection("list", "Какво събираме") {
+			<p>
+				Когато четеш сайта, не създаваме профил и не искаме данни от теб.
+				Обработват се само тези, без които сайтът не може да работи:
+			</p>
+			<ul class="list-disc space-y-2 pl-6">
+				<li>
+					<strong class="text-slate-900 dark:text-white">Технически бисквитки:</strong>
+					{ " " }
+					един идентификатор на браузъра и един токен срещу подправени заявки
+					(CSRF). Без тях всяка форма в сайта става атакуема.
+				</li>
+				<li>
+					<strong class="text-slate-900 dark:text-white">Избора ти за реклами:</strong>
+					{ " " }
+					пази се в бисквитка, за да не те питаме на всяка страница.
+				</li>
+				<li>
+					<strong class="text-slate-900 dark:text-white">IP адрес:</strong>
+					{ " " }
+					използва се само за ограничаване на опитите за вход и се пази в
+					паметта на сървъра за срока на съответния лимит - до час. Не влиза
+					в база данни и не се свързва с потребител.
+				</li>
+				<li>
+					<strong class="text-slate-900 dark:text-white">Технически журнали:</strong>
+					{ " " }
+					адресът на страницата, отговорът на сървъра и номер на заявката,
+					за да може една грешка да бъде проследена.
+				</li>
+			</ul>
+			<p>
+				Профили има само екипът, който публикува съдържание. За такъв профил
+				се пазят имейл, по избор име, ролята и парола - записана като
+				необратим хеш, не като текст.
+			</p>
+		}
+		@privacySection("cookie", "Бисквитки") {
+			<p>
+				Ползваме две групи. Необходимите вървят винаги, защото без тях няма
+				вход и няма защита на формите. Рекламните се пускат само ако си
+				натиснал съгласие.
+			</p>
+			<ul class="list-disc space-y-2 pl-6">
+				<li><code>csrf_session</code>, <code>csrf_token</code> - защита на формите, до 24 часа.</li>
+				<li><code>consent</code> - твоят избор за реклами, до една година.</li>
+				<li><code>X-LOGIN-TOKEN</code>, <code>X-REFRESH-TOKEN</code> - само за влезли автори.</li>
+			</ul>
+			<p>
+				Съгласието се оттегля толкова лесно, колкото се дава: бутонът долу
+				вдясно отваря същия въпрос по всяко време. Можеш и да изтриеш
+				бисквитките от браузъра си.
+			</p>
+		}
+		@privacySection("gift", "Реклами") {
+			<p>
+				В момента в сайта не е включена рекламна мрежа - местата за реклама
+				стоят празни. Когато бъде включена, тя ще се зарежда единствено
+				след твое съгласие.
+			</p>
+			<p>
+				Рекламните мрежи виждат IP адреса и данни за устройството ти и могат
+				да ги ползват за профилиране. Затова без съгласие не се зарежда нищо
+				тяхно - не просто скриваме рекламата, а изобщо не се свързваме с
+				мрежата.
+			</p>
+		}
+		@privacySection("open_in_new", "Кой друг вижда данните") {
+			<p>Не продаваме данни. До тях достигат само доставчиците, които сайтът ползва, за да работи:</p>
+			<ul class="list-disc space-y-2 pl-6">
+				<li>Хостинг доставчикът, при когото работят сървърът и базата данни.</li>
+				<li>Cloudinary - съхранява снимките в статиите.</li>
+				<li>Доставчикът на имейл - изпраща писмата за възстановяване на парола.</li>
+			</ul>
+			<p>
+				Част от тях обработват данни извън Европейския съюз. Данни се
+				предоставят и когато закон го изисква.
+			</p>
+		}
+		@privacySection("description", "Колко дълго") {
+			<ul class="list-disc space-y-2 pl-6">
+				<li>Бисквитките - за срока, описан по-горе.</li>
+				<li>IP адресите за ограничаване на опитите - до час, само в паметта.</li>
+				<li>Технически журнали - до 30 дни.</li>
+				<li>Профил на автор - докато съществува, плюс изтриване при поискване.</li>
+				<li>Кодовете за нова парола - до един час и само като хеш; използваният код става невалиден веднага.</li>
+			</ul>
+		}
+		@privacySection("person", "Твоите права") {
+			<p>Според Общия регламент за защита на данните (GDPR) имаш право да:</p>
+			<ul class="list-disc space-y-2 pl-6">
+				<li>получиш копие от данните, които се отнасят до теб;</li>
+				<li>поискаш поправка на неточни данни;</li>
+				<li>поискаш изтриване;</li>
+				<li>оттеглиш съгласие, което си дал - включително за реклами;</li>
+				<li>възразиш срещу обработването;</li>
+				<li>подадеш жалба до Комисията за защита на личните данни.</li>
+			</ul>
+			<p>
+				Ако само четеш сайта, при нас няма запис, който да те идентифицира -
+				бисквитките се трият от браузъра ти и с това въпросът приключва.
+			</p>
+		}
+		@privacySection("mail", "Контакт") {
+			<p>
+				За всичко по-горе - въпроси, искания или възражения - пиши на:
+			</p>
+			if config.PrivacyContactEmail() != "" {
+				<p>
+					<a
+						class="font-bold text-primary hover:underline"
+						href={ templ.SafeURL("mailto:" + config.PrivacyContactEmail()) }
+					>
+						{ config.PrivacyContactEmail() }
+					</a>
+				</p>
+			}
+			<p class="text-sm text-slate-500 dark:text-slate-400">
+				Отговаряме в срок до един месец, както изисква регламентът.
+			</p>
+		}
+	</div>
+}
