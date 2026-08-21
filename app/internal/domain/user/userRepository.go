@@ -28,7 +28,7 @@ func (repo *UserRepository) Create(ctx context.Context, user User) error {
 // CreateAdmin adds a user with the ADMIN role. Used to bootstrap the first
 // administrator, since registration only ever grants USER.
 func (repo *UserRepository) CreateAdmin(ctx context.Context, user User) error {
-	return repo.createWithRole(ctx, user, "ADMIN")
+	return repo.createWithRole(ctx, user, RoleAdmin)
 }
 
 func (repo *UserRepository) createWithRole(ctx context.Context, user User, roleName string) error {

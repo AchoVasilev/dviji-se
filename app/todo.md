@@ -46,6 +46,11 @@
 - [x] Protect admin endpoints (RequireAuth + RequireAdmin middleware)
 - [x] Add role-based access control (RBAC) checks in handlers
 - [x] Protect category endpoints (`POST /categories` was fully unauthenticated)
+- [x] Refuse non administrators at `/admin/login`
+  - It stays registered when public registration is off, so it was the one
+    entry point that would hand a session to any account with a valid password
+  - Checked after the password and answered with the same message, so the
+    response cannot be used to find out which addresses are administrators
 - [x] Protect user-specific endpoints - nothing to protect yet
   - Audited every route: all are public content, auth entry points, or already
     behind RequireAuth+RequireAdmin. There are no user-scoped endpoints
@@ -70,6 +75,13 @@
     tag and the reset service, so one policy governs every path
   - Login deliberately enforces no policy: existing accounts hold weaker
     passwords and must still be able to sign in
+
+### Denial of service
+- [x] Set the HTTP server timeouts
+  - `http.Server` had none, so a client could hold a connection open by
+    trickling a request one byte at a time
+  - Header 10s, body 60s (a 12 MiB upload over a slow link), write 60s,
+    idle 120s
 
 ### Security Headers
 - [x] Re-enable Content-Security-Policy middleware in `server.go`
@@ -263,19 +275,49 @@
 - [x] Schema.org Article markup (JSON-LD)
 
 ## Milestone 6: Monetization & Ads
-- [ ] Ad consent system (popup → minimized widget, ads only if consented)
+- [x] Ad consent system (popup → floating button, ads only if consented)
+  - `templates.Consent` renders both dialogs and the button; `consent.js`
+    stores the answer in a `consent` cookie (`necessary` or `ads`)
+  - `templates.AdSlot(id, variant)` is one component for every placement:
+    `AdRail` beside the content from 1024px up, `AdBanner` full width and one
+    viewport tall below it, `AdInline` anywhere in a page
+  - Both layout slots live in `LayoutSEO`, so every public page carries them
+  - Slots hold no third party markup and are display:none until consent.js
+    marks the document `ads-on` - visibility is a stylesheet concern because
+    which placement applies depends on the viewport, not on the answer
+  - The button stays after either answer, so consent can be withdrawn as
+    easily as it was given
 - [ ] Third-party ad networks (Google AdSense)
+  - Register `window.dvijiSe.renderAds`; `consent.js` calls it only once
+    advertising is consented to
+  - Needs the public CSP widened for the network's script and frame hosts,
+    and `AdSlot` placed on the pages that should carry ads
 - [ ] Affiliate links tracking (`/go/{slug}`)
 - [ ] Sponsored posts (sponsor badge, sponsor fields)
 - [ ] Self-hosted ads (full ad management system)
 
 ## Milestone 7: GDPR & Privacy Compliance
-- [ ] Cookie consent banner (necessary/analytics/advertising categories)
-- [ ] Privacy policy page (`/privacy`)
+- [x] Cookie consent banner (necessary + advertising)
+  - Asked once on the first visit and unanswerable by dismissal, so no
+    non-essential cookie is set without a choice
+  - Analytics is deliberately not offered: nothing measures visitors yet, and
+    a category that does nothing is a consent nobody can act on
+- [x] Privacy policy page (`/privacy`)
+  - Describes what the app actually does: the four cookies by name, the IP
+    kept in memory by the rate limiter, hashed reset tokens, and the fact
+    that no ad network is wired in yet
+  - Linked from the footer and from the cookie dialog, and listed in the
+    sitemap along with `/about`, which was missing from it
+  - `PRIVACY_CONTACT_EMAIL` names the mailbox; it falls back to
+    privacy@<host of APP_BASE_URL>
+  - Still owner supplied: the legal identity of whoever runs the site, if it
+    is operated as a business rather than personally
 - [ ] User data export (`/account/export` - right to access)
 - [ ] Account deletion (`/account/delete` - right to be forgotten)
 - [ ] Consent logging (track all user consents)
-- [ ] Integration: cookie consent → ad consent flow
+- [x] Integration: cookie consent → ad consent flow
+  - Accepting everything in the cookie dialog answers the advertising
+    question too; the floating button reopens it later
 
 ## Milestone 8: Social Login (OAuth2)
 - [ ] OAuth2 infrastructure (provider interface, manager)

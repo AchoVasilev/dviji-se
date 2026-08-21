@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"server/internal/application/auth"
 	"server/internal/application/users"
+	"server/internal/domain/user"
 	"server/internal/http/handlers/models"
 	"server/util"
 	"server/util/ctxutils"
@@ -114,21 +115,25 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 		return
 	}
 
-	user, err := handler.userService.GetUserByEmail(ctx, input.Email)
+	// The admin login stays reachable when public registration is off, so it is
+	// the one entry point that must not hand a session to a non administrator.
+	adminLogin := strings.HasPrefix(req.URL.Path, "/admin")
+
+	account, err := handler.userService.GetUserByEmail(ctx, input.Email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		slog.ErrorContext(ctx, err.Error())
 		writer.Header().Add("HX-Redirect", "/error")
 		return
 	}
 
-	if errors.Is(err, sql.ErrNoRows) || user.Email == "" {
+	if errors.Is(err, sql.ErrNoRows) || account.Email == "" {
 		slog.InfoContext(ctx, fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
 		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(ctx, writer))
 		return
 	}
 
-	tokenResult, err := handler.authService.Authenticate(user, input.Password, input.RememberMe, ctx)
+	tokenResult, err := handler.authService.Authenticate(account, input.Password, input.RememberMe, ctx)
 	if errors.Is(err, auth.ErrHashNotMatch) {
 		slog.InfoContext(ctx, fmt.Sprintf("Attempt to login with invalid credentials. [email=%s]", input.Email))
 		writer.WriteHeader(http.StatusNotFound)
@@ -142,11 +147,23 @@ func (handler *AuthHandler) HandleLogin(writer http.ResponseWriter, req *http.Re
 		return
 	}
 
+	// Checked after the password so the response cannot be used to tell an
+	// administrator's address apart from any other, and answered with the same
+	// message for the same reason. No cookie is issued: a non administrator has
+	// nothing to do behind /admin, and a session minted here would otherwise
+	// survive as an ordinary login.
+	if adminLogin && !user.HasRole(account.Roles, user.RoleAdmin) {
+		slog.WarnContext(ctx, "Rejected a non administrator at the admin login", "email", input.Email)
+		writer.WriteHeader(http.StatusNotFound)
+		util.Must(templates.InvalidMessage("Невалиден имейл или парола", "error-email").Render(ctx, writer))
+		return
+	}
+
 	httputils.SetAuthCookie(httputils.AuthCookieName, tokenResult.Token, tokenResult.TokenTime, input.RememberMe, writer)
 	httputils.SetRefreshCookie(tokenResult.RefreshToken, tokenResult.RefreshTokenTime, writer)
 
 	redirect := "/"
-	if strings.HasPrefix(req.URL.Path, "/admin") {
+	if adminLogin {
 		redirect = "/admin"
 	}
 	writer.Header().Set("HX-Redirect", redirect)

@@ -269,31 +269,35 @@ func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), cancelTime)
+	ctx, cancel := context.WithTimeout(r.Context(), uploadTime)
 	defer cancel()
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max
-	if err != nil {
-		httputils.SendBadRequestResponse(ctx, w, "Failed to parse form")
-		return
-	}
-
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		httputils.SendBadRequestResponse(ctx, w, "No file uploaded")
+	file, header, ok := readUpload(ctx, w, r)
+	if !ok {
 		return
 	}
 	defer file.Close()
 
+	// The browser's declared type is whatever it felt like sending, so the
+	// bytes decide. Without this any file the admin picked by mistake would be
+	// stored and then served as a cover image.
+	if err := requireImage(file); err != nil {
+		httputils.SendBadRequestResponse(ctx, w, err.Error())
+		return
+	}
+
 	if h.cloudinaryService == nil {
-		httputils.SendErrorResponse(ctx, w, "Image upload not configured", http.StatusServiceUnavailable)
+		httputils.SendErrorResponse(ctx, w, "Качването на изображения не е настроено", http.StatusServiceUnavailable)
 		return
 	}
 
 	result, err := h.cloudinaryService.Upload(ctx, file, header.Filename)
 	if err != nil {
-		slog.ErrorContext(ctx, "Error uploading image", "error", err)
-		httputils.SendInternalServerResponse(w, r)
+		// Cloudinary has its own size ceiling - 10 MB on the free plan - so a
+		// file this server accepted can still be refused there. Saying so
+		// beats a blank 500 that looks like the site broke.
+		slog.ErrorContext(ctx, "Error uploading image", "error", err, "filename", header.Filename, "size", header.Size)
+		httputils.SendErrorResponse(ctx, w, "Хранилището за изображения отказа файла. Пробвай с по-малък файл.", http.StatusBadGateway)
 		return
 	}
 
@@ -303,37 +307,30 @@ func (h *AdminHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), cancelTime)
+	ctx, cancel := context.WithTimeout(r.Context(), uploadTime)
 	defer cancel()
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max
-	if err != nil {
-		httputils.SendBadRequestResponse(ctx, w, "Failed to parse form")
-		return
-	}
-
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		httputils.SendBadRequestResponse(ctx, w, "No file uploaded")
+	file, header, ok := readUpload(ctx, w, r)
+	if !ok {
 		return
 	}
 	defer file.Close()
 
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	if ext != ".gpx" {
-		httputils.SendBadRequestResponse(ctx, w, "Only .gpx files are allowed")
+		httputils.SendBadRequestResponse(ctx, w, "Разрешени са само .gpx файлове")
 		return
 	}
 
 	if h.cloudinaryService == nil {
-		httputils.SendErrorResponse(ctx, w, "File upload not configured", http.StatusServiceUnavailable)
+		httputils.SendErrorResponse(ctx, w, "Качването на файлове не е настроено", http.StatusServiceUnavailable)
 		return
 	}
 
 	result, err := h.cloudinaryService.UploadRaw(ctx, file, header.Filename)
 	if err != nil {
-		slog.ErrorContext(ctx, "Error uploading file", "error", err)
-		httputils.SendInternalServerResponse(w, r)
+		slog.ErrorContext(ctx, "Error uploading file", "error", err, "filename", header.Filename, "size", header.Size)
+		httputils.SendErrorResponse(ctx, w, "Хранилището отказа файла. Пробвай с по-малък файл.", http.StatusBadGateway)
 		return
 	}
 

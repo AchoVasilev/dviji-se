@@ -1,0 +1,27 @@
+# Terminates TLS and forwards to the app. Caddy obtains and renews the
+# certificate from Let's Encrypt on its own, which is the whole reason it is
+# here: the app sets Secure cookies and HSTS in production, so it is unusable
+# over plain HTTP.
+#
+# DOMAIN and ACME_EMAIL come from the environment (see docker-compose.prod.yml).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# X-Forwarded-For is appended here, and the app only believes it from the
+	# networks listed in TRUSTED_PROXIES. Both halves are needed: without the
+	# header every client looks like this container to the rate limiter,
+	# without the allow list any client could forge it.
+	reverse_proxy app:8080 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	# The app already emits its own security headers, CSP and compression, so
+	# nothing here duplicates them.
+	log {
+		output stderr
+		format console
+	}
+}

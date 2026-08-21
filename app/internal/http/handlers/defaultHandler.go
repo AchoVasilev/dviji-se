@@ -43,6 +43,11 @@ func (handler *DefaultHandler) HandleAbout(writer http.ResponseWriter, req *http
 	util.Must(templates.About().Render(req.Context(), writer))
 }
 
+// HandlePrivacy renders the privacy policy.
+func (handler *DefaultHandler) HandlePrivacy(writer http.ResponseWriter, req *http.Request) {
+	util.Must(templates.Privacy().Render(req.Context(), writer))
+}
+
 func (handler *DefaultHandler) HandleNotFound(writer http.ResponseWriter, req *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
 	util.Must(templates.Layout(

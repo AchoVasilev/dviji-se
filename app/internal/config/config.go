@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"net/netip"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -60,8 +61,9 @@ type cfg struct {
 	adminPassword string
 
 	// App
-	baseURL    string
-	tinymceURL string
+	baseURL             string
+	tinymceURL          string
+	privacyContactEmail string
 }
 
 func load() {
@@ -118,6 +120,11 @@ func load() {
 			baseURL:    getEnv("APP_BASE_URL", "http://localhost:8080"),
 			tinymceURL: getEnv("TINYMCE_URL", ""),
 		}
+
+		// The privacy policy has to name an address people can write to, so
+		// this falls back to privacy@<site host> rather than leaving the page
+		// telling visitors to contact nobody.
+		c.privacyContactEmail = getEnv("PRIVACY_CONTACT_EMAIL", defaultContactEmail(c.baseURL))
 	})
 }
 
@@ -205,6 +212,27 @@ func AdminPassword() string { return get().adminPassword }
 
 func BaseURL() string    { return get().baseURL }
 func TinyMCEURL() string { return get().tinymceURL }
+
+// PrivacyContactEmail is the address the privacy policy points data subjects
+// at. Set PRIVACY_CONTACT_EMAIL to a mailbox that is actually read.
+func PrivacyContactEmail() string { return get().privacyContactEmail }
+
+// defaultContactEmail derives privacy@<host> from the site's base URL. A base
+// URL that does not parse leaves the address empty, and the policy then omits
+// the mail link rather than printing a broken one.
+func defaultContactEmail(baseURL string) string {
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+
+	host := parsed.Hostname()
+	if host == "" {
+		return ""
+	}
+
+	return "privacy@" + host
+}
 
 // --- Helpers ---
 

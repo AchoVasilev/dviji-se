@@ -133,6 +133,16 @@ func SitemapFromPosts(domainPosts []posts.SitemapEntry, baseURL string) Sitemap 
 			ChangeFreq: "daily",
 			Priority:   "0.9",
 		},
+		{
+			Loc:        baseURL + "/about",
+			ChangeFreq: "monthly",
+			Priority:   "0.5",
+		},
+		{
+			Loc:        baseURL + "/privacy",
+			ChangeFreq: "yearly",
+			Priority:   "0.3",
+		},
 	}
 
 	for _, post := range domainPosts {

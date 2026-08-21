@@ -29,6 +29,116 @@ button, [type="button"], [type="submit"], [type="reset"] {
 	@apply bg-accent hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg transition-all uppercase tracking-wider text-sm;
 }
 
+/* ── Consent dialogs (cookies + ads) ──
+   One set of classes for both so the two dialogs cannot drift apart. Hidden
+   by default: consent.js decides which one to show, and a browser with
+   JavaScript off must not be left staring at an undismissable overlay. */
+.consent-overlay {
+	@apply hidden fixed inset-0 z-[100] items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm;
+}
+
+.consent-overlay.is-open {
+	@apply flex;
+}
+
+.consent-panel {
+	@apply relative w-full max-w-md rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 p-8 shadow-2xl;
+}
+
+.consent-icon {
+	@apply w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-4xl mb-6;
+}
+
+.consent-title {
+	@apply text-2xl font-black tracking-tight mb-4;
+}
+
+.consent-text {
+	@apply text-sm text-slate-600 dark:text-slate-400 mb-8;
+}
+
+.consent-actions {
+	@apply flex flex-col w-full gap-3;
+}
+
+.consent-accept {
+	@apply w-full py-3 rounded-full bg-primary hover:bg-red-700 text-white font-bold uppercase tracking-wider text-sm transition-all hover:scale-[1.02];
+}
+
+.consent-decline {
+	@apply w-full py-3 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors;
+}
+
+.consent-close {
+	@apply absolute top-4 right-4 text-slate-400 hover:text-primary transition-colors;
+}
+
+/* Sits above the mobile bottom nav, which the layout already pads for. */
+.consent-fab {
+	@apply hidden fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50 w-14 h-14 rounded-full bg-primary text-white text-2xl shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95;
+}
+
+.consent-fab.is-visible {
+	@apply flex;
+}
+
+/* ── Advertising slots ──
+   One component, three placements. Every slot is display:none until
+   consent.js marks the document with `ads-on`, so an unconsented visitor
+   never even reserves the space - the rail drops out of the flex row and the
+   content reclaims the full width. */
+[data-ad-slot] {
+	display: none;
+}
+
+.ad-slot-frame {
+	@apply flex w-full items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs uppercase tracking-widest text-slate-400;
+}
+
+/* Rail: beside the content, following the scroll below the sticky header. */
+.ad-slot-rail {
+	@apply w-40 shrink-0 self-start sticky top-20 ps-4 py-8;
+}
+
+.ad-slot-rail .ad-slot-frame {
+	@apply min-h-[600px];
+}
+
+/* Banner: a full viewport above the content on narrow screens, scrolled past
+   rather than squeezed in beside anything. */
+.ad-slot-banner {
+	@apply w-full border-b border-slate-200 dark:border-slate-800;
+}
+
+.ad-slot-banner .ad-slot-frame {
+	@apply min-h-[100svh] rounded-none border-0;
+}
+
+.ad-slot-inline {
+	@apply my-8 w-full;
+}
+
+.ad-slot-inline .ad-slot-frame {
+	@apply min-h-[90px];
+}
+
+.ads-on .ad-slot-inline,
+.ads-on .ad-slot-banner {
+	display: block;
+}
+
+/* The rail needs room next to the page, and the banner would then be a second
+   advertisement on the same screen, so the two swap at the same breakpoint. */
+@media (min-width: 1024px) {
+	.ads-on .ad-slot-rail {
+		display: block;
+	}
+
+	.ads-on .ad-slot-banner {
+		display: none;
+	}
+}
+
 /* ── Navigation ── */
 .nav-item-on {
 	@apply text-primary font-medium text-sm uppercase tracking-wider;
@@ -79,6 +189,8 @@ button, [type="button"], [type="submit"], [type="reset"] {
 .icon-bookmark { -webkit-mask-image: url(/static/icons/bookmark.svg); mask-image: url(/static/icons/bookmark.svg); }
 .icon-category { -webkit-mask-image: url(/static/icons/category.svg); mask-image: url(/static/icons/category.svg); }
 .icon-check_circle { -webkit-mask-image: url(/static/icons/check_circle.svg); mask-image: url(/static/icons/check_circle.svg); }
+.icon-close { -webkit-mask-image: url(/static/icons/close.svg); mask-image: url(/static/icons/close.svg); }
+.icon-cookie { -webkit-mask-image: url(/static/icons/cookie.svg); mask-image: url(/static/icons/cookie.svg); }
 .icon-delete { -webkit-mask-image: url(/static/icons/delete.svg); mask-image: url(/static/icons/delete.svg); }
 .icon-download { -webkit-mask-image: url(/static/icons/download.svg); mask-image: url(/static/icons/download.svg); }
 .icon-description { -webkit-mask-image: url(/static/icons/description.svg); mask-image: url(/static/icons/description.svg); }
@@ -87,6 +199,7 @@ button, [type="button"], [type="submit"], [type="reset"] {
 .icon-edit_note { -webkit-mask-image: url(/static/icons/edit_note.svg); mask-image: url(/static/icons/edit_note.svg); }
 .icon-explore { -webkit-mask-image: url(/static/icons/explore.svg); mask-image: url(/static/icons/explore.svg); }
 .icon-fitness_center { -webkit-mask-image: url(/static/icons/fitness_center.svg); mask-image: url(/static/icons/fitness_center.svg); }
+.icon-gift { -webkit-mask-image: url(/static/icons/gift.svg); mask-image: url(/static/icons/gift.svg); }
 .icon-home { -webkit-mask-image: url(/static/icons/home.svg); mask-image: url(/static/icons/home.svg); }
 .icon-image { -webkit-mask-image: url(/static/icons/image.svg); mask-image: url(/static/icons/image.svg); }
 .icon-list { -webkit-mask-image: url(/static/icons/list.svg); mask-image: url(/static/icons/list.svg); }

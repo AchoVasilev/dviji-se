@@ -2,13 +2,14 @@ package middleware
 
 import (
 	"net/http"
+	"server/internal/domain/user"
 	"server/util/ctxutils"
 )
 
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := ctxutils.GetUser(r.Context())
-		if err != nil || user == nil {
+		loggedUser, err := ctxutils.GetUser(r.Context())
+		if err != nil || loggedUser == nil {
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
@@ -19,21 +20,13 @@ func RequireAuth(next http.Handler) http.Handler {
 
 func RequireAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := ctxutils.GetUser(r.Context())
-		if err != nil || user == nil {
+		loggedUser, err := ctxutils.GetUser(r.Context())
+		if err != nil || loggedUser == nil {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
 
-		isAdmin := false
-		for _, role := range user.Roles {
-			if role.Name == "ADMIN" {
-				isAdmin = true
-				break
-			}
-		}
-
-		if !isAdmin {
+		if !user.HasRole(loggedUser.Roles, user.RoleAdmin) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}

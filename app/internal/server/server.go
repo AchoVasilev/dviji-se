@@ -10,6 +10,7 @@ import (
 	"server/internal/domain/user"
 	"server/internal/http/middleware"
 	"server/internal/http/routes"
+	"time"
 )
 
 type ApiServer struct {
@@ -52,6 +53,15 @@ func Initialize(db *sql.DB) {
 		http: &http.Server{
 			Addr:    ":" + port,
 			Handler: stack(router),
+
+			// Without these a client can hold a connection open by trickling a
+			// request one byte at a time and exhaust the server. The header
+			// budget is the tight one; the body budget has to stay generous
+			// enough for a 12 MiB image upload over a slow link.
+			ReadHeaderTimeout: 10 * time.Second,
+			ReadTimeout:       60 * time.Second,
+			WriteTimeout:      60 * time.Second,
+			IdleTimeout:       120 * time.Second,
 		},
 	}
 }
