@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"server/internal/config"
+	"server/util/imageutils"
 )
 
 const (
@@ -73,12 +74,18 @@ func (s SEO) CanonicalURL() string {
 
 // ImageAbsoluteURL is the absolute URL of the share image. Social scrapers do
 // not resolve relative paths, so this must never be relative.
+// ogImageWidth matches what the social networks render a preview at.
+const ogImageWidth = 1200
+
 func (s SEO) ImageAbsoluteURL() string {
 	if s.ImageURL == "" {
 		return absoluteURL(defaultOGImage)
 	}
 
-	return absoluteURL(s.ImageURL)
+	// Scrapers fetch this once per share and the previews they build are about
+	// 1200 wide, so an untouched original would be downloaded in full to be
+	// shown small. ogImageWidth is what they need and no more.
+	return absoluteURL(imageutils.Resized(s.ImageURL, ogImageWidth))
 }
 
 // PublishedISO and ModifiedISO render the article timestamps in RFC 3339,

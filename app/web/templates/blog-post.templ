@@ -8,6 +8,7 @@ import (
 	"server/internal/http/handlers/models"
 	"server/internal/http/middleware"
 	"server/util/ctxutils"
+	"server/util/imageutils"
 )
 
 func getGpxUrl(metadata json.RawMessage) string {
@@ -56,7 +57,14 @@ templ blogPostContent(post models.PostResponseResource, relatedPosts []models.Po
 		<!-- Hero Header -->
 		<header class="relative h-[50vh] min-h-[400px] w-full overflow-hidden">
 			if post.CoverImageUrl != "" {
-				<img src={ post.CoverImageUrl } alt={ post.Title } class="absolute inset-0 w-full h-full object-cover" decoding="async" />
+				@Image(ResponsiveImage{
+					URL:           post.CoverImageUrl,
+					Alt:           post.Title,
+					Class:         "absolute inset-0 w-full h-full object-cover",
+					Sizes:         "100vw",
+					Widths:        imageutils.HeroWidths,
+					FallbackWidth: 2000,
+				})
 			} else {
 				<div class="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30"></div>
 			}
@@ -94,7 +102,7 @@ templ blogPostContent(post models.PostResponseResource, relatedPosts []models.Po
 			}
 			<!-- Article body -->
 			<div class="prose prose-lg max-w-none dark:prose-invert prose-headings:text-primary prose-headings:font-extrabold prose-headings:italic prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-blockquote:border-primary prose-blockquote:bg-slate-50 dark:prose-blockquote:bg-slate-900/50 prose-blockquote:rounded-r-xl prose-blockquote:py-4 prose-blockquote:pr-4">
-				@templ.Raw(post.Content)
+				@templ.Raw(imageutils.RewriteContentImages(post.Content))
 			</div>
 			<!-- GPX Route Map -->
 			if getGpxUrl(post.Metadata) != "" {
@@ -172,7 +180,15 @@ templ relatedPostCard(post models.PostListItem) {
 		<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="block">
 			<div class="aspect-video overflow-hidden">
 				if post.CoverImageUrl != "" {
-					<img src={ post.CoverImageUrl } alt={ post.Title } class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" decoding="async" />
+					@Image(ResponsiveImage{
+						URL:           post.CoverImageUrl,
+						Alt:           post.Title,
+						Class:         "w-full h-full object-cover group-hover:scale-110 transition-transform duration-500",
+						Sizes:         "(min-width: 1024px) 400px, 100vw",
+						Widths:        imageutils.CardWidths,
+						FallbackWidth: 800,
+						Lazy:          true,
+					})
 				} else {
 					<div class="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
 						<span class="icon icon-article text-4xl text-slate-300 dark:text-slate-600"></span>

@@ -1,0 +1,51 @@
+package templates
+
+import "server/util/imageutils"
+
+// ResponsiveImage describes one picture and the sizes it will be painted at.
+// Widths and Sizes belong together: Widths are the files offered, Sizes tells
+// the browser how wide the element will be so it can pick among them before
+// the stylesheet has loaded.
+type ResponsiveImage struct {
+	URL   string
+	Alt   string
+	Class string
+
+	// Sizes is the sizes attribute, in CSS terms - "100vw" for a full width
+	// header, a media query list for anything inside a grid.
+	Sizes string
+
+	// Widths are the candidates offered through srcset. Empty means a single
+	// file at FallbackWidth, which is right for a thumbnail.
+	Widths []int
+
+	// FallbackWidth is the width of the plain src, used by browsers that
+	// ignore srcset and as the value the others fall back to.
+	FallbackWidth int
+
+	// Lazy defers loading until the image approaches the viewport. Wrong for
+	// anything above the fold, since it delays the largest paint.
+	Lazy bool
+}
+
+// Image renders a picture at the size it is displayed rather than at the size
+// it was uploaded. A URL Cloudinary does not serve is emitted untouched and
+// without a srcset, so a pasted address still works.
+templ Image(img ResponsiveImage) {
+	{{ srcset := imageutils.Srcset(img.URL, img.Widths) }}
+	<img
+		src={ imageutils.Resized(img.URL, img.FallbackWidth) }
+		if srcset != "" {
+			srcset={ srcset }
+		}
+		if img.Sizes != "" {
+			sizes={ img.Sizes }
+		}
+		alt={ img.Alt }
+		class={ img.Class }
+		if img.Lazy {
+			loading="lazy"
+		}
+		decoding="async"
+	/>
+}
